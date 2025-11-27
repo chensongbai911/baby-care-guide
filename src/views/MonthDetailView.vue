@@ -1,5 +1,54 @@
 <template>
   <div class="month-detail-view" v-if="monthData">
+    <!-- SVG 动画背景 -->
+    <svg class="hero-svg-bg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <!-- 渐变定义 -->
+        <linearGradient id="heroGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:0.6" />
+          <stop offset="100%" style="stop-color:#818cf8;stop-opacity:0.3" />
+        </linearGradient>
+        <linearGradient id="heroGradient2" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#f472b6;stop-opacity:0.4" />
+          <stop offset="100%" style="stop-color:#c084fc;stop-opacity:0.2" />
+        </linearGradient>
+
+        <!-- 发光滤镜 -->
+        <filter id="heroGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- 动态波浪 -->
+      <path class="wave wave-1" d="M0,300 Q200,250 400,300 T800,280 V400 H0 Z" fill="url(#heroGradient1)"/>
+      <path class="wave wave-2" d="M0,320 Q200,280 400,320 T800,300 V400 H0 Z" fill="url(#heroGradient2)"/>
+
+      <!-- 漂浮圆圈 -->
+      <circle class="float-circle fc-1" cx="100" cy="80" r="30" fill="rgba(255,255,255,0.15)" filter="url(#heroGlow)"/>
+      <circle class="float-circle fc-2" cx="700" cy="120" r="45" fill="rgba(255,255,255,0.1)" filter="url(#heroGlow)"/>
+      <circle class="float-circle fc-3" cx="400" cy="60" r="20" fill="rgba(255,255,255,0.2)" filter="url(#heroGlow)"/>
+      <circle class="float-circle fc-4" cx="600" cy="200" r="25" fill="rgba(255,255,255,0.12)" filter="url(#heroGlow)"/>
+
+      <!-- 星星装饰 -->
+      <g class="star-group">
+        <polygon class="twinkle-star ts-1" points="150,150 153,158 162,158 155,163 158,172 150,167 142,172 145,163 138,158 147,158" fill="rgba(255,255,255,0.8)"/>
+        <polygon class="twinkle-star ts-2" points="650,80 652,86 658,86 653,90 655,96 650,92 645,96 647,90 642,86 648,86" fill="rgba(255,255,255,0.7)"/>
+        <polygon class="twinkle-star ts-3" points="300,100 302,106 308,106 303,110 305,116 300,112 295,116 297,110 292,106 298,106" fill="rgba(255,255,255,0.6)"/>
+      </g>
+
+      <!-- 爱心装饰 -->
+      <g class="heart-float hf-1" transform="translate(500, 150)">
+        <path d="M0,-8 C-4,-12 -10,-8 -10,-4 C-10,2 0,10 0,10 C0,10 10,2 10,-4 C10,-8 4,-12 0,-8" fill="rgba(244,114,182,0.6)" filter="url(#heroGlow)"/>
+      </g>
+      <g class="heart-float hf-2" transform="translate(200, 200)">
+        <path d="M0,-6 C-3,-9 -7.5,-6 -7.5,-3 C-7.5,1.5 0,7.5 0,7.5 C0,7.5 7.5,1.5 7.5,-3 C7.5,-6 3,-9 0,-6" fill="rgba(251,191,36,0.5)" filter="url(#heroGlow)"/>
+      </g>
+    </svg>
+
     <!-- 顶部导航 -->
     <div class="top-nav">
       <el-button class="back-btn" @click="router.back()" round>

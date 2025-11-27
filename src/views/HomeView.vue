@@ -2,6 +2,8 @@
   <div class="home-view">
     <!-- 头部横幅 -->
     <div class="hero-section">
+      <!-- SVG粒子动画背景 -->
+      <ParticleAnimation />
       <div class="hero-bg-shapes">
         <div class="shape shape-1"></div>
         <div class="shape shape-2"></div>
@@ -240,6 +242,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBabyStore } from '@/stores/babyStore'
 import MonthCard from '@/components/baby/MonthCard.vue'
+import ParticleAnimation from '@/components/baby/ParticleAnimation.vue'
 import { Timer, List, User, ArrowRight, Check, TrendCharts, Histogram, Reading } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { BabyMonthData } from '@/types/baby'
