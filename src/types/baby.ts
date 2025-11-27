@@ -64,4 +64,5 @@ export interface MediaResource {
   thumbnail?: string;
   description?: string;
   type: 'video' | 'image' | 'gif';
+  duration?: string; // 视频时长
 }
