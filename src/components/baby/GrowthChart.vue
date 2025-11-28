@@ -225,7 +225,7 @@
           <el-option
             v-for="i in 13"
             :key="i-1"
-            :label="`${(i-1)}个月`"
+            :label="(i-1) + '个月'"
             :value="i-1"
           />
         </el-select>
@@ -234,7 +234,7 @@
           :min="0"
           :max="activeTab === 'weight' ? 15 : 100"
           :step="0.1"
-          :placeholder="`输入${currentLabel}`"
+          :placeholder="'输入' + currentLabel"
           class="value-input"
           @keyup.enter="addDataPoint"
         />
