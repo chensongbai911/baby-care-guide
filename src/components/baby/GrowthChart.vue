@@ -316,7 +316,6 @@ const tabs = [
 ]
 
 const activeTab = ref('weight')
-const hoveredPoint = ref<number | null>(null)
 const selectedMonth = ref(0)
 const inputValue = ref<number | null>(null)
 const showRecords = ref(false)
@@ -503,8 +502,7 @@ const currentStats = computed(() => {
     {
       icon: '✨',
       value: '正常',
-      label: '发育评估',
-      onClick: () => showDetailedAssessment()
+      label: '发育评估'
     }
   ]
 })

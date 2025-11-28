@@ -32,7 +32,7 @@ const emit = defineEmits<{
 
 const isActive = ref(props.active)
 
-const getConfettiStyle = (index: number) => {
+const getConfettiStyle = (_index: number) => {
   const colors = props.colors
   const color = colors[Math.floor(Math.random() * colors.length)]
   const left = Math.random() * 100

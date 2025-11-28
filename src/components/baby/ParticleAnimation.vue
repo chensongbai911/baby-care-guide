@@ -96,7 +96,7 @@ let particleId = 0
 const createParticle = (x: number, y: number) => {
   const angle = Math.random() * Math.PI * 2
   const speed = 2 + Math.random() * 4
-  const type = props.particleTypes[Math.floor(Math.random() * props.particleTypes.length)]
+  const type = props.particleTypes[Math.floor(Math.random() * props.particleTypes.length)] as 'circle' | 'star' | 'heart'
 
   return {
     id: particleId++,
@@ -105,7 +105,7 @@ const createParticle = (x: number, y: number) => {
     vx: Math.cos(angle) * speed,
     vy: Math.sin(angle) * speed - 2, // 向上的初始速度
     size: 3 + Math.random() * 5,
-    color: props.colors[Math.floor(Math.random() * props.colors.length)],
+    color: props.colors[Math.floor(Math.random() * props.colors.length)] as string,
     opacity: 1,
     life: 0,
     maxLife: 60 + Math.random() * 60,

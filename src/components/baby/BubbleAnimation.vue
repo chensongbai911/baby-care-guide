@@ -74,7 +74,7 @@ interface Props {
   isActive?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   size: 200,
   colors: () => ['#a78bfa', '#ec4899'],
   isActive: false

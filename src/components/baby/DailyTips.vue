@@ -16,15 +16,15 @@
     <!-- 主要贴士卡片 -->
     <div class="main-tip-card" :class="{ flipping: isFlipping }">
       <div class="tip-category">
-        <span class="category-icon">{{ currentCategory.icon }}</span>
-        <span class="category-name">{{ currentCategory.name }}</span>
+        <span class="category-icon">{{ currentCategory?.icon }}</span>
+        <span class="category-name">{{ currentCategory?.name }}</span>
       </div>
       <div class="tip-content">
-        <p>{{ currentTip.content }}</p>
+        <p>{{ currentTip?.content }}</p>
       </div>
       <div class="tip-footer">
         <div class="tip-tags">
-          <el-tag v-for="tag in currentTip.tags" :key="tag" size="small" effect="plain">
+          <el-tag v-for="tag in currentTip?.tags || []" :key="tag" size="small" effect="plain">
             {{ tag }}
           </el-tag>
         </div>
@@ -182,7 +182,7 @@ const tips: Tip[] = [
 
 const currentTip = computed(() => tips[currentTipIndex.value])
 const currentCategory = computed(() =>
-  categories.find(c => c.id === currentTip.value.category) || categories[0]
+  categories.find(c => c.id === currentTip.value?.category) || categories[0]
 )
 
 const quickTips: QuickTip[] = [
@@ -268,7 +268,10 @@ const showTipDetail = (tip: QuickTip) => {
 }
 
 const toggleReminder = (index: number) => {
-  reminders.value[index].completed = !reminders.value[index].completed
+  const reminder = reminders.value[index]
+  if (reminder) {
+    reminder.completed = !reminder.completed
+  }
 }
 </script>
 

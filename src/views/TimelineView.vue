@@ -176,7 +176,7 @@ const babyStore = useBabyStore()
 const monthsData = computed(() => babyStore.allMonthsData)
 const headerRef = ref<HTMLElement>()
 const timelineRef = ref<HTMLElement>()
-const monthRefs = ref<HTMLElement[]>([])
+const monthRefs = ref<any[]>([])
 const scrollProgress = ref(0)
 const showScrollTop = ref(false)
 

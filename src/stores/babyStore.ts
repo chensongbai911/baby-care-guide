@@ -64,6 +64,16 @@ export const useBabyStore = defineStore('baby', () => {
     return completedMilestones.value.includes(milestoneTitle)
   }
 
+  // 统计已完成里程碑数量
+  const completedMilestonesCount = computed(() => completedMilestones.value.length)
+
+  // 统计总里程碑数量
+  const totalMilestonesCount = computed(() => {
+    return babyMonthsData.reduce((total, month) => {
+      return total + (month.milestones?.length || 0)
+    }, 0)
+  })
+
   // 初始化从本地存储加载数据
   const initFromStorage = () => {
     const savedBabyInfo = localStorage.getItem('babyInfo')
@@ -86,6 +96,8 @@ export const useBabyStore = defineStore('baby', () => {
     completedMilestones,
     allMonthsData,
     currentMonthData,
+    completedMilestonesCount,
+    totalMilestonesCount,
     setBabyInfo,
     setCurrentMonth,
     toggleMilestone,
