@@ -1324,31 +1324,43 @@ onMounted(() => {
   50% { transform: scale(1.2); }
 }
 
-/* 响应式设计 */
+/* 响应式设计 - 移动端优化 */
 @media (max-width: 768px) {
+  .home-view {
+    padding-bottom: 80px; /* 为底部导航留空间 */
+  }
+
   .hero-section {
-    padding: 32px 20px;
-    border-radius: 0 0 32px 32px;
+    padding: 24px 16px;
+    border-radius: 0 0 24px 24px;
+    margin-bottom: 16px;
   }
 
   .hero-emoji {
-    font-size: 50px;
+    font-size: 48px;
+    margin-bottom: 12px;
   }
 
   .hero-title {
-    font-size: 26px;
+    font-size: 24px;
+    margin-bottom: 8px;
   }
 
   .subtitle {
     font-size: 14px;
+    margin-bottom: 16px;
   }
 
   .hero-stats {
     gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .stat-item {
-    padding: 8px 14px;
+    padding: 10px 16px;
+    min-width: calc(50% - 8px);
+    flex: 1 1 calc(50% - 8px);
   }
 
   .stat-number {
@@ -1359,12 +1371,19 @@ onMounted(() => {
     font-size: 12px;
   }
 
+  .section-header {
+    padding: 0 16px;
+    margin-bottom: 16px;
+  }
+
   .section-header h2 {
     font-size: 20px;
   }
 
   .icon-wrapper {
     font-size: 22px;
+    width: 36px;
+    height: 36px;
   }
 
   .section-desc {
@@ -1375,34 +1394,156 @@ onMounted(() => {
   .months-section,
   .quick-actions,
   .tips-section {
-    padding: 0 16px;
+    padding: 0 12px;
+    margin-bottom: 24px;
   }
 
   .month-info {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
   }
 
   .month-badge {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
   }
 
   .month-num {
-    font-size: 26px;
+    font-size: 28px;
+  }
+
+  .month-details {
+    flex: 1;
+    min-width: 0;
   }
 
   .month-details h3 {
-    font-size: 17px;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .month-stage {
+    font-size: 13px;
+  }
+
+  .months-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .month-card {
+    padding: 12px;
+  }
+
+  .month-card-num {
+    font-size: 24px;
+  }
+
+  .month-card-label {
+    font-size: 12px;
+  }
+
+  .actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 
   .action-card {
-    padding: 16px;
+    padding: 16px 12px;
   }
 
   .action-icon {
     width: 48px;
     height: 48px;
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .action-title {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .action-desc {
+    font-size: 12px;
+  }
+
+  .tips-grid {
+    gap: 12px;
+  }
+
+  .tip-card {
+    padding: 16px;
+  }
+
+  .tip-icon {
+    font-size: 28px;
+  }
+
+  .tip-title {
+    font-size: 14px;
+  }
+
+  .tip-content {
+    font-size: 13px;
+  }
+}
+
+/* 小屏手机优化 */
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 20px 12px;
+  }
+
+  .hero-title {
+    font-size: 22px;
+  }
+
+  .stat-item {
+    padding: 8px 12px;
+    min-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .months-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .month-card {
+    padding: 10px 8px;
+  }
+
+  .month-card-num {
+    font-size: 20px;
+  }
+
+  .month-card-label {
+    font-size: 11px;
+  }
+
+  .actions-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .action-card {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    padding: 14px;
+  }
+
+  .action-icon {
+    margin-bottom: 0;
+    margin-right: 12px;
+  }
+
+  .action-content {
+    flex: 1;
   }
 
   .action-content h3 {

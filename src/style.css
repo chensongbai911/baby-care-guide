@@ -880,7 +880,8 @@ p {
   transition: all var(--transition-normal) !important;
 }
 
-/* 响应式 */
+/* 响应式优化 */
+/* 平板和移动设备 */
 @media (max-width: 768px) {
   :root {
     --font-size-xs: 12px;
@@ -893,10 +894,17 @@ p {
     --font-size-3xl: 22px;
     --font-size-4xl: 26px;
     --font-size-5xl: 30px;
+    
+    /* 移动端优化间距 */
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
   }
 
   body {
     font-size: var(--font-size-base);
+    padding-bottom: env(safe-area-inset-bottom); /* 适配 iPhone 底部安全区 */
   }
 
   .hide-on-mobile {
@@ -905,6 +913,87 @@ p {
 
   #app {
     padding: 0;
+  }
+
+  /* 移动端通用卡片优化 */
+  .el-card,
+  [class*="card"] {
+    border-radius: var(--radius-md) !important;
+    margin: 12px !important;
+  }
+
+  /* 移动端按钮优化 - 增大可点击区域 */
+  .el-button {
+    min-height: 44px !important;
+    padding: 12px 20px !important;
+    font-size: var(--font-size-base) !important;
+  }
+
+  .el-button--small {
+    min-height: 36px !important;
+    padding: 8px 16px !important;
+  }
+
+  /* 移动端表单优化 */
+  .el-input__inner,
+  .el-textarea__inner,
+  .el-select__input {
+    font-size: var(--font-size-base) !important;
+    padding: 12px !important;
+    min-height: 44px !important;
+  }
+
+  /* 移动端网格布局优化 */
+  [class*="grid"],
+  .grid-container {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* 移动端对话框优化 */
+  .el-dialog {
+    width: 95% !important;
+    margin: 5vh auto !important;
+  }
+
+  /* 移动端弹出层优化 */
+  .el-drawer,
+  .el-popup-parent--hidden {
+    overflow: hidden !important;
+  }
+}
+
+/* 小屏手机优化 */
+@media (max-width: 480px) {
+  :root {
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-base: 13px;
+    --font-size-md: 14px;
+    --font-size-lg: 15px;
+    --font-size-xl: 16px;
+    --font-size-2xl: 18px;
+    --font-size-3xl: 20px;
+    --font-size-4xl: 24px;
+    --font-size-5xl: 28px;
+  }
+
+  /* 更紧凑的卡片间距 */
+  .el-card,
+  [class*="card"] {
+    margin: 8px !important;
+    padding: 12px !important;
+  }
+
+  /* 更小的装饰元素 */
+  .decoration-dots::before {
+    width: 200px;
+    height: 200px;
+  }
+
+  .decoration-dots::after {
+    width: 150px;
+    height: 150px;
   }
 }
 

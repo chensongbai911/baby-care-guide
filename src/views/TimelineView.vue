@@ -1022,42 +1022,190 @@ onBeforeUnmount(() => {
   transform: translateY(20px);
 }
 
-/* 响应式 */
+/* 响应式优化 */
 @media (max-width: 768px) {
+  .timeline-view {
+    padding-bottom: 80px;
+  }
+
   .timeline-header {
-    padding: 28px 20px;
+    padding: 20px 16px;
+    border-radius: 0 0 24px 24px;
+  }
+
+  .main-title {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .title-icon {
+    font-size: 36px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .overall-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stat-card {
+    width: 100%;
+    max-width: none;
+    padding: 12px 16px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  /* 移动端简化时间轴布局 */
+  .timeline-container {
+    padding: 20px 12px;
+  }
+
+  .timeline-item.left,
+  .timeline-item.right {
+    padding-left: 60px;
+    padding-right: 12px;
+    margin-bottom: 24px;
+  }
+
+  .timeline-line {
+    left: 28px;
+    width: 3px;
+  }
+
+  .timeline-dot {
+    left: 28px;
+    transform: translateX(-50%);
+  }
+
+  .dot-outer {
+    width: 56px;
+    height: 56px;
+  }
+
+  .dot-inner {
+    width: 48px;
+    height: 48px;
+    font-size: 16px;
+  }
+
+  .dot-month {
+    font-size: 14px;
+  }
+
+  .dot-ring {
+    width: 64px;
+    height: 64px;
+  }
+
+  .month-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .card-header {
+    margin-bottom: 12px;
+  }
+
+  .header-title {
+    gap: 8px;
+  }
+
+  .header-title h3 {
+    font-size: 17px;
+  }
+
+  .header-emoji {
+    font-size: 24px;
+  }
+
+  .month-badge {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  .card-body {
+    gap: 12px;
+  }
+
+  .month-summary {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .highlights-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .section-title {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .highlight-item {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .milestone-item {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .progress-info {
+    font-size: 12px;
+  }
+
+  .card-footer {
+    padding-top: 12px;
+    margin-top: 12px;
+  }
+
+  .view-detail-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .scroll-top-btn {
+    bottom: 90px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* 小屏优化 */
+@media (max-width: 480px) {
+  .timeline-header {
+    padding: 16px 12px;
   }
 
   .main-title {
     font-size: 20px;
   }
 
-  .title-icon {
-    font-size: 32px;
-  }
-
-  .subtitle {
-    font-size: 12px;
-  }
-
   .overall-stats {
-    flex-direction: column;
-    align-items: center;
+    gap: 8px;
   }
 
   .stat-card {
-    width: 100%;
-    max-width: 280px;
-  }
-
-  .stat-value {
-    font-size: 16px;
+    padding: 10px 14px;
   }
 
   .timeline-item.left,
   .timeline-item.right {
-    padding-left: 50px;
-    padding-right: 16px;
+    padding-left: 56px;
+    padding-right: 8px;
   }
 
   .timeline-line {
@@ -1074,30 +1222,26 @@ onBeforeUnmount(() => {
   }
 
   .dot-inner {
-    width: 40px;
-    height: 40px;
-    font-size: 14px;
+    width: 42px;
+    height: 42px;
   }
 
   .month-card {
-    padding: 20px;
+    padding: 14px;
   }
 
   .header-title h3 {
     font-size: 16px;
   }
 
-  .month-summary {
-    font-size: 12px;
+  .highlights-grid {
+    gap: 6px;
   }
 
-  .section-title {
-    font-size: 13px;
-  }
-
-  .highlight-item {
+  .highlight-item,
+  .milestone-item {
     font-size: 12px;
-    padding: 8px;
+    padding: 8px 10px;
   }
 }
 </style>
