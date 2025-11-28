@@ -22,6 +22,21 @@ const router = createRouter({
       path: '/checklist',
       name: 'checklist',
       component: () => import('../views/ChecklistView.vue')
+    },
+    {
+      path: '/vaccine',
+      name: 'vaccine',
+      component: () => import('../views/VaccineView.vue')
+    },
+    {
+      path: '/growth',
+      name: 'growth',
+      component: () => import('../views/GrowthChartView.vue')
+    },
+    {
+      path: '/diary',
+      name: 'diary',
+      component: () => import('../views/DiaryView.vue')
     }
   ],
   scrollBehavior(_to, _from, savedPosition) {

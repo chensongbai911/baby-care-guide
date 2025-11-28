@@ -133,38 +133,74 @@
         <p class="section-desc">便捷工具助您育儿更轻松</p>
       </div>
       <el-row :gutter="24">
-        <el-col :xs="24" :sm="12" :md="8">
+        <el-col :xs="24" :sm="12" :md="8" :lg="4">
           <div class="action-card timeline-card" @click="router.push('/timeline')">
             <div class="action-icon">
               <el-icon :size="48"><Timer /></el-icon>
             </div>
             <div class="action-content">
               <h3>成长时间轴</h3>
-              <p>查看宝宝0-12个月完整发育时间轴，追踪每个重要节点</p>
+              <p>查看宝宝0-12个月完整发育时间轴</p>
             </div>
             <div class="action-arrow">→</div>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="12" :md="8">
+        <el-col :xs="24" :sm="12" :md="8" :lg="4">
           <div class="action-card checklist-card" @click="router.push('/checklist')">
             <div class="action-icon">
               <el-icon :size="48"><List /></el-icon>
             </div>
             <div class="action-content">
               <h3>成长清单</h3>
-              <p>记录宝宝的成长里程碑，见证每一个珍贵瞬间</p>
+              <p>记录宝宝的成长里程碑</p>
             </div>
             <div class="action-arrow">→</div>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="12" :md="8">
+        <el-col :xs="24" :sm="12" :md="8" :lg="4">
+          <div class="action-card vaccine-card" @click="router.push('/vaccine')">
+            <div class="action-icon">
+              <el-icon :size="48"><FirstAidKit /></el-icon>
+            </div>
+            <div class="action-content">
+              <h3>疫苗接种</h3>
+              <p>疫苗接种提醒与记录</p>
+            </div>
+            <div class="action-arrow">→</div>
+          </div>
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="8" :lg="4">
+          <div class="action-card growth-card" @click="router.push('/growth')">
+            <div class="action-icon">
+              <el-icon :size="48"><TrendCharts /></el-icon>
+            </div>
+            <div class="action-content">
+              <h3>成长曲线</h3>
+              <p>身高体重变化图表</p>
+            </div>
+            <div class="action-arrow">→</div>
+          </div>
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="8" :lg="4">
+          <div class="action-card diary-card" @click="router.push('/diary')">
+            <div class="action-icon">
+              <el-icon :size="48"><Notebook /></el-icon>
+            </div>
+            <div class="action-content">
+              <h3>育儿日记</h3>
+              <p>记录宝宝的点点滴滴</p>
+            </div>
+            <div class="action-arrow">→</div>
+          </div>
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="8" :lg="4">
           <div class="action-card knowledge-card">
             <div class="action-icon">
               <el-icon :size="48"><Reading /></el-icon>
             </div>
             <div class="action-content">
               <h3>育儿知识库</h3>
-              <p>新手爸爸必备育儿技巧，科学养育从这里开始</p>
+              <p>新手爸爸必备育儿技巧</p>
             </div>
             <el-tag type="warning" size="small">即将上线</el-tag>
           </div>
@@ -299,7 +335,7 @@ import { useBabyStore } from '@/stores/babyStore'
 import MonthCard from '@/components/baby/MonthCard.vue'
 import AnimatedNumber from '@/components/baby/AnimatedNumber.vue'
 import ConfettiEffect from '@/components/baby/ConfettiEffect.vue'
-import { Timer, List, User, ArrowRight, Check, TrendCharts, Histogram, Reading } from '@element-plus/icons-vue'
+import { Timer, List, User, ArrowRight, Check, TrendCharts, Histogram, Reading, FirstAidKit, Notebook } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { BabyMonthData } from '@/types/baby'
 
@@ -853,6 +889,18 @@ onMounted(() => {
 
 .checklist-card .action-icon {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.vaccine-card .action-icon {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+.growth-card .action-icon {
+  background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+}
+
+.diary-card .action-icon {
+  background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
 }
 
 .knowledge-card .action-icon {
