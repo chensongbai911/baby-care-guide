@@ -596,7 +596,7 @@ watch(() => route.params.id, (newId) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 12px 20px; /* 从 20px 减小 */
   position: sticky;
   top: 0;
   z-index: 100;
@@ -615,7 +615,7 @@ watch(() => route.params.id, (newId) => {
 }
 
 .nav-month {
-  font-size: 18px;
+  font-size: 16px; /* 从 18px 减小 */
   font-weight: 700;
   color: #303133;
   min-width: 50px;
@@ -625,7 +625,7 @@ watch(() => route.params.id, (newId) => {
 /* 页面头部 */
 .page-hero {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 60px 30px;
+  padding: 40px 30px; /* 从 60px 30px 减小 */
   border-radius: 0 0 40px 40px;
   color: white;
   text-align: center;
@@ -680,34 +680,34 @@ watch(() => route.params.id, (newId) => {
   flex-direction: column;
   align-items: center;
   background: rgba(255, 255, 255, 0.2);
-  padding: 20px 40px;
+  padding: 16px 32px; /* 从 20px 40px 减小 */
   border-radius: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 16px; /* 从 20px 减小 */
   backdrop-filter: blur(10px);
 }
 
 .month-num {
-  font-size: 56px;
+  font-size: 44px; /* 从 56px 减小 */
   font-weight: 900;
   line-height: 1;
 }
 
 .month-unit {
-  font-size: 16px;
+  font-size: 14px; /* 从 16px 减小 */
   opacity: 0.9;
   margin-top: 4px;
 }
 
 .page-hero h1 {
-  font-size: 32px;
-  margin: 0 0 12px 0;
+  font-size: 26px; /* 从 32px 减小 */
+  margin: 0 0 10px 0; /* 从 12px 减小 */
   font-weight: 800;
 }
 
 .hero-summary {
-  font-size: 16px;
+  font-size: 14px; /* 从 16px 减小 */
   opacity: 0.9;
-  margin: 0 0 30px 0;
+  margin: 0 0 20px 0; /* 从 30px 减小 */
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
@@ -717,22 +717,22 @@ watch(() => route.params.id, (newId) => {
 .quick-stats {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 16px; /* 从 20px 减小 */
   flex-wrap: wrap;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px; /* 从 12px 减小 */
   background: rgba(255, 255, 255, 0.15);
-  padding: 16px 24px;
+  padding: 12px 20px; /* 从 16px 24px 减小 */
   border-radius: 16px;
   backdrop-filter: blur(10px);
 }
 
 .stat-item .el-icon {
-  font-size: 28px;
+  font-size: 24px; /* 从 28px 减小 */
 }
 
 .stat-content {
@@ -742,13 +742,146 @@ watch(() => route.params.id, (newId) => {
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 11px; /* 从 12px 减小 */
   opacity: 0.85;
 }
 
 .stat-value {
-  font-size: 16px;
+  font-size: 15px; /* 从 16px 减小 */
   font-weight: 700;
+}
+
+/* 详情页头部 */
+.detail-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 30px; /* 从 60px 40px 减小 */
+  border-radius: 0 0 40px 40px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 30px; /* 从 40px 减小 */
+}
+
+.detail-header .month-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 6px 16px; /* 从 8px 20px 减小 */
+  border-radius: 20px;
+  font-size: 13px; /* 从 14px 减小 */
+  font-weight: 600;
+  margin-bottom: 12px; /* 从 16px 减小 */
+  backdrop-filter: blur(10px);
+}
+
+.detail-header h1 {
+  font-size: 32px; /* 从 42px 减小 */
+  font-weight: 800;
+  margin: 0 0 8px 0; /* 从 12px 减小 */
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.detail-header p {
+  font-size: 15px; /* 从 18px 减小 */
+  opacity: 0.9;
+  margin: 0 0 20px 0; /* 从 24px 减小 */
+}
+
+.quick-stats {
+  display: flex;
+  gap: 12px; /* 从 16px 减小 */
+  margin-top: 20px; /* 从 24px 减小 */
+}
+
+.quick-stat {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 12px; /* 从 16px 减小 */
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+.quick-stat-icon {
+  font-size: 20px; /* 从 24px 减小 */
+  margin-bottom: 6px; /* 从 8px 减小 */
+}
+
+.quick-stat-value {
+  font-size: 15px; /* 从 18px 减小 */
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px; /* 从 4px 减小 */
+}
+
+.quick-stat-label {
+  font-size: 11px; /* 从 12px 减小 */
+  opacity: 0.8;
+}
+
+/* 月份详情头部 */
+.month-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 30px; /* 从 60px 40px 减小 */
+  border-radius: 0 0 40px 40px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px; /* 从 40px 减小 */
+  height: 36px; /* 从 40px 减小 */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.month-number {
+  font-size: 48px; /* 从 64px 减小 */
+  font-weight: 800;
+  margin: 0;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.month-label {
+  font-size: 16px; /* 从 18px 减小 */
+  opacity: 0.9;
+  margin-top: 4px; /* 从 8px 减小 */
+}
+
+.milestone-preview {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 16px; /* 从 20px 减小 */
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  margin-top: 20px; /* 从 24px 减小 */
+}
+
+.milestone-title {
+  font-size: 14px; /* 从 16px 减小 */
+  opacity: 0.9;
+  margin-bottom: 10px; /* 从 12px 减小 */
+}
+
+.milestone-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.milestone-tag {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 6px 12px; /* 从 8px 16px 减小 */
+  border-radius: 20px;
+  font-size: 12px; /* 从 13px 减小 */
+  backdrop-filter: blur(5px);
 }
 
 /* 内容区域 */

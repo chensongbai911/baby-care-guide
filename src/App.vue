@@ -1,5 +1,20 @@
 <template>
-  <div id="app">
+  <div id="app" :class="{ 'dark-mode': isDarkMode }">
+    <!-- 主题切换按钮 -->
+    <div class="theme-toggle-container">
+      <el-button
+        circle
+        class="theme-toggle-btn"
+        @click="toggleTheme"
+        :title="isDarkMode ? '切换到浅色模式' : '切换到深色模式'"
+      >
+        <el-icon>
+          <Sunny v-if="isDarkMode" />
+          <Moon v-else />
+        </el-icon>
+      </el-button>
+    </div>
+
     <!-- 顶部导航栏 -->
     <header class="app-header">
       <div class="header-content">
@@ -91,13 +106,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { Sunny, Moon } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
 const showMobileMenu = ref(false)
 const showBackTop = ref(false)
+const isDarkMode = ref(false)
 
 const isActive = (path: string) => {
   if (path === '/') {
@@ -126,6 +143,28 @@ const handleScroll = () => {
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
+
+// 从本地存储加载主题设置
+onMounted(() => {
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme === 'dark') {
+    isDarkMode.value = true
+  } else if (savedTheme === null) {
+    // 检测系统主题偏好
+    isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+})
+
+// 切换主题
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value
+}
+
+// 监听主题变化并保存
+watch(isDarkMode, (newVal) => {
+  localStorage.setItem('theme', newVal ? 'dark' : 'light')
+  document.documentElement.setAttribute('data-theme', newVal ? 'dark' : 'light')
+})
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
@@ -472,6 +511,52 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
+/* 页面过渡动画 - 增强版 */
+.page-fade-enter-active {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-fade-leave-active {
+  animation: fadeOutDown 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.98);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: scale(0.8) translateY(10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: scale(0.9) translateY(-10px);
+}
+
 /* 页面过渡动画 */
 .page-fade-enter-active,
 .page-fade-leave-active {
@@ -627,5 +712,127 @@ onUnmounted(() => {
   .footer-copyright {
     font-size: 11px;
   }
+}
+
+/* 主题切换按钮 */
+.theme-toggle-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.theme-toggle-btn {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(124, 58, 237, 0.2);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.15);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.theme-toggle-btn:hover {
+  transform: rotate(180deg) scale(1.1);
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.3);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+
+.theme-toggle-btn .el-icon {
+  font-size: 24px;
+  color: #7c3aed;
+  transition: transform 0.3s ease;
+}
+
+/* 深色模式 */
+.dark-mode {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #e4e4e7;
+}
+
+.dark-mode .theme-toggle-btn {
+  background: rgba(30, 30, 46, 0.9);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.dark-mode .theme-toggle-btn .el-icon {
+  color: #fbbf24;
+}
+
+/* 页面切换动画 */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+}
+
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.98);
+}
+
+/* 滚动条优化 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #6d28d9 0%, #9333ea 100%);
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+}
+
+/* 性能优化：减少不必要的重绘 */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+  will-change: transform;
+}
+
+/* 无障碍优化 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 焦点可见性增强 */
+:focus-visible {
+  outline: 3px solid #7c3aed;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.dark-mode :focus-visible {
+  outline-color: #a855f7;
 }
 </style>

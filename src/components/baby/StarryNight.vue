@@ -142,6 +142,12 @@
       </g>
     </svg>
   </div>
+  <div class="starry-night">
+    <div class="stars-layer stars-small"></div>
+    <div class="stars-layer stars-medium"></div>
+    <div class="stars-layer stars-large"></div>
+    <div class="shooting-star" v-for="i in 3" :key="i" :style="{ animationDelay: `${i * 8}s` }"></div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -337,5 +343,106 @@ const zzzs = computed(() => [1, 2, 3])
   50% {
     opacity: 1;
   }
+}
+
+.starry-night {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(to bottom, #0a0e27 0%, #1a1f3a 100%);
+}
+
+.stars-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-repeat: repeat;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.stars-small {
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, white, transparent),
+    radial-gradient(1px 1px at 60px 70px, white, transparent),
+    radial-gradient(1px 1px at 50px 100px, white, transparent),
+    radial-gradient(1px 1px at 80px 10px, white, transparent),
+    radial-gradient(1px 1px at 130px 50px, white, transparent),
+    radial-gradient(1px 1px at 10px 60px, white, transparent);
+  background-size: 200px 200px;
+  animation-duration: 3s;
+}
+
+.stars-medium {
+  background-image:
+    radial-gradient(2px 2px at 40px 60px, white, transparent),
+    radial-gradient(2px 2px at 110px 90px, white, transparent),
+    radial-gradient(2px 2px at 150px 30px, white, transparent),
+    radial-gradient(2px 2px at 70px 120px, white, transparent);
+  background-size: 300px 300px;
+  animation-duration: 4s;
+  animation-delay: 1s;
+}
+
+.stars-large {
+  background-image:
+    radial-gradient(3px 3px at 90px 40px, white, transparent),
+    radial-gradient(3px 3px at 180px 80px, white, transparent),
+    radial-gradient(3px 3px at 50px 150px, white, transparent);
+  background-size: 400px 400px;
+  animation-duration: 5s;
+  animation-delay: 2s;
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* 流星 */
+.shooting-star {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 2px;
+  height: 2px;
+  background: white;
+  box-shadow: 0 0 4px 2px rgba(255, 255, 255, 0.8);
+  animation: shooting 8s linear infinite;
+  opacity: 0;
+}
+
+@keyframes shooting {
+  0% {
+    transform: translateX(0) translateY(0);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  15% {
+    transform: translateX(-500px) translateY(500px);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.shooting-star::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(to left, white, transparent);
 }
 </style>

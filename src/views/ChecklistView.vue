@@ -1,11 +1,11 @@
 <template>
   <div class="checklist-view">
     <!-- 页面头部 -->
-    <div class="page-hero">
+    <div class="page-header checklist-header">
       <div class="hero-content">
-        <div class="hero-icon">✅</div>
-        <h1>成长里程碑清单</h1>
-        <p>记录{{ babyStore.babyInfo.name }}的每一个重要时刻</p>
+        <div class="hero-icon animate-bounce">✅</div>
+        <h1 class="checklist-title">成长里程碑清单</h1>
+        <p class="checklist-subtitle">记录{{ babyStore.babyInfo.name }}的每一个重要时刻</p>
 
         <!-- 总进度统计 -->
         <div class="stats-overview">
@@ -33,7 +33,7 @@
         </div>
 
         <!-- 总进度条 -->
-        <div class="total-progress">
+        <div class="total-progress progress-section">
           <el-progress
             :percentage="completionRate"
             :stroke-width="12"
@@ -366,50 +366,98 @@ const resetProgress = () => {
 }
 
 /* 页面头部 */
-.page-hero {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  padding: 60px 30px;
-  border-radius: 0 0 40px 40px;
-  margin-bottom: 30px;
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 30px 20px; /* 从 50px 30px 减小 */
+  border-radius: 0 0 30px 30px;
   color: white;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px; /* 从 30px 减小 */
+}
+
+.checklist-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 30px; /* 从 60px 40px 减小 */
+  border-radius: 0 0 40px 40px;
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 30px; /* 从 40px 减小 */
 }
 
 .hero-icon {
-  font-size: 60px;
-  margin-bottom: 16px;
+  font-size: 48px; /* 从 64px 减小 */
+  margin-bottom: 16px; /* 从 20px 减小 */
 }
 
-.page-hero h1 {
-  font-size: 36px;
-  margin: 0 0 12px 0;
+.animate-bounce {
+  animation: gentle-bounce 2s ease-in-out infinite;
+}
+
+@keyframes gentle-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.page-header h1 {
+  font-size: 26px; /* 从 32px 减小 */
+  margin: 0 0 8px 0; /* 从 12px 减小 */
   font-weight: 800;
+  position: relative;
+  z-index: 1;
 }
 
-.page-hero > .hero-content > p {
-  font-size: 16px;
+.checklist-title {
+  font-size: 32px; /* 从 42px 减小 */
+  font-weight: 800;
+  margin: 0 0 8px 0; /* 从 12px 减小 */
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+.page-subtitle {
+  font-size: 14px; /* 从 16px 减小 */
   opacity: 0.9;
-  margin: 0 0 30px 0;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.checklist-subtitle {
+  font-size: 15px; /* 从 18px 减小 */
+  opacity: 0.9;
+  margin-bottom: 20px; /* 从 24px 减小 */
+  position: relative;
+  z-index: 1;
 }
 
 /* 统计卡片 */
 .stats-overview {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 12px; /* 从 16px 减小 */
   flex-wrap: wrap;
+  margin-bottom: 20px; /* 从 30px 减小 */
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  padding: 20px 30px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 12px 20px; /* 从 16px 24px 减小 */
   border-radius: 16px;
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-width: 160px;
+  gap: 10px; /* 从 12px 减小 */
+  transition: all 0.3s ease;
+  min-width: 120px; /* 从 140px 减小 */
 }
 
 .stat-card.highlight {
@@ -418,7 +466,7 @@ const resetProgress = () => {
 }
 
 .stat-icon {
-  font-size: 36px;
+  font-size: 24px; /* 从 28px 减小 */
 }
 
 .stat-info {
@@ -427,14 +475,14 @@ const resetProgress = () => {
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 20px; /* 从 24px 减小 */
   font-weight: 800;
   line-height: 1;
 }
 
 .stat-label {
-  font-size: 13px;
-  opacity: 0.85;
+  font-size: 11px; /* 从 12px 减小 */
+  opacity: 0.9;
   margin-top: 4px;
 }
 
@@ -442,14 +490,34 @@ const resetProgress = () => {
 .total-progress {
   max-width: 500px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0 16px; /* 从 20px 减小 */
+}
+
+.progress-section {
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
+  padding: 16px; /* 从 24px 减小 */
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  max-width: 400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  margin-top: 20px; /* 从 24px 减小 */
 }
 
 .progress-text {
-  color: white;
+  font-size: 15px; /* 从 16px 减小 */
   font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px; /* 从 12px 减小 */
+  margin-top: 8px;
+}
+
+.progress-label {
+  font-size: 13px; /* 从 14px 减小 */
+  opacity: 0.9;
+  margin-bottom: 8px; /* 从 12px 减小 */
 }
 
 /* 月龄标签 */
@@ -575,34 +643,51 @@ const resetProgress = () => {
   border-radius: 20px;
   padding: 24px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   border: 2px solid transparent;
   overflow: hidden;
-  animation: fadeInUp 0.5s ease forwards;
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   opacity: 0;
 }
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .milestone-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(17, 153, 142, 0.2);
-  border-color: rgba(17, 153, 142, 0.3);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 16px 40px rgba(17, 153, 142, 0.25);
+  border-color: rgba(17, 153, 142, 0.4);
+}
+
+.milestone-card:active {
+  transform: translateY(-4px) scale(0.98);
 }
 
 .milestone-card.completed {
   background: linear-gradient(135deg, #f0fff4 0%, #e6ffed 100%);
   border-color: #38ef7d;
+  animation: celebrate 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes celebrate {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 .card-check {
@@ -748,12 +833,12 @@ const resetProgress = () => {
 
 /* 响应式 */
 @media (max-width: 768px) {
-  .page-hero {
-    padding: 40px 20px;
+  .page-header {
+    padding: 30px 20px;
   }
 
-  .page-hero h1 {
-    font-size: 28px;
+  .page-header h1 {
+    font-size: 26px;
   }
 
   .stats-overview {

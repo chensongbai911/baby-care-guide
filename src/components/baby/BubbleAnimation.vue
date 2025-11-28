@@ -1,443 +1,235 @@
 <template>
-  <div class="bubble-animation-container" @click="createBubble">
-    <svg
-      ref="svgRef"
-      viewBox="0 0 400 300"
-      class="bubble-svg"
-      preserveAspectRatio="xMidYMid slice"
-    >
+  <div class="bubble-animation" :class="{ active: isActive }">
+    <svg class="bubble-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- 定义渐变 -->
       <defs>
-        <!-- 气泡渐变 -->
-        <radialGradient id="bubbleGradient" cx="30%" cy="30%" r="70%">
-          <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
-          <stop offset="30%" style="stop-color:#bfdbfe;stop-opacity:0.5" />
-          <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.2" />
-        </radialGradient>
+        <linearGradient :id="gradientId" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" :style="{ stopColor: colors[0], stopOpacity: 0.8 }" />
+          <stop offset="100%" :style="{ stopColor: colors[1], stopOpacity: 0.9 }" />
+        </linearGradient>
 
-        <!-- 粉色气泡渐变 -->
-        <radialGradient id="pinkBubbleGradient" cx="30%" cy="30%" r="70%">
-          <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
-          <stop offset="30%" style="stop-color:#fbcfe8;stop-opacity:0.5" />
-          <stop offset="100%" style="stop-color:#ec4899;stop-opacity:0.2" />
-        </radialGradient>
-
-        <!-- 紫色气泡渐变 -->
-        <radialGradient id="purpleBubbleGradient" cx="30%" cy="30%" r="70%">
-          <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
-          <stop offset="30%" style="stop-color:#ddd6fe;stop-opacity:0.5" />
-          <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.2" />
-        </radialGradient>
-
-        <!-- 气泡高光 -->
-        <filter id="bubbleHighlight">
-          <feGaussianBlur stdDeviation="1" result="blur"/>
+        <!-- 发光滤镜 -->
+        <filter :id="glowId" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
           <feMerge>
-            <feMergeNode in="blur"/>
+            <feMergeNode in="coloredBlur"/>
             <feMergeNode in="SourceGraphic"/>
           </feMerge>
         </filter>
       </defs>
 
-      <!-- 背景气泡 -->
-      <g class="background-bubbles">
-        <g
-          v-for="(bubble, index) in backgroundBubbles"
-          :key="'bg-bubble-'+index"
-          class="bg-bubble"
-          :style="{ animationDelay: `${bubble.delay}s`, animationDuration: `${bubble.duration}s` }"
-        >
-          <circle
-            :cx="bubble.x"
-            :cy="bubble.y"
-            :r="bubble.size"
-            :fill="bubble.gradient"
-            :opacity="bubble.opacity"
-            filter="url(#bubbleHighlight)"
-          />
-          <!-- 高光点 -->
-          <circle
-            :cx="bubble.x - bubble.size * 0.3"
-            :cy="bubble.y - bubble.size * 0.3"
-            :r="bubble.size * 0.15"
-            fill="white"
-            :opacity="0.6"
-          />
-        </g>
-      </g>
+      <!-- 主气泡 -->
+      <circle
+        class="main-bubble"
+        cx="100"
+        cy="100"
+        :r="mainRadius"
+        :fill="`url(#${gradientId})`"
+        :filter="`url(#${glowId})`"
+      />
 
-      <!-- 可点击的互动气泡 -->
-      <g class="interactive-bubbles">
-        <g
-          v-for="(bubble, index) in interactiveBubbles"
-          :key="'bubble-'+bubble.id"
-          class="interactive-bubble"
-          :class="{ popping: bubble.popping }"
-          @click.stop="popBubble(index)"
-          style="cursor: pointer"
-        >
-          <circle
-            :cx="bubble.x"
-            :cy="bubble.y"
-            :r="bubble.size"
-            :fill="bubble.gradient"
-            :opacity="bubble.opacity"
-            filter="url(#bubbleHighlight)"
-            class="bubble-body"
-          />
-          <!-- 高光 -->
-          <circle
-            :cx="bubble.x - bubble.size * 0.25"
-            :cy="bubble.y - bubble.size * 0.25"
-            :r="bubble.size * 0.2"
-            fill="white"
-            :opacity="0.7"
-          />
-          <!-- 小高光 -->
-          <circle
-            :cx="bubble.x - bubble.size * 0.1"
-            :cy="bubble.y + bubble.size * 0.3"
-            :r="bubble.size * 0.08"
-            fill="white"
-            :opacity="0.4"
-          />
-        </g>
-      </g>
+      <!-- 小气泡 -->
+      <circle
+        v-for="(bubble, index) in smallBubbles"
+        :key="index"
+        class="small-bubble"
+        :cx="bubble.x"
+        :cy="bubble.y"
+        :r="bubble.r"
+        :fill="colors[0]"
+        :opacity="bubble.opacity"
+        :style="{ animationDelay: `${bubble.delay}s` }"
+      />
 
-      <!-- 爆炸粒子 -->
-      <g class="pop-particles">
-        <g
-          v-for="particle in popParticles"
-          :key="'particle-'+particle.id"
-          class="particle"
-        >
-          <circle
-            :cx="particle.x"
-            :cy="particle.y"
-            :r="particle.size"
-            :fill="particle.color"
-            :opacity="particle.opacity"
-            :style="{
-              transform: `translate(${particle.offsetX}px, ${particle.offsetY}px)`,
-              transition: 'all 0.5s ease-out'
-            }"
-          />
-        </g>
-      </g>
+      <!-- 内部光圈 -->
+      <circle
+        class="inner-ring"
+        cx="100"
+        cy="100"
+        :r="mainRadius - 10"
+        fill="none"
+        stroke="rgba(255,255,255,0.3)"
+        stroke-width="2"
+      />
 
-      <!-- 提示文字 -->
-      <text
-        x="200"
-        y="280"
-        text-anchor="middle"
-        font-size="12"
-        fill="#94a3b8"
-        class="hint-text"
-      >
-        点击气泡让它们爆炸！💫
-      </text>
-
-      <!-- 分数显示 -->
-      <g class="score-display">
-        <text
-          x="200"
-          y="25"
-          text-anchor="middle"
-          font-size="16"
-          fill="#60a5fa"
-          font-weight="bold"
-        >
-          🎯 得分: {{ score }}
-        </text>
-      </g>
+      <!-- 图标/文字插槽 -->
+      <foreignObject x="50" y="50" width="100" height="100">
+        <div class="bubble-content">
+          <slot></slot>
+        </div>
+      </foreignObject>
     </svg>
+
+    <!-- 涟漪效果 -->
+    <div v-if="showRipple" class="ripple-effect"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
-interface Bubble {
-  id: number
-  x: number
-  y: number
-  size: number
-  opacity: number
-  gradient: string
-  popping: boolean
-  speedY: number
+interface Props {
+  size?: number
+  colors?: [string, string]
+  isActive?: boolean
 }
 
-interface Particle {
-  id: number
-  x: number
-  y: number
-  size: number
-  color: string
-  opacity: number
-  offsetX: number
-  offsetY: number
-}
-
-const gradients = [
-  'url(#bubbleGradient)',
-  'url(#pinkBubbleGradient)',
-  'url(#purpleBubbleGradient)'
-]
-
-const colors = ['#3b82f6', '#ec4899', '#8b5cf6', '#06b6d4', '#10b981']
-
-// 背景气泡（装饰用）
-const backgroundBubbles = ref<Array<{
-  x: number
-  y: number
-  size: number
-  opacity: number
-  gradient: string
-  delay: number
-  duration: number
-}>>([])
-
-// 互动气泡
-const interactiveBubbles = ref<Bubble[]>([])
-
-// 爆炸粒子
-const popParticles = ref<Particle[]>([])
-
-// 分数
-const score = ref(0)
-
-// 气泡ID计数器
-let bubbleIdCounter = 0
-let particleIdCounter = 0
-let animationFrameId: number | null = null
-
-// 生成背景气泡
-const generateBackgroundBubbles = () => {
-  const bubbles = []
-  for (let i = 0; i < 8; i++) {
-    bubbles.push({
-      x: Math.random() * 380 + 10,
-      y: Math.random() * 250 + 25,
-      size: Math.random() * 15 + 8,
-      opacity: Math.random() * 0.3 + 0.1,
-      gradient: gradients[Math.floor(Math.random() * gradients.length)],
-      delay: Math.random() * 5,
-      duration: Math.random() * 3 + 4
-    })
-  }
-  backgroundBubbles.value = bubbles
-}
-
-// 创建新气泡
-const createBubble = (event?: MouseEvent) => {
-  if (interactiveBubbles.value.length >= 15) return
-
-  let x = Math.random() * 350 + 25
-  let y = 320
-
-  if (event) {
-    const svg = event.currentTarget as SVGSVGElement
-    const rect = svg.getBoundingClientRect()
-    const scaleX = 400 / rect.width
-    const scaleY = 300 / rect.height
-    x = (event.clientX - rect.left) * scaleX
-    y = (event.clientY - rect.top) * scaleY
-  }
-
-  const bubble: Bubble = {
-    id: bubbleIdCounter++,
-    x,
-    y,
-    size: Math.random() * 20 + 15,
-    opacity: Math.random() * 0.3 + 0.5,
-    gradient: gradients[Math.floor(Math.random() * gradients.length)],
-    popping: false,
-    speedY: Math.random() * 0.5 + 0.3
-  }
-
-  interactiveBubbles.value.push(bubble)
-}
-
-// 气泡爆炸
-const popBubble = (index: number) => {
-  const bubble = interactiveBubbles.value[index]
-  if (!bubble || bubble.popping) return
-
-  bubble.popping = true
-  score.value += Math.floor(bubble.size)
-
-  // 创建爆炸粒子
-  for (let i = 0; i < 8; i++) {
-    const angle = (Math.PI * 2 * i) / 8
-    const distance = bubble.size * 2
-
-    const particle: Particle = {
-      id: particleIdCounter++,
-      x: bubble.x,
-      y: bubble.y,
-      size: Math.random() * 4 + 2,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      opacity: 1,
-      offsetX: Math.cos(angle) * distance,
-      offsetY: Math.sin(angle) * distance
-    }
-
-    popParticles.value.push(particle)
-
-    // 移除粒子
-    setTimeout(() => {
-      const idx = popParticles.value.findIndex(p => p.id === particle.id)
-      if (idx !== -1) {
-        popParticles.value.splice(idx, 1)
-      }
-    }, 500)
-  }
-
-  // 移除气泡
-  setTimeout(() => {
-    const idx = interactiveBubbles.value.findIndex(b => b.id === bubble.id)
-    if (idx !== -1) {
-      interactiveBubbles.value.splice(idx, 1)
-    }
-  }, 100)
-}
-
-// 动画循环
-const animate = () => {
-  // 移动气泡向上
-  interactiveBubbles.value.forEach(bubble => {
-    if (!bubble.popping) {
-      bubble.y -= bubble.speedY
-      bubble.x += Math.sin(Date.now() / 500 + bubble.id) * 0.3
-    }
-  })
-
-  // 移除超出范围的气泡
-  interactiveBubbles.value = interactiveBubbles.value.filter(
-    bubble => bubble.y > -bubble.size
-  )
-
-  animationFrameId = requestAnimationFrame(animate)
-}
-
-// 自动生成气泡
-let autoCreateInterval: ReturnType<typeof setInterval> | null = null
-
-onMounted(() => {
-  generateBackgroundBubbles()
-  animate()
-
-  // 初始创建几个气泡
-  for (let i = 0; i < 5; i++) {
-    setTimeout(() => createBubble(), i * 300)
-  }
-
-  // 自动生成新气泡
-  autoCreateInterval = setInterval(() => {
-    if (interactiveBubbles.value.length < 10) {
-      createBubble()
-    }
-  }, 2000)
+const props = withDefaults(defineProps<Props>(), {
+  size: 200,
+  colors: () => ['#a78bfa', '#ec4899'],
+  isActive: false
 })
 
-onUnmounted(() => {
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId)
+const mainRadius = ref(40)
+const showRipple = ref(false)
+const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`
+const glowId = `glow-${Math.random().toString(36).substr(2, 9)}`
+
+// 生成小气泡
+const smallBubbles = computed(() => {
+  const bubbles = []
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * 60) * Math.PI / 180
+    const distance = 60
+    bubbles.push({
+      x: 100 + Math.cos(angle) * distance,
+      y: 100 + Math.sin(angle) * distance,
+      r: 4 + Math.random() * 3,
+      opacity: 0.4 + Math.random() * 0.3,
+      delay: i * 0.2
+    })
   }
-  if (autoCreateInterval) {
-    clearInterval(autoCreateInterval)
+  return bubbles
+})
+
+// 呼吸动画
+const breathe = () => {
+  setInterval(() => {
+    mainRadius.value = 40 + Math.sin(Date.now() / 1000) * 3
+  }, 50)
+}
+
+onMounted(() => {
+  breathe()
+})
+
+defineExpose({
+  triggerRipple: () => {
+    showRipple.value = true
+    setTimeout(() => {
+      showRipple.value = false
+    }, 600)
   }
 })
 </script>
 
 <style scoped>
-.bubble-animation-container {
-  width: 100%;
-  border-radius: 16px;
-  overflow: hidden;
-  background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%);
-}
-
-.bubble-svg {
-  width: 100%;
-  height: auto;
-  display: block;
+.bubble-animation {
+  position: relative;
+  display: inline-block;
   cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
-/* 背景气泡动画 */
-.bg-bubble {
-  animation: floatBubble 6s ease-in-out infinite;
+.bubble-animation:hover {
+  transform: scale(1.05);
 }
 
-@keyframes floatBubble {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-20px) scale(1.05);
-  }
-}
-
-/* 互动气泡 */
-.interactive-bubble {
-  transition: transform 0.2s ease;
-}
-
-.interactive-bubble:hover .bubble-body {
-  transform: scale(1.1);
-  filter: url(#bubbleHighlight) brightness(1.1);
-}
-
-.interactive-bubble.popping {
-  animation: popBubble 0.3s ease-out forwards;
-}
-
-@keyframes popBubble {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(0);
-    opacity: 0;
-  }
-}
-
-/* 粒子动画 */
-.particle circle {
-  animation: particleFade 0.5s ease-out forwards;
-}
-
-@keyframes particleFade {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-/* 提示文字 */
-.hint-text {
-  animation: pulse 2s ease-in-out infinite;
+.bubble-animation.active {
+  animation: pulse 0.6s ease;
 }
 
 @keyframes pulse {
   0%, 100% {
-    opacity: 0.7;
+    transform: scale(1);
   }
   50% {
-    opacity: 1;
+    transform: scale(1.1);
   }
 }
 
-/* 分数显示 */
-.score-display text {
-  transition: transform 0.2s ease;
+.bubble-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.main-bubble {
+  transition: r 0.3s ease;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.small-bubble {
+  animation: bubbleFloat 4s ease-in-out infinite;
+}
+
+@keyframes bubbleFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(2px, -3px) scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+.inner-ring {
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.bubble-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.ripple-effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  transform: translate(-50%, -50%);
+  animation: ripple 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  0% {
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+  }
+  100% {
+    width: 200%;
+    height: 200%;
+    opacity: 0;
+  }
 }
 </style>

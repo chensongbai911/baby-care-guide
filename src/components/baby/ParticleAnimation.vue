@@ -1,297 +1,201 @@
 <template>
-  <div class="particle-container">
-    <svg class="particle-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+  <div class="particle-animation" ref="containerRef">
+    <svg class="particle-svg" :viewBox="`0 0 ${width} ${height}`" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <!-- 星星渐变 -->
-        <linearGradient id="starGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#fbbf24" />
-          <stop offset="100%" style="stop-color:#f59e0b" />
-        </linearGradient>
+        <!-- 星星形状 -->
+        <path id="star" d="M 0,-5 L 1.5,-1.5 L 5,0 L 1.5,1.5 L 0,5 L -1.5,1.5 L -5,0 L -1.5,-1.5 Z" />
 
-        <!-- 心形渐变 -->
-        <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#f472b6" />
-          <stop offset="100%" style="stop-color:#ec4899" />
-        </linearGradient>
+        <!-- 心形 -->
+        <path id="heart" d="M 0,-3 C -1,-5 -4,-5 -4,-2 C -4,1 0,4 0,4 C 0,4 4,1 4,-2 C 4,-5 1,-5 0,-3 Z" />
 
-        <!-- 发光滤镜 -->
-        <filter id="particleGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
+        <!-- 圆形渐变 -->
+        <radialGradient id="particle-gradient" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:rgb(255,255,255);stop-opacity:1" />
+          <stop offset="100%" style="stop-color:rgb(168,139,250);stop-opacity:0.5" />
+        </radialGradient>
       </defs>
 
-      <!-- 漂浮的星星 -->
-      <g class="stars-group">
-        <g v-for="(star, index) in stars" :key="'star-' + index"
-           :class="['star-item', `star-${index}`]"
-           :style="{ '--delay': star.delay + 's', '--duration': star.duration + 's' }">
-          <polygon
-            :points="getStarPoints(star.x, star.y, star.size)"
-            fill="url(#starGradient)"
-            filter="url(#particleGlow)"
-            :opacity="star.opacity"
-          />
-        </g>
-      </g>
+      <!-- 粒子 -->
+      <g v-for="particle in particles" :key="particle.id">
+        <circle
+          v-if="particle.type === 'circle'"
+          :cx="particle.x"
+          :cy="particle.y"
+          :r="particle.size"
+          :fill="particle.color"
+          :opacity="particle.opacity"
+          class="particle"
+        />
 
-      <!-- 漂浮的心形 -->
-      <g class="hearts-group">
-        <g v-for="(heart, index) in hearts" :key="'heart-' + index"
-           :class="['heart-item', `heart-${index}`]"
-           :style="{ '--delay': heart.delay + 's', '--duration': heart.duration + 's' }">
-          <path
-            :d="getHeartPath(heart.x, heart.y, heart.size)"
-            fill="url(#heartGradient)"
-            filter="url(#particleGlow)"
-            :opacity="heart.opacity"
-          />
-        </g>
-      </g>
+        <use
+          v-else-if="particle.type === 'star'"
+          :href="'#star'"
+          :x="particle.x"
+          :y="particle.y"
+          :fill="particle.color"
+          :opacity="particle.opacity"
+          :transform="`scale(${particle.size / 5}) rotate(${particle.rotation})`"
+          class="particle"
+        />
 
-      <!-- 漂浮的气泡 -->
-      <g class="bubbles-group">
-        <g v-for="(bubble, index) in bubbles" :key="'bubble-' + index"
-           :class="['bubble-item', `bubble-${index}`]"
-           :style="{ '--delay': bubble.delay + 's', '--duration': bubble.duration + 's' }">
-          <circle
-            :cx="bubble.x"
-            :cy="bubble.y"
-            :r="bubble.size"
-            :fill="bubble.color"
-            :opacity="bubble.opacity"
-          />
-          <circle
-            :cx="bubble.x - bubble.size * 0.3"
-            :cy="bubble.y - bubble.size * 0.3"
-            :r="bubble.size * 0.2"
-            fill="rgba(255,255,255,0.8)"
-          />
-        </g>
-      </g>
-
-      <!-- 闪烁的光点 -->
-      <g class="sparkles-group">
-        <g v-for="(sparkle, index) in sparkles" :key="'sparkle-' + index"
-           :class="['sparkle-item', `sparkle-${index}`]"
-           :style="{ '--delay': sparkle.delay + 's' }">
-          <circle
-            :cx="sparkle.x"
-            :cy="sparkle.y"
-            r="2"
-            fill="#fff"
-            filter="url(#particleGlow)"
-          />
-          <line
-            :x1="sparkle.x - 8" :y1="sparkle.y"
-            :x2="sparkle.x + 8" :y2="sparkle.y"
-            stroke="#fff" stroke-width="1" opacity="0.6"
-          />
-          <line
-            :x1="sparkle.x" :y1="sparkle.y - 8"
-            :x2="sparkle.x" :y2="sparkle.y + 8"
-            stroke="#fff" stroke-width="1" opacity="0.6"
-          />
-        </g>
+        <use
+          v-else-if="particle.type === 'heart'"
+          :href="'#heart'"
+          :x="particle.x"
+          :y="particle.y"
+          :fill="particle.color"
+          :opacity="particle.opacity"
+          :transform="`scale(${particle.size / 3}) rotate(${particle.rotation})`"
+          class="particle"
+        />
       </g>
     </svg>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
-// 生成星星数据
-const stars = ref(
-  Array.from({ length: 8 }, () => ({
-    x: 50 + Math.random() * 700,
-    y: 50 + Math.random() * 500,
-    size: 8 + Math.random() * 12,
-    opacity: 0.6 + Math.random() * 0.4,
-    delay: Math.random() * 5,
-    duration: 3 + Math.random() * 4
-  }))
-)
+interface Particle {
+  id: number
+  x: number
+  y: number
+  vx: number
+  vy: number
+  size: number
+  color: string
+  opacity: number
+  life: number
+  maxLife: number
+  type: 'circle' | 'star' | 'heart'
+  rotation: number
+}
 
-// 生成心形数据
-const hearts = ref(
-  Array.from({ length: 6 }, () => ({
-    x: 100 + Math.random() * 600,
-    y: 100 + Math.random() * 400,
-    size: 10 + Math.random() * 15,
-    opacity: 0.5 + Math.random() * 0.4,
-    delay: Math.random() * 6,
-    duration: 4 + Math.random() * 5
-  }))
-)
+interface Props {
+  width?: number
+  height?: number
+  colors?: string[]
+  particleTypes?: Array<'circle' | 'star' | 'heart'>
+  autoStart?: boolean
+}
 
-// 生成气泡数据
-const bubbles = ref(
-  Array.from({ length: 12 }, () => ({
-    x: Math.random() * 800,
-    y: Math.random() * 600,
-    size: 5 + Math.random() * 20,
-    color: ['rgba(124, 58, 237, 0.3)', 'rgba(236, 72, 153, 0.3)', 'rgba(168, 85, 247, 0.3)', 'rgba(251, 191, 36, 0.2)'][Math.floor(Math.random() * 4)],
-    opacity: 0.4 + Math.random() * 0.4,
-    delay: Math.random() * 8,
-    duration: 5 + Math.random() * 7
-  }))
-)
+const props = withDefaults(defineProps<Props>(), {
+  width: 400,
+  height: 400,
+  colors: () => ['#a78bfa', '#ec4899', '#fbbf24', '#34d399'],
+  particleTypes: () => ['circle', 'star', 'heart'],
+  autoStart: false
+})
 
-// 生成闪烁光点数据
-const sparkles = ref(
-  Array.from({ length: 15 }, () => ({
-    x: Math.random() * 800,
-    y: Math.random() * 600,
-    delay: Math.random() * 3
-  }))
-)
+const containerRef = ref<HTMLElement>()
+const particles = ref<Particle[]>([])
+let animationFrame: number
+let particleId = 0
 
-// 生成星星路径点
-const getStarPoints = (cx: number, cy: number, size: number) => {
-  const points = []
-  for (let i = 0; i < 5; i++) {
-    const outerAngle = (i * 72 - 90) * Math.PI / 180
-    const innerAngle = ((i * 72) + 36 - 90) * Math.PI / 180
-    points.push(`${cx + size * Math.cos(outerAngle)},${cy + size * Math.sin(outerAngle)}`)
-    points.push(`${cx + size * 0.4 * Math.cos(innerAngle)},${cy + size * 0.4 * Math.sin(innerAngle)}`)
+// 创建粒子
+const createParticle = (x: number, y: number) => {
+  const angle = Math.random() * Math.PI * 2
+  const speed = 2 + Math.random() * 4
+  const type = props.particleTypes[Math.floor(Math.random() * props.particleTypes.length)]
+
+  return {
+    id: particleId++,
+    x,
+    y,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed - 2, // 向上的初始速度
+    size: 3 + Math.random() * 5,
+    color: props.colors[Math.floor(Math.random() * props.colors.length)],
+    opacity: 1,
+    life: 0,
+    maxLife: 60 + Math.random() * 60,
+    type,
+    rotation: Math.random() * 360
   }
-  return points.join(' ')
 }
 
-// 生成心形路径
-const getHeartPath = (cx: number, cy: number, size: number) => {
-  const s = size / 10
-  return `M ${cx} ${cy + s * 3}
-    C ${cx} ${cy + s}, ${cx - s * 5} ${cy + s}, ${cx - s * 5} ${cy - s * 2}
-    C ${cx - s * 5} ${cy - s * 5}, ${cx} ${cy - s * 5}, ${cx} ${cy - s * 2}
-    C ${cx} ${cy - s * 5}, ${cx + s * 5} ${cy - s * 5}, ${cx + s * 5} ${cy - s * 2}
-    C ${cx + s * 5} ${cy + s}, ${cx} ${cy + s}, ${cx} ${cy + s * 3} Z`
+// 爆炸效果
+const explode = (x?: number, y?: number, count: number = 30) => {
+  const centerX = x ?? props.width / 2
+  const centerY = y ?? props.height / 2
+
+  for (let i = 0; i < count; i++) {
+    particles.value.push(createParticle(centerX, centerY))
+  }
 }
+
+// 更新粒子
+const updateParticles = () => {
+  particles.value = particles.value.filter(p => {
+    p.x += p.vx
+    p.y += p.vy
+    p.vy += 0.15 // 重力
+    p.vx *= 0.99 // 空气阻力
+    p.life++
+    p.rotation += 5
+
+    // 淡出效果
+    const lifeRatio = p.life / p.maxLife
+    p.opacity = 1 - lifeRatio
+
+    return p.life < p.maxLife
+  })
+
+  animationFrame = requestAnimationFrame(updateParticles)
+}
+
+// 连续发射模式
+const continuousEmit = () => {
+  const emit = () => {
+    if (particles.value.length < 100) {
+      const x = props.width / 2 + (Math.random() - 0.5) * 50
+      const y = props.height / 2 + (Math.random() - 0.5) * 50
+      for (let i = 0; i < 3; i++) {
+        particles.value.push(createParticle(x, y))
+      }
+    }
+    setTimeout(emit, 100)
+  }
+  emit()
+}
+
+onMounted(() => {
+  updateParticles()
+
+  if (props.autoStart) {
+    continuousEmit()
+  }
+})
+
+onUnmounted(() => {
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame)
+  }
+})
+
+defineExpose({
+  explode,
+  clear: () => {
+    particles.value = []
+  }
+})
 </script>
 
 <style scoped>
-.particle-container {
-  position: absolute;
-  top: 0;
-  left: 0;
+.particle-animation {
+  position: relative;
   width: 100%;
   height: 100%;
-  pointer-events: none;
   overflow: hidden;
-  z-index: 1;
 }
 
 .particle-svg {
   width: 100%;
   height: 100%;
+  pointer-events: none;
 }
 
-/* 星星动画 */
-.star-item {
-  animation: floatStar var(--duration) ease-in-out infinite;
-  animation-delay: var(--delay);
-  transform-origin: center;
-}
-
-@keyframes floatStar {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg) scale(1);
-    opacity: 0.6;
-  }
-  25% {
-    transform: translateY(-20px) rotate(15deg) scale(1.1);
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(-10px) rotate(-10deg) scale(0.95);
-    opacity: 0.8;
-  }
-  75% {
-    transform: translateY(-25px) rotate(5deg) scale(1.05);
-    opacity: 0.9;
-  }
-}
-
-/* 心形动画 */
-.heart-item {
-  animation: floatHeart var(--duration) ease-in-out infinite;
-  animation-delay: var(--delay);
-  transform-origin: center;
-}
-
-@keyframes floatHeart {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateY(-30px) scale(1.2);
-    opacity: 0.9;
-  }
-}
-
-/* 气泡动画 */
-.bubble-item {
-  animation: floatBubble var(--duration) ease-in-out infinite;
-  animation-delay: var(--delay);
-}
-
-@keyframes floatBubble {
-  0% {
-    transform: translateY(0) translateX(0) scale(1);
-    opacity: 0.4;
-  }
-  25% {
-    transform: translateY(-40px) translateX(10px) scale(1.1);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateY(-80px) translateX(-5px) scale(0.9);
-    opacity: 0.5;
-  }
-  75% {
-    transform: translateY(-120px) translateX(15px) scale(1.05);
-    opacity: 0.3;
-  }
-  100% {
-    transform: translateY(-160px) translateX(0) scale(0.8);
-    opacity: 0;
-  }
-}
-
-/* 闪烁光点动画 */
-.sparkle-item {
-  animation: sparkle 2s ease-in-out infinite;
-  animation-delay: var(--delay);
-}
-
-@keyframes sparkle {
-  0%, 100% {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-}
-
-/* 针对不同星星添加独特动画 */
-.star-0 { animation-name: floatStar, rotateStar; }
-.star-2 { animation-name: floatStar, pulseStar; }
-.star-4 { animation-name: floatStar, rotateStar; }
-
-@keyframes rotateStar {
-  0%, 100% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulseStar {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.3); }
+.particle {
+  transition: opacity 0.1s linear;
 }
 </style>

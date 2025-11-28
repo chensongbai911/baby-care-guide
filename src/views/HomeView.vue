@@ -1,9 +1,10 @@
 <template>
   <div class="home-view">
+    <!-- 页面头部 -->
+
     <!-- 头部横幅 -->
     <div class="hero-section">
-      <!-- SVG粒子动画背景 -->
-      <ParticleAnimation />
+      <!-- 简化背景装饰 -->
       <div class="hero-bg-shapes">
         <div class="shape shape-1"></div>
         <div class="shape shape-2"></div>
@@ -175,16 +176,65 @@
     <div class="tips-section">
       <div class="section-header">
         <h2><span class="icon-wrapper">💡</span> 每日育儿小贴士</h2>
+        <p class="section-desc">科学育儿，从这里开始</p>
       </div>
-      <el-carousel :interval="5000" type="card" height="200px" indicator-position="outside">
-        <el-carousel-item v-for="(tip, index) in dailyTips" :key="index">
-          <div class="tip-card" :class="tip.type">
-            <div class="tip-icon">{{ tip.icon }}</div>
-            <h4>{{ tip.title }}</h4>
-            <p>{{ tip.content }}</p>
-          </div>
-        </el-carousel-item>
-      </el-carousel>
+
+      <!-- 大气轮播图 -->
+      <div class="tips-carousel-wrapper">
+        <el-carousel
+          :interval="5000"
+          height="320px"
+          indicator-position="outside"
+          :autoplay="true"
+          arrow="hover"
+          class="tips-carousel"
+        >
+          <el-carousel-item v-for="(tip, index) in dailyTips" :key="index">
+            <div class="tip-card-large" :class="tip.type">
+              <!-- 背景装饰 -->
+              <div class="tip-bg-decoration">
+                <div class="tip-blob tip-blob-1"></div>
+                <div class="tip-blob tip-blob-2"></div>
+                <div class="tip-circle"></div>
+              </div>
+
+              <!-- 内容区域 -->
+              <div class="tip-content-wrapper">
+                <div class="tip-icon-large">
+                  <span class="icon-emoji">{{ tip.icon }}</span>
+                  <div class="icon-ring"></div>
+                  <div class="icon-pulse"></div>
+                </div>
+
+                <div class="tip-text-content">
+                  <div class="tip-category">{{ tip.category || '育儿贴士' }}</div>
+                  <h3 class="tip-title-large">{{ tip.title }}</h3>
+                  <p class="tip-desc-large">{{ tip.content }}</p>
+
+                  <div class="tip-footer">
+                    <div class="tip-tags">
+                      <span class="tip-tag" v-for="(tag, idx) in (tip.tags || ['实用', '科学'])" :key="idx">
+                        {{ tag }}
+                      </span>
+                    </div>
+                    <div class="tip-action">
+                      <span class="action-text">了解更多</span>
+                      <span class="action-arrow">→</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 序号指示 -->
+              <div class="tip-number">
+                <span class="current">0{{ index + 1 }}</span>
+                <span class="divider">/</span>
+                <span class="total">0{{ dailyTips.length }}</span>
+              </div>
+            </div>
+          </el-carousel-item>
+        </el-carousel>
+      </div>
     </div>
 
     <!-- 宝宝信息设置对话框 -->
@@ -234,6 +284,11 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 底部简单装饰 -->
+    <div class="bottom-decoration">
+      <div class="wave-line"></div>
+    </div>
   </div>
 </template>
 
@@ -242,7 +297,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBabyStore } from '@/stores/babyStore'
 import MonthCard from '@/components/baby/MonthCard.vue'
-import ParticleAnimation from '@/components/baby/ParticleAnimation.vue'
+import AnimatedNumber from '@/components/baby/AnimatedNumber.vue'
+import ConfettiEffect from '@/components/baby/ConfettiEffect.vue'
 import { Timer, List, User, ArrowRight, Check, TrendCharts, Histogram, Reading } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { BabyMonthData } from '@/types/baby'
@@ -267,32 +323,42 @@ const dailyTips = [
   {
     icon: '🍼',
     title: '喂养小贴士',
-    content: '母乳是宝宝最好的食物，按需喂养能帮助建立良好的供需关系。',
-    type: 'feeding'
+    content: '母乳是宝宝最好的食物，按需喂养能帮助建立良好的供需关系。建议新生儿每2-3小时喂一次，每次10-20分钟。',
+    type: 'feeding',
+    category: '科学喂养',
+    tags: ['母乳喂养', '按需哺乳']
   },
   {
     icon: '😴',
     title: '睡眠小贴士',
-    content: '建立规律的睡前仪式，帮助宝宝区分白天和夜晚。',
-    type: 'sleep'
+    content: '建立规律的睡前仪式，帮助宝宝区分白天和夜晚。可以通过洗澡、换睡衣、讲故事等方式，让宝宝慢慢进入睡眠状态。',
+    type: 'sleep',
+    category: '健康睡眠',
+    tags: ['睡眠习惯', '作息规律']
   },
   {
     icon: '🛁',
     title: '护理小贴士',
-    content: '新生儿洗澡水温保持在37-38°C，每次洗澡时间不超过10分钟。',
-    type: 'care'
+    content: '新生儿洗澡水温保持在37-38°C，每次洗澡时间不超过10分钟。注意保持脐部干燥，避免感染。',
+    type: 'care',
+    category: '日常护理',
+    tags: ['洗澡技巧', '脐带护理']
   },
   {
     icon: '🎮',
     title: '互动小贴士',
-    content: '多和宝宝说话、唱歌，有助于宝宝的语言发展和情感联结。',
-    type: 'play'
+    content: '多和宝宝说话、唱歌，有助于宝宝的语言发展和情感联结。每天抽出固定时间进行亲子互动游戏。',
+    type: 'play',
+    category: '亲子互动',
+    tags: ['语言发展', '情感培养']
   },
   {
     icon: '⚠️',
     title: '安全小贴士',
-    content: '宝宝睡觉时保持仰卧姿势，床上不放置枕头和毛绒玩具。',
-    type: 'safety'
+    content: '宝宝睡觉时保持仰卧姿势，床上不放置枕头和毛绒玩具。确保婴儿床符合安全标准，护栏间隙小于6厘米。',
+    type: 'safety',
+    category: '安全防护',
+    tags: ['睡眠安全', '防护措施']
   }
 ]
 
@@ -327,28 +393,38 @@ onMounted(() => {
   margin: 0 auto;
   padding: 0;
   width: 100%;
+  background: linear-gradient(180deg, #fdf4ff 0%, #ffffff 50%, #f0f9ff 100%);
+  min-height: 100vh;
+  position: relative;
 }
 
-/* 英雄区域 - 更鲜艳的渐变 */
+.home-view::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(240, 147, 251, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(79, 172, 254, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 主英雄区域 */
 .hero-section {
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 25%, #ec4899 50%, #f472b6 75%, #fb7185 100%);
-  background-size: 200% 200%;
-  animation: gradientFlow 8s ease infinite;
-  border-radius: 0 0 60px 60px;
-  padding: 120px 80px;
-  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 24px;
+  border-radius: 0 0 40px 40px;
   color: white;
-  margin-bottom: 70px;
   position: relative;
   overflow: hidden;
+  margin-bottom: 28px;
 }
 
-@keyframes gradientFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
+/* 背景装饰 */
 .hero-bg-shapes {
   position: absolute;
   top: 0;
@@ -362,59 +438,1040 @@ onMounted(() => {
 .shape {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  animation: floatSlow 10s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 70%, transparent 100%);
+  animation: floatShape 12s ease-in-out infinite;
+  filter: blur(1px);
 }
 
 .shape-1 {
-  width: 500px;
-  height: 500px;
+  width: 400px;
+  height: 400px;
   top: -200px;
   right: -150px;
-  animation-delay: 0s;
 }
 
 .shape-2 {
-  width: 400px;
-  height: 400px;
+  width: 350px;
+  height: 350px;
   bottom: -150px;
   left: 5%;
-  animation-delay: -3s;
+  animation-delay: -4s;
 }
 
 .shape-3 {
-  width: 300px;
-  height: 300px;
+  width: 280px;
+  height: 280px;
   top: 30%;
-  left: -80px;
-  animation-delay: -6s;
-}
-
-@keyframes floatSlow {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  25% {
-    transform: translateY(-20px) rotate(5deg);
-  }
-  50% {
-    transform: translateY(-10px) rotate(-3deg);
-  }
-  75% {
-    transform: translateY(-25px) rotate(3deg);
-  }
+  left: -100px;
+  animation-delay: -8s;
 }
 
 .hero-content {
   position: relative;
   z-index: 1;
-  animation: fadeInUp 1s ease-out;
+  animation: heroFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes fadeInUp {
+.hero-emoji {
+  font-size: 60px;
+  margin-bottom: 12px;
+  animation: emojiFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.25));
+  display: inline-block;
+}
+
+@keyframes emojiFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(-12px) rotate(-5deg) scale(1.05);
+  }
+  50% {
+    transform: translateY(-20px) rotate(0deg) scale(1.08);
+  }
+  75% {
+    transform: translateY(-10px) rotate(5deg) scale(1.05);
+  }
+}
+
+.hero-title {
+  font-size: 32px;
+  margin: 0 0 8px 0;
+  font-weight: 800;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  letter-spacing: 1px;
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.95) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 16px;
+  margin-bottom: 22px;
+  opacity: 0.95;
+  font-weight: 500;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 10px;
+  max-width: 600px;
+  margin: 0 auto 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: scale(1.08) translateY(-4px);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.stat-number {
+  font-size: 26px;
+  font-weight: 800;
+  text-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  color: #fff;
+}
+
+.stat-label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 3px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.stat-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 1px;
+  align-self: center;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hero-buttons :deep(.el-button) {
+  padding: 12px 26px !important;
+  font-size: 15px !important;
+  border-radius: 24px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
+}
+
+.hero-buttons :deep(.el-button:hover) {
+  transform: translateY(-4px) scale(1.05);
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border: 2px solid rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(15px);
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* 通用区域样式 */
+.section-header {
+  margin-bottom: 24px;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.section-header h2 {
+  font-size: 26px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.icon-wrapper {
+  display: inline-block;
+  animation: iconBounce 2s ease-in-out infinite;
+  font-size: 28px;
+}
+
+@keyframes iconBounce {
+  0%, 100% { transform: translateY(0) rotate(-5deg) scale(1); }
+  25% { transform: translateY(-6px) rotate(5deg) scale(1.1); }
+  50% { transform: translateY(0) rotate(-5deg) scale(1); }
+  75% { transform: translateY(-4px) rotate(5deg) scale(1.08); }
+}
+
+.section-desc {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* 当前月龄卡片 */
+.current-section {
+  padding: 0 24px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.current-month-card {
+  border-radius: 24px !important;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ffffff 0%, #fef3ff 25%, #fae8ff 50%, #f3e8ff 75%, #ede9fe 100%) !important;
+  border: 2px solid transparent !important;
+  background-image:
+    linear-gradient(white, white),
+    linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  box-shadow: 0 16px 48px rgba(102, 126, 234, 0.18) !important;
+  transition: all 0.4s ease !important;
+}
+
+.current-month-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 24px 64px rgba(102, 126, 234, 0.25) !important;
+}
+
+.current-month-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+}
+
+.month-info {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex: 1;
+}
+
+.month-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  flex-shrink: 0;
+}
+
+.month-num {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.month-text {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.month-details {
+  flex: 1;
+}
+
+.month-details h3 {
+  font-size: 20px;
+  margin: 0 0 6px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.overview-summary {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin: 0 0 10px 0;
+  line-height: 1.6;
+}
+
+.month-highlights {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #667eea;
+  font-weight: 600;
+  padding: 6px 12px;
+  background: rgba(102, 126, 234, 0.08);
+  border-radius: 10px;
+}
+
+.month-actions :deep(.el-button) {
+  padding: 10px 20px !important;
+  font-size: 13px !important;
+}
+
+.milestones-preview {
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.milestones-preview h4 {
+  font-size: 16px;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.milestone-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.milestone-tags :deep(.el-tag) {
+  font-size: 13px;
+  padding: 5px 14px;
+  font-weight: 500;
+}
+
+/* 月龄网格 */
+.months-section {
+  padding: 0 24px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.month-col {
+  margin-bottom: 20px;
+  animation: monthFadeIn 0.6s ease forwards;
+  opacity: 0;
+}
+
+@keyframes monthFadeIn {
   from {
     opacity: 0;
-    transform: translateY(40px);
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 快捷功能 */
+.quick-actions {
+  padding: 0 24px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.action-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fefbff 50%, #fdf4ff 100%);
+  border-radius: 20px;
+  padding: 20px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.08);
+}
+
+.action-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(102, 126, 234, 0.2);
+  box-shadow: 0 16px 48px rgba(102, 126, 234, 0.18);
+}
+
+.action-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+  transition: all 0.3s ease;
+}
+
+.action-card:hover .action-icon {
+  transform: rotate(8deg) scale(1.1);
+}
+
+.timeline-card .action-icon {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.checklist-card .action-icon {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.knowledge-card .action-icon {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+
+.action-content h3 {
+  font-size: 18px;
+  margin: 0 0 6px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.action-content p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.action-arrow {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0;
+  transition: all 0.3s ease;
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+}
+
+.action-card:hover .action-arrow {
+  opacity: 1;
+  transform: translateX(6px);
+}
+
+.knowledge-card :deep(.el-tag) {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 12px;
+  padding: 4px 12px;
+  font-weight: 600;
+}
+
+/* 育儿小贴士 - 大气轮播图 */
+.tips-section {
+  padding: 0 24px 60px;
+  position: relative;
+  z-index: 1;
+}
+
+.tips-carousel-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.tips-carousel :deep(.el-carousel__container) {
+  border-radius: 24px;
+  overflow: visible;
+}
+
+.tips-carousel :deep(.el-carousel__item) {
+  border-radius: 24px;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tips-carousel :deep(.el-carousel__item.is-active) {
+  transform: scale(1);
+  z-index: 2;
+}
+
+.tips-carousel :deep(.el-carousel__item:not(.is-active)) {
+  transform: scale(0.88);
+  opacity: 0.6;
+}
+
+.tips-carousel :deep(.el-carousel__arrow) {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
+
+.tips-carousel :deep(.el-carousel__arrow:hover) {
+  transform: scale(1.1);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+}
+
+.tips-carousel :deep(.el-carousel__arrow i) {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.tips-carousel :deep(.el-carousel__indicators) {
+  margin-top: 20px;
+}
+
+.tips-carousel :deep(.el-carousel__indicator .el-carousel__button) {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.tips-carousel :deep(.el-carousel__indicator.is-active .el-carousel__button) {
+  width: 32px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 大气贴士卡片 */
+.tip-card-large {
+  height: 100%;
+  min-height: 320px;
+  border-radius: 24px;
+  padding: 32px 40px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  transition: all 0.4s ease;
+  cursor: pointer;
+}
+
+.tip-card-large::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+  z-index: 1;
+}
+
+/* 不同类型的背景渐变 */
+.tip-card-large.feeding {
+  background: linear-gradient(135deg, #e0f4ff 0%, #b8e4ff 50%, #89d4ff 100%);
+}
+
+.tip-card-large.sleep {
+  background: linear-gradient(135deg, #e8e0ff 0%, #d4c4ff 50%, #b8a4ff 100%);
+}
+
+.tip-card-large.care {
+  background: linear-gradient(135deg, #ffe0f0 0%, #ffc4e0 50%, #ffa4d0 100%);
+}
+
+.tip-card-large.play {
+  background: linear-gradient(135deg, #fff4e0 0%, #ffe8c4 50%, #ffd8a4 100%);
+}
+
+.tip-card-large.safety {
+  background: linear-gradient(135deg, #ffe0e0 0%, #ffc4c4 50%, #ffa4a4 100%);
+}
+
+/* 背景装饰 */
+.tip-bg-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tip-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.6;
+  animation: tipBlobFloat 8s ease-in-out infinite;
+}
+
+.tip-blob-1 {
+  width: 200px;
+  height: 200px;
+  top: -50px;
+  right: -30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.tip-blob-2 {
+  width: 150px;
+  height: 150px;
+  bottom: -40px;
+  left: 20%;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  animation-delay: -4s;
+}
+
+.tip-circle {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  border: 2px dashed rgba(102, 126, 234, 0.15);
+  top: 50%;
+  right: -100px;
+  transform: translateY(-50%);
+  animation: tipCircleRotate 20s linear infinite;
+}
+
+@keyframes tipBlobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, -20px) scale(1.1); }
+}
+
+@keyframes tipCircleRotate {
+  from { transform: translateY(-50%) rotate(0deg); }
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* 内容包装器 */
+.tip-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+/* 图标区域 */
+.tip-icon-large {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-emoji {
+  font-size: 56px;
+  position: relative;
+  z-index: 2;
+  animation: iconFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.05); }
+}
+
+.icon-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid rgba(102, 126, 234, 0.2);
+  animation: iconRingPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconRingPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.5; }
+}
+
+.icon-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.1) 100%);
+  animation: iconPulseAnim 2s ease-in-out infinite;
+}
+
+@keyframes iconPulseAnim {
+  0%, 100% { transform: scale(0.8); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 0; }
+}
+
+/* 文本内容 */
+.tip-text-content {
+  flex: 1;
+}
+
+.tip-category {
+  display: inline-block;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.tip-title-large {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.3;
+}
+
+.tip-desc-large {
+  font-size: 16px;
+  color: #4a5568;
+  margin: 0 0 20px 0;
+  line-height: 1.8;
+  max-width: 500px;
+}
+
+/* 底部区域 */
+.tip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tip-tags {
+  display: flex;
+  gap: 8px;
+}
+
+.tip-tag {
+  padding: 6px 14px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.tip-card-large:hover .tip-tag {
+  background: rgba(102, 126, 234, 0.2);
+}
+
+.tip-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.action-arrow {
+  transition: transform 0.3s ease;
+  font-size: 18px;
+}
+
+.tip-card-large:hover .tip-action {
+  color: #764ba2;
+}
+
+.tip-card-large:hover .action-arrow {
+  transform: translateX(6px);
+}
+
+/* 序号指示 */
+.tip-number {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  z-index: 3;
+  font-family: 'Georgia', serif;
+}
+
+.tip-number .current {
+  font-size: 36px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tip-number .divider {
+  font-size: 20px;
+  color: rgba(102, 126, 234, 0.3);
+  margin: 0 4px;
+}
+
+.tip-number .total {
+  font-size: 18px;
+  color: rgba(102, 126, 234, 0.5);
+}
+
+/* 悬浮效果增强 */
+.tip-card-large:hover {
+  transform: translateY(-4px);
+}
+
+.tip-card-large:hover .tip-blob {
+  animation-play-state: paused;
+  opacity: 0.8;
+}
+
+.tip-card-large:hover .icon-emoji {
+  animation: iconBounce 0.6s ease;
+}
+
+@keyframes iconBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 32px 20px;
+    border-radius: 0 0 32px 32px;
+  }
+
+  .hero-emoji {
+    font-size: 50px;
+  }
+
+  .hero-title {
+    font-size: 26px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .hero-stats {
+    gap: 8px;
+  }
+
+  .stat-item {
+    padding: 8px 14px;
+  }
+
+  .stat-number {
+    font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .section-header h2 {
+    font-size: 20px;
+  }
+
+  .icon-wrapper {
+    font-size: 22px;
+  }
+
+  .section-desc {
+    font-size: 13px;
+  }
+
+  .current-section,
+  .months-section,
+  .quick-actions,
+  .tips-section {
+    padding: 0 16px;
+  }
+
+  .month-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .month-badge {
+    width: 56px;
+    height: 56px;
+  }
+
+  .month-num {
+    font-size: 26px;
+  }
+
+  .month-details h3 {
+    font-size: 17px;
+  }
+
+  .action-card {
+    padding: 16px;
+  }
+
+  .action-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .action-content h3 {
+    font-size: 16px;
+  }
+
+  .action-content p {
+    font-size: 13px;
+  }
+
+  .tips-section {
+    padding: 0 16px 40px;
+  }
+
+  .tips-carousel :deep(.el-carousel__arrow) {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tip-card-large {
+    padding: 24px 20px;
+    min-height: 280px;
+  }
+
+  .tip-content-wrapper {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .tip-icon-large {
+    width: 80px;
+    height: 80px;
+  }
+
+  .icon-emoji {
+    font-size: 44px;
+  }
+
+  .tip-title-large {
+    font-size: 20px;
+  }
+
+  .tip-desc-large {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .tip-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .tip-number {
+    top: 16px;
+    right: 20px;
+  }
+
+  .tip-number .current {
+    font-size: 28px;
+  }
+
+  .tip-blob-1 {
+    width: 120px;
+    height: 120px;
+  }
+
+  .tip-blob-2 {
+    width: 100px;
+    height: 100px;
+  }
+
+  .tip-circle {
+    width: 200px;
+    height: 200px;
+    right: -80px;
+  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  25% { background-position: 50% 50%; }
+  50% { background-position: 100% 50%; }
+  75% { background-position: 50% 100%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes floatShape {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(40px, -40px) rotate(90deg) scale(1.15);
+  }
+  50% {
+    transform: translate(-30px, -60px) rotate(180deg) scale(0.9);
+  }
+  75% {
+    transform: translate(-50px, -30px) rotate(270deg) scale(1.1);
+  }
+}
+
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes titleSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -422,632 +1479,14 @@ onMounted(() => {
   }
 }
 
-.hero-emoji {
-  font-size: 120px;
-  margin-bottom: 30px;
-  animation: bounce 2.5s ease-in-out infinite;
-  filter: drop-shadow(0 15px 30px rgba(0,0,0,0.25));
-  display: inline-block;
-}
-
-@keyframes bounce {
-  0%, 20%, 53%, 100% {
-    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
-    transform: translateY(0) scale(1);
-  }
-  40%, 43% {
-    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
-    transform: translateY(-35px) scale(1.1);
-  }
-  70% {
-    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
-    transform: translateY(-18px) scale(1.05);
-  }
-  80% {
-    transform: translateY(0) scale(1);
-  }
-  90% {
-    transform: translateY(-8px);
-  }
-}
-
-.hero-title {
-  font-size: 72px;
-  margin: 0 0 24px 0;
-  font-weight: 900;
-  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
-  animation: fadeInUp 1s ease-out 0.2s both;
-  letter-spacing: 2px;
-}
-
-.subtitle {
-  font-size: 28px;
-  margin-bottom: 60px;
-  opacity: 0.95;
-  font-weight: 500;
-  animation: fadeInUp 1s ease-out 0.4s both;
-  text-shadow: 0 3px 15px rgba(0,0,0,0.25);
-}
-
-.hero-stats {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 60px;
-  margin-bottom: 60px;
-  flex-wrap: wrap;
-  animation: fadeInUp 1s ease-out 0.6s both;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  cursor: default;
-}
-
-.stat-item:hover {
-  transform: scale(1.15) translateY(-5px);
-}
-
-.stat-number {
-  font-size: 60px;
-  font-weight: 900;
-  text-shadow: 0 5px 20px rgba(0,0,0,0.25);
-  background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.8) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.stat-label {
-  font-size: 18px;
-  opacity: 0.9;
-  margin-top: 8px;
-  font-weight: 600;
-}
-
-.stat-divider {
-  width: 3px;
-  height: 70px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.1) 100%);
-  border-radius: 2px;
-}
-
-.hero-buttons {
-  display: flex;
-  gap: 24px;
-  justify-content: center;
-  flex-wrap: wrap;
-  animation: fadeInUp 1s ease-out 0.8s both;
-}
-
-.hero-buttons .el-button {
-  padding: 18px 40px !important;
-  font-size: 20px !important;
-  border-radius: 50px !important;
-  font-weight: 700 !important;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
-}
-
-.hero-buttons .el-button:hover {
-  transform: translateY(-6px) scale(1.05);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.25) !important;
-}
-
-.secondary-btn {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: white !important;
-  border: 2px solid rgba(255, 255, 255, 0.7) !important;
-  backdrop-filter: blur(10px);
-}
-
-.secondary-btn:hover {
-  background: rgba(255, 255, 255, 0.35) !important;
-  border-color: white !important;
-}
-
-/* 通用区域样式 */
-.section-header {
-  margin-bottom: 50px;
-  padding: 0 40px;
-  animation: fadeInUp 0.8s ease-out;
-}
-
-.section-header h2 {
-  font-size: 42px;
-  margin-bottom: 16px;
-  color: #1e1b4b;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  justify-content: center;
-}
-
-.icon-wrapper {
-  display: inline-block;
-  animation: wiggle 2.5s ease-in-out infinite;
-  font-size: 48px;
-}
-
-@keyframes wiggle {
-  0%, 100% { transform: rotate(-5deg) scale(1); }
-  25% { transform: rotate(5deg) scale(1.1); }
-  50% { transform: rotate(-3deg) scale(1); }
-  75% { transform: rotate(3deg) scale(1.05); }
-}
-
-.section-desc {
-  font-size: 20px;
-  color: #7c3aed;
-  margin: 0;
-  font-weight: 600;
-}
-
-/* 当前月龄卡片 */
-.current-section {
-  padding: 0 40px;
-  margin-bottom: 80px;
-}
-
-.current-month-card {
-  border-radius: 40px !important;
-  overflow: hidden;
-  background: linear-gradient(135deg, #ffffff 0%, #fdf4ff 30%, #fae8ff 60%, #f5f3ff 100%) !important;
-  border: 2px solid rgba(168, 85, 247, 0.15) !important;
-  box-shadow: 0 20px 60px rgba(124, 58, 237, 0.15) !important;
-  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
-  animation: fadeInScale 0.8s ease-out;
-}
-
-@keyframes fadeInScale {
+@keyframes cardSlideIn {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: translateY(30px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.current-month-card:hover {
-  transform: translateY(-12px) scale(1.01);
-  box-shadow: 0 35px 80px rgba(124, 58, 237, 0.2) !important;
-}
-
-.current-month-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 30px;
-  flex-wrap: wrap;
-  gap: 40px;
-}
-
-.month-info {
-  display: flex;
-  align-items: center;
-  gap: 40px;
-  flex: 1;
-}
-
-.month-badge {
-  width: 140px;
-  height: 140px;
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 40%, #ec4899 100%);
-  border-radius: 35px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-  box-shadow: 0 15px 40px rgba(124, 58, 237, 0.4);
-  animation: pulse 3s ease-in-out infinite, floatBadge 4s ease-in-out infinite;
-  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 15px 40px rgba(124, 58, 237, 0.4); }
-  50% { box-shadow: 0 20px 60px rgba(124, 58, 237, 0.6), 0 0 40px rgba(236, 72, 153, 0.3); }
-}
-
-@keyframes floatBadge {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-8px) rotate(3deg); }
-}
-
-.month-badge:hover {
-  transform: rotate(-8deg) scale(1.1);
-}
-
-.month-num {
-  font-size: 60px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.month-text {
-  font-size: 18px;
-  opacity: 0.95;
-  font-weight: 700;
-}
-
-.month-details h3 {
-  font-size: 32px;
-  margin: 0 0 16px 0;
-  color: #1e1b4b;
-  font-weight: 800;
-}
-
-.overview-summary {
-  font-size: 18px;
-  line-height: 1.9;
-  color: #4c1d95;
-  margin: 0 0 24px 0;
-}
-
-.month-highlights {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.highlight-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  color: #7c3aed;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-  padding: 12px 22px;
-  border-radius: 30px;
-  font-weight: 700;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  cursor: default;
-}
-
-.highlight-item:hover {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.2);
-}
-
-.milestones-preview {
-  margin-top: 30px;
-  padding-top: 30px;
-  border-top: 2px solid rgba(168, 85, 247, 0.12);
-}
-
-.milestones-preview h4 {
-  font-size: 20px;
-  margin: 0 0 24px 0;
-  color: #1e1b4b;
-  font-weight: 800;
-}
-
-.milestone-tags {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.milestone-tags .el-tag {
-  padding: 10px 22px !important;
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
-  cursor: default;
-}
-
-.milestone-tags .el-tag:hover {
-  transform: translateY(-5px) scale(1.08);
-  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
-}
-
-/* 月龄网格 */
-.months-section {
-  padding: 0 40px;
-  margin-bottom: 80px;
-}
-
-.month-col {
-  margin-bottom: 28px;
-  animation: fadeInUp 0.7s ease forwards;
-  opacity: 0;
-}
-
-/* 快捷功能 */
-.quick-actions {
-  padding: 0 40px;
-  margin-bottom: 80px;
-}
-
-.action-card {
-  background: linear-gradient(135deg, #ffffff 0%, #fefbff 50%, #fdf4ff 100%);
-  border-radius: 35px;
-  padding: 45px;
-  cursor: pointer;
-  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  display: flex;
-  align-items: center;
-  gap: 35px;
-  margin-bottom: 28px;
-  box-shadow: 0 10px 40px rgba(124, 58, 237, 0.1);
-  position: relative;
-  overflow: hidden;
-  border: 2px solid rgba(168, 85, 247, 0.1);
-}
-
-.action-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  transition: height 0.5s ease;
-}
-
-.action-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transition: left 0.7s ease;
-}
-
-.action-card:hover::after {
-  left: 100%;
-}
-
-.timeline-card::before {
-  background: linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
-}
-
-.checklist-card::before {
-  background: linear-gradient(90deg, #10b981 0%, #34d399 50%, #6ee7b7 100%);
-}
-
-.knowledge-card::before {
-  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #fcd34d 100%);
-}
-
-.action-card:hover {
-  transform: translateY(-15px) scale(1.02);
-  box-shadow: 0 30px 70px rgba(124, 58, 237, 0.2);
-}
-
-.action-card:hover::before {
-  height: 10px;
-}
-
-.action-icon {
-  width: 100px;
-  height: 100px;
-  border-radius: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.action-card:hover .action-icon {
-  transform: scale(1.15) rotate(-8deg);
-}
-
-.timeline-card .action-icon {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
-  color: #7c3aed;
-}
-
-.checklist-card .action-icon {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.15) 100%);
-  color: #10b981;
-}
-
-.knowledge-card .action-icon {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 191, 36, 0.15) 100%);
-  color: #f59e0b;
-}
-
-.action-content {
-  flex: 1;
-}
-
-.action-content h3 {
-  font-size: 28px;
-  margin: 0 0 12px 0;
-  color: #1e1b4b;
-  font-weight: 800;
-}
-
-.action-content p {
-  font-size: 18px;
-  color: #7c3aed;
-  margin: 0;
-  line-height: 1.8;
-}
-
-.action-arrow {
-  font-size: 40px;
-  color: #c4b5fd;
-  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  font-weight: 300;
-}
-
-.action-card:hover .action-arrow {
-  transform: translateX(15px);
-  color: #7c3aed;
-}
-
-/* 育儿小贴士 */
-.tips-section {
-  padding: 0 40px;
-  margin-bottom: 100px;
-}
-
-.tip-card {
-  height: 100%;
-  padding: 45px;
-  border-radius: 30px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.tip-card:hover {
-  transform: scale(1.05);
-}
-
-.tip-card.feeding {
-  background: linear-gradient(135deg, #a7f3d0 0%, #d9f99d 50%, #fef3c7 100%);
-}
-
-.tip-card.sleep {
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
-  color: white;
-}
-
-.tip-card.care {
-  background: linear-gradient(135deg, #fef3c7 0%, #fce7f3 50%, #fae8ff 100%);
-}
-
-.tip-card.play {
-  background: linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 50%, #e0e7ff 100%);
-}
-
-.tip-card.safety {
-  background: linear-gradient(135deg, #fecdd3 0%, #fbcfe8 50%, #fae8ff 100%);
-}
-
-.tip-icon {
-  font-size: 60px;
-  margin-bottom: 20px;
-  animation: bounce 2.5s ease-in-out infinite;
-}
-
-.tip-card h4 {
-  font-size: 26px;
-  margin: 0 0 14px 0;
-  font-weight: 800;
-}
-
-.tip-card p {
-  font-size: 17px;
-  margin: 0;
-  line-height: 1.8;
-  opacity: 0.9;
-}
-
-/* 轮播样式增强 */
-:deep(.el-carousel__item) {
-  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
-}
-
-:deep(.el-carousel__indicators) {
-  margin-top: 25px;
-}
-
-:deep(.el-carousel__button) {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #c4b5fd;
-  transition: all 0.4s ease;
-}
-
-:deep(.el-carousel__indicator.is-active .el-carousel__button) {
-  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
-  width: 40px;
-  border-radius: 7px;
-}
-
-/* 对话框样式 */
-:deep(.baby-info-dialog) {
-  border-radius: 35px;
-}
-
-:deep(.el-dialog__header) {
-  padding: 32px 32px 24px;
-  border-bottom: 2px solid rgba(168, 85, 247, 0.12);
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
-}
-
-:deep(.el-dialog__body) {
-  padding: 32px;
-}
-
-:deep(.el-dialog__footer) {
-  padding: 24px 32px 32px;
-  border-top: 2px solid rgba(168, 85, 247, 0.12);
-}
-
-/* 响应式 */
-@media (max-width: 768px) {
-  .hero-section {
-    padding: 70px 28px;
-    border-radius: 0 0 40px 40px;
-  }
-
-  .hero-emoji {
-    font-size: 80px;
-  }
-
-  .hero-title {
-    font-size: 40px;
-  }
-
-  .subtitle {
-    font-size: 20px;
-    margin-bottom: 40px;
-  }
-
-  .hero-stats {
-    gap: 30px;
-  }
-
-  .stat-number {
-    font-size: 38px;
-  }
-
-  .stat-divider {
-    display: none;
-  }
-
-  .section-header h2 {
-    font-size: 30px;
-  }
-
-  .month-info {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .month-highlights {
-    justify-content: center;
-  }
-
-  .current-month-content {
-    flex-direction: column;
-  }
-
-  .month-actions {
-    width: 100%;
-  }
-
-  .month-actions .el-button {
-    width: 100%;
+    transform: translateY(0) scale(1);
   }
 }
 </style>
