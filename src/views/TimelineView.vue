@@ -58,8 +58,466 @@
             <div class="stat-glow"></div>
           </div>
         </div>
+
+        <!-- 功能快捷入口 -->
+        <div class="feature-shortcuts">
+          <div class="shortcut-card" @click="openGrowthAlbum">
+            <div class="shortcut-icon">📸</div>
+            <div class="shortcut-info">
+              <span class="shortcut-title">成长相册</span>
+              <span class="shortcut-desc">{{ growthMomentsCount }} 个瞬间</span>
+            </div>
+            <div class="shortcut-badge" v-if="hasNewMoments">NEW</div>
+          </div>
+          <div class="shortcut-card" @click="showSmartReminder">
+            <div class="shortcut-icon">🔔</div>
+            <div class="shortcut-info">
+              <span class="shortcut-title">智能提醒</span>
+              <span class="shortcut-desc">{{ pendingReminders }} 项待办</span>
+            </div>
+            <div class="shortcut-badge warning" v-if="pendingReminders > 0">
+              {{ pendingReminders }}
+            </div>
+          </div>
+          <div class="shortcut-card" @click="openFamilyCollaboration">
+            <div class="shortcut-icon">👨‍👩‍👧</div>
+            <div class="shortcut-info">
+              <span class="shortcut-title">家庭协作</span>
+              <span class="shortcut-desc">{{ familyMembersCount }} 位成员</span>
+            </div>
+          </div>
+          <div class="shortcut-card" @click="generateGrowthReport">
+            <div class="shortcut-icon">📊</div>
+            <div class="shortcut-info">
+              <span class="shortcut-title">成长报告</span>
+              <span class="shortcut-desc">一键生成</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- 智能提醒横幅 -->
+    <Transition name="slide-down">
+      <div
+        class="smart-reminder-banner"
+        v-if="showReminderBanner && currentWeekMilestones.length > 0"
+      >
+        <div class="reminder-content">
+          <span class="reminder-icon">🌟</span>
+          <div class="reminder-text">
+            <strong>本周关键里程碑</strong>
+            <p>
+              宝宝快{{ babyStore.currentMonth + 1 }}个月啦，关注「{{
+                currentWeekMilestones[0]
+              }}」能力
+            </p>
+          </div>
+        </div>
+        <div class="reminder-actions">
+          <el-button size="small" type="primary" round @click="goToChecklist">
+            去打卡
+          </el-button>
+          <el-button size="small" text @click="dismissReminder">
+            稍后提醒
+          </el-button>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- 未打卡提醒弹窗 -->
+    <el-dialog
+      v-model="showNoCheckInDialog"
+      title="温馨提示 💝"
+      width="90%"
+      class="no-checkin-dialog"
+      center
+    >
+      <div class="no-checkin-content">
+        <div class="no-checkin-icon">📅</div>
+        <p class="no-checkin-text">
+          已经
+          <strong>{{ daysSinceLastCheckIn }}</strong>
+          天没有记录啦~
+        </p>
+        <p class="no-checkin-hint">
+          宝宝每天都在成长，建议查看训练方法，帮助宝宝发展新技能！
+        </p>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="showNoCheckInDialog = false">稍后再说</el-button>
+          <el-button type="primary" @click="goToTrainingMethods">
+            查看训练方法
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 成长相册弹窗 -->
+    <el-dialog
+      v-model="showAlbumDialog"
+      title="📸 成长相册"
+      width="95%"
+      class="album-dialog"
+      fullscreen
+    >
+      <div class="album-content">
+        <!-- 月份筛选 -->
+        <div class="album-filter">
+          <el-radio-group v-model="albumFilterMonth" size="small">
+            <el-radio-button :value="-1">全部</el-radio-button>
+            <el-radio-button
+              v-for="m in 13"
+              :key="m - 1"
+              :value="m - 1"
+              :disabled="!hasPhotosInMonth(m - 1)"
+            >
+              {{ m - 1 }}月
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <!-- 相册网格 -->
+        <div class="album-grid" v-if="filteredGrowthMoments.length > 0">
+          <div
+            v-for="moment in filteredGrowthMoments"
+            :key="moment.id"
+            class="album-item"
+            @click="viewMomentDetail(moment)"
+          >
+            <div class="album-thumb">
+              <img :src="moment.media[0]" :alt="moment.milestone" />
+              <div class="album-overlay">
+                <span class="album-milestone">{{ moment.milestone }}</span>
+                <span class="album-date">{{ formatDate(moment.date) }}</span>
+              </div>
+              <div class="media-count" v-if="moment.media.length > 1">
+                +{{ moment.media.length - 1 }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <el-empty v-else description="还没有成长瞬间，快去记录里程碑吧~">
+          <el-button type="primary" @click="goToChecklist">去记录</el-button>
+        </el-empty>
+      </div>
+
+      <template #footer>
+        <div class="album-footer">
+          <el-button @click="shareAlbum" type="primary" round>
+            <span>📤</span>
+            分享相册
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 成长瞬间详情弹窗 -->
+    <el-dialog
+      v-model="showMomentDetailDialog"
+      :title="currentMoment?.milestone"
+      width="95%"
+      class="moment-detail-dialog"
+    >
+      <div class="moment-detail-content" v-if="currentMoment">
+        <!-- 媒体轮播 -->
+        <el-carousel
+          :autoplay="false"
+          indicator-position="outside"
+          height="300px"
+        >
+          <el-carousel-item
+            v-for="(media, idx) in currentMoment.media"
+            :key="idx"
+          >
+            <img :src="media" class="moment-media" />
+          </el-carousel-item>
+        </el-carousel>
+
+        <div class="moment-info">
+          <div class="moment-date">
+            <el-icon><Calendar /></el-icon>
+            {{ formatDate(currentMoment.date) }}
+          </div>
+          <div class="moment-note" v-if="currentMoment.note">
+            {{ currentMoment.note }}
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="moment-actions">
+          <el-button @click="shareMoment" type="primary">
+            <span>📤</span>
+            分享
+          </el-button>
+          <el-button @click="deleteMoment" type="danger" plain>
+            <span>🗑️</span>
+            删除
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 家庭协作弹窗 -->
+    <el-dialog
+      v-model="showFamilyDialog"
+      title="👨‍👩‍👧 家庭协作"
+      width="95%"
+      class="family-dialog"
+    >
+      <div class="family-content">
+        <!-- 当前用户 -->
+        <div class="family-current-user">
+          <div class="user-avatar primary">
+            {{ babyStore.babyInfo.name?.charAt(0) || '宝' }}
+          </div>
+          <div class="user-info">
+            <h4>{{ babyStore.babyInfo.name || '宝宝' }}的成长记录</h4>
+            <el-tag size="small" type="primary">主账号</el-tag>
+          </div>
+        </div>
+
+        <!-- 家庭成员列表 -->
+        <div class="family-members-section">
+          <div class="section-header">
+            <h3>家庭成员</h3>
+            <el-button
+              size="small"
+              type="primary"
+              @click="showAddFamilyMember = true"
+            >
+              + 添加成员
+            </el-button>
+          </div>
+
+          <div class="family-members-list" v-if="familyMembers.length > 0">
+            <div
+              v-for="member in familyMembers"
+              :key="member.id"
+              class="family-member-card"
+            >
+              <div class="member-avatar" :style="{ background: member.color }">
+                {{ member.name.charAt(0) }}
+              </div>
+              <div class="member-info">
+                <span class="member-name">{{ member.name }}</span>
+                <span class="member-relation">{{ member.relation }}</span>
+              </div>
+              <div class="member-permission">
+                <el-tag
+                  :type="member.permission === 'edit' ? 'success' : 'info'"
+                  size="small"
+                >
+                  {{ member.permission === 'edit' ? '可记录' : '仅查看' }}
+                </el-tag>
+              </div>
+              <el-button
+                text
+                type="danger"
+                size="small"
+                @click="removeFamilyMember(member.id)"
+              >
+                移除
+              </el-button>
+            </div>
+          </div>
+
+          <el-empty v-else description="还没有添加家庭成员" />
+        </div>
+
+        <!-- 添加成员表单 -->
+        <Transition name="slide-down">
+          <div class="add-member-form" v-if="showAddFamilyMember">
+            <el-form :model="newFamilyMember" label-position="top">
+              <el-form-item label="称呼">
+                <el-input
+                  v-model="newFamilyMember.name"
+                  placeholder="如：奶奶"
+                />
+              </el-form-item>
+              <el-form-item label="关系">
+                <el-select
+                  v-model="newFamilyMember.relation"
+                  style="width: 100%;"
+                >
+                  <el-option label="爸爸" value="爸爸" />
+                  <el-option label="妈妈" value="妈妈" />
+                  <el-option label="爷爷" value="爷爷" />
+                  <el-option label="奶奶" value="奶奶" />
+                  <el-option label="外公" value="外公" />
+                  <el-option label="外婆" value="外婆" />
+                  <el-option label="其他" value="其他" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="权限">
+                <el-radio-group v-model="newFamilyMember.permission">
+                  <el-radio value="view">仅查看</el-radio>
+                  <el-radio value="edit">可记录</el-radio>
+                </el-radio-group>
+              </el-form-item>
+              <div class="form-actions">
+                <el-button @click="showAddFamilyMember = false">取消</el-button>
+                <el-button type="primary" @click="addFamilyMember">
+                  添加
+                </el-button>
+              </div>
+            </el-form>
+          </div>
+        </Transition>
+
+        <!-- 活动通知 -->
+        <div class="activity-notifications">
+          <h3>🔔 最近活动</h3>
+          <div class="activity-list" v-if="recentActivities.length > 0">
+            <div
+              v-for="activity in recentActivities"
+              :key="activity.id"
+              class="activity-item"
+            >
+              <div
+                class="activity-avatar"
+                :style="{ background: activity.color }"
+              >
+                {{ activity.memberName.charAt(0) }}
+              </div>
+              <div class="activity-content">
+                <p>
+                  <strong>{{ activity.memberName }}</strong>
+                  {{ activity.action }}
+                </p>
+                <span class="activity-time">{{ activity.time }}</span>
+              </div>
+            </div>
+          </div>
+          <el-empty v-else description="暂无活动记录" />
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 成长报告生成弹窗 -->
+    <el-dialog
+      v-model="showReportDialog"
+      title="📊 成长报告"
+      width="95%"
+      class="report-dialog"
+    >
+      <div class="report-content" ref="reportRef">
+        <!-- 报告头部 -->
+        <div class="report-header">
+          <div class="report-avatar">
+            {{ babyStore.babyInfo.name?.charAt(0) || '宝' }}
+          </div>
+          <div class="report-title">
+            <h2>{{ babyStore.babyInfo.name || '宝宝' }}的成长报告</h2>
+            <p>出生日期：{{ formatBirthday() }}</p>
+            <p>当前月龄：{{ babyStore.currentMonth }}月龄</p>
+          </div>
+        </div>
+
+        <!-- 总体统计 -->
+        <div class="report-section">
+          <h3>📈 总体进度</h3>
+          <div class="report-stats">
+            <div class="report-stat">
+              <div class="stat-number">
+                {{ babyStore.completedMilestonesCount }}
+              </div>
+              <div class="stat-label">已完成里程碑</div>
+            </div>
+            <div class="report-stat">
+              <div class="stat-number">
+                {{ babyStore.totalMilestonesCount }}
+              </div>
+              <div class="stat-label">总里程碑数</div>
+            </div>
+            <div class="report-stat">
+              <div class="stat-number">
+                {{
+                  Math.round(
+                    (babyStore.completedMilestonesCount /
+                      babyStore.totalMilestonesCount) *
+                      100,
+                  )
+                }}%
+              </div>
+              <div class="stat-label">完成率</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 各月龄完成情况 -->
+        <div class="report-section">
+          <h3>📅 各月龄完成情况</h3>
+          <div class="month-progress-list">
+            <div
+              v-for="month in monthsData"
+              :key="month.month"
+              class="month-progress-item"
+            >
+              <div class="month-label">{{ month.month }}月龄</div>
+              <div class="progress-bar-wrapper">
+                <el-progress
+                  :percentage="getMonthCompletionRate(month)"
+                  :stroke-width="8"
+                  :show-text="false"
+                />
+              </div>
+              <div class="progress-text">
+                {{ getCompletedCount(month) }}/{{
+                  month.milestones?.length || 0
+                }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 能力发展曲线 -->
+        <div class="report-section">
+          <h3>🎯 关键能力发展</h3>
+          <div class="ability-chart">
+            <div
+              class="ability-item"
+              v-for="ability in abilityProgress"
+              :key="ability.name"
+            >
+              <div class="ability-name">
+                <span class="ability-icon">{{ ability.icon }}</span>
+                {{ ability.name }}
+              </div>
+              <div class="ability-bar">
+                <div
+                  class="ability-fill"
+                  :style="{ width: ability.progress + '%' }"
+                ></div>
+              </div>
+              <div class="ability-percent">{{ ability.progress }}%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 报告生成时间 -->
+        <div class="report-footer">
+          <p>报告生成时间：{{ new Date().toLocaleDateString() }}</p>
+          <p class="report-powered">Powered by 宝宝成长指南</p>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="report-actions">
+          <el-button @click="downloadReport" type="primary" round>
+            <span>📥</span>
+            下载报告
+          </el-button>
+          <el-button @click="shareReport" round>
+            <span>📤</span>
+            分享到微信
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <!-- 横向时间轴导航 -->
     <div class="horizontal-timeline-nav">
@@ -598,10 +1056,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBabyStore } from '@/stores/babyStore'
-import { ArrowRight, Top, ArrowLeft, Check } from '@element-plus/icons-vue'
+import {
+  ArrowRight,
+  Top,
+  ArrowLeft,
+  Check,
+  Calendar,
+  Share,
+} from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import html2canvas from 'html2canvas'
 import type { BabyMonthData } from '@/types/baby'
 
 const router = useRouter()
@@ -611,6 +1078,7 @@ const monthsData = computed(() => babyStore.allMonthsData)
 const headerRef = ref<HTMLElement>()
 const timelineRef = ref<HTMLElement>()
 const timelineNavRef = ref<HTMLElement>()
+const reportRef = ref<HTMLElement>()
 const monthRefs = ref<any[]>([])
 const scrollProgress = ref(0)
 const showScrollTop = ref(false)
@@ -618,6 +1086,389 @@ const currentMonth = ref(babyStore.currentMonth)
 const visitedMonths = ref<number[]>([0]) // 已浏览的月龄
 const expandedMonths = ref<number[]>([]) // 已展开的月龄
 const activeDimension = ref('gross') // 当前选中的发育维度
+
+// ========== 成长相册相关 ==========
+const showAlbumDialog = ref(false)
+const showMomentDetailDialog = ref(false)
+const albumFilterMonth = ref(-1)
+const currentMoment = ref<GrowthMoment | null>(null)
+const hasNewMoments = ref(false)
+
+interface GrowthMoment {
+  id: string
+  milestone: string
+  month: number
+  date: string
+  note: string
+  media: string[]
+  createdBy?: string
+}
+
+// 从 localStorage 加载成长瞬间
+const growthMoments = ref<GrowthMoment[]>([])
+
+const loadGrowthMoments = () => {
+  const records = localStorage.getItem('milestoneRecords')
+  if (records) {
+    const parsed = JSON.parse(records)
+    const moments: GrowthMoment[] = []
+
+    Object.entries(parsed).forEach(([title, record]: [string, any]) => {
+      if (record.media && record.media.length > 0) {
+        // 找到对应的月龄
+        let month = 0
+        for (const monthData of babyStore.allMonthsData) {
+          if (
+            monthData.milestones?.some(
+              (m: { title: string }) => m.title === title,
+            )
+          ) {
+            month = monthData.month
+            break
+          }
+        }
+
+        moments.push({
+          id: title,
+          milestone: title,
+          month,
+          date: record.date,
+          note: record.note || '',
+          media: record.media,
+        })
+      }
+    })
+
+    growthMoments.value = moments.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    )
+  }
+}
+
+const growthMomentsCount = computed(() => growthMoments.value.length)
+
+const filteredGrowthMoments = computed(() => {
+  if (albumFilterMonth.value === -1) return growthMoments.value
+  return growthMoments.value.filter((m) => m.month === albumFilterMonth.value)
+})
+
+const hasPhotosInMonth = (month: number): boolean => {
+  return growthMoments.value.some((m) => m.month === month)
+}
+
+const openGrowthAlbum = () => {
+  loadGrowthMoments()
+  showAlbumDialog.value = true
+  hasNewMoments.value = false
+}
+
+const viewMomentDetail = (moment: GrowthMoment) => {
+  currentMoment.value = moment
+  showMomentDetailDialog.value = true
+}
+
+const shareMoment = async () => {
+  if (!currentMoment.value) return
+
+  // 模拟分享功能
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: `${babyStore.babyInfo.name || '宝宝'}的成长瞬间`,
+        text: `${currentMoment.value.milestone} - ${currentMoment.value.note}`,
+      })
+    } else {
+      ElMessage.success('已复制分享链接到剪贴板')
+    }
+  } catch {
+    ElMessage.info('分享已取消')
+  }
+}
+
+const shareAlbum = async () => {
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: `${babyStore.babyInfo.name || '宝宝'}的成长相册`,
+        text: `记录了 ${growthMomentsCount.value} 个珍贵的成长瞬间`,
+      })
+    } else {
+      ElMessage.success('已复制相册链接到剪贴板')
+    }
+  } catch {
+    ElMessage.info('分享已取消')
+  }
+}
+
+const deleteMoment = async () => {
+  if (!currentMoment.value) return
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除"${currentMoment.value.milestone}"的成长瞬间吗？`,
+      '删除确认',
+      { type: 'warning' },
+    )
+
+    // 从 localStorage 删除
+    const records = JSON.parse(localStorage.getItem('milestoneRecords') || '{}')
+    if (records[currentMoment.value.milestone]) {
+      records[currentMoment.value.milestone].media = []
+      localStorage.setItem('milestoneRecords', JSON.stringify(records))
+    }
+
+    // 更新列表
+    loadGrowthMoments()
+    showMomentDetailDialog.value = false
+    ElMessage.success('已删除')
+  } catch {
+    // 取消删除
+  }
+}
+
+// ========== 智能提醒相关 ==========
+const showReminderBanner = ref(true)
+const showNoCheckInDialog = ref(false)
+const daysSinceLastCheckIn = ref(0)
+
+// 本周关键里程碑
+const currentWeekMilestones = computed(() => {
+  const currentMonthData = babyStore.currentMonthData
+  if (!currentMonthData?.milestones) return []
+
+  return currentMonthData.milestones
+    .filter((m: { title: string }) => !babyStore.isMilestoneCompleted(m.title))
+    .slice(0, 3)
+    .map((m: { title: string }) => m.title)
+})
+
+const pendingReminders = computed(() => currentWeekMilestones.value.length)
+
+const dismissReminder = () => {
+  showReminderBanner.value = false
+  localStorage.setItem('reminderDismissed', new Date().toDateString())
+}
+
+const checkLastCheckIn = () => {
+  const lastCheckIn = localStorage.getItem('lastCheckInDate')
+  if (lastCheckIn) {
+    const daysDiff = Math.floor(
+      (Date.now() - new Date(lastCheckIn).getTime()) / (1000 * 60 * 60 * 24),
+    )
+    daysSinceLastCheckIn.value = daysDiff
+
+    if (daysDiff >= 3) {
+      showNoCheckInDialog.value = true
+    }
+  }
+}
+
+const goToTrainingMethods = () => {
+  showNoCheckInDialog.value = false
+  router.push(`/month/${babyStore.currentMonth}`)
+}
+
+const showSmartReminder = () => {
+  if (currentWeekMilestones.value.length > 0) {
+    showReminderBanner.value = true
+  } else {
+    ElMessage.success('太棒了！本周里程碑都已完成 🎉')
+  }
+}
+
+// ========== 家庭协作相关 ==========
+const showFamilyDialog = ref(false)
+const showAddFamilyMember = ref(false)
+
+interface FamilyMember {
+  id: string
+  name: string
+  relation: string
+  permission: 'view' | 'edit'
+  color: string
+}
+
+interface Activity {
+  id: string
+  memberName: string
+  action: string
+  time: string
+  color: string
+}
+
+const familyMembers = ref<FamilyMember[]>([])
+const recentActivities = ref<Activity[]>([])
+
+const newFamilyMember = reactive({
+  name: '',
+  relation: '妈妈',
+  permission: 'edit' as 'view' | 'edit',
+})
+
+const memberColors = [
+  '#9d50ff',
+  '#ff6bcc',
+  '#10b981',
+  '#f59e0b',
+  '#06b6d4',
+  '#8b5cf6',
+]
+
+const familyMembersCount = computed(() => familyMembers.value.length)
+
+const loadFamilyData = () => {
+  const saved = localStorage.getItem('familyMembers')
+  if (saved) {
+    familyMembers.value = JSON.parse(saved)
+  }
+
+  const activities = localStorage.getItem('familyActivities')
+  if (activities) {
+    recentActivities.value = JSON.parse(activities)
+  }
+}
+
+const openFamilyCollaboration = () => {
+  loadFamilyData()
+  showFamilyDialog.value = true
+}
+
+const addFamilyMember = () => {
+  if (!newFamilyMember.name.trim()) {
+    ElMessage.warning('请输入成员称呼')
+    return
+  }
+
+  const colorIndex = familyMembers.value.length % memberColors.length
+  const member: FamilyMember = {
+    id: Date.now().toString(),
+    name: newFamilyMember.name,
+    relation: newFamilyMember.relation,
+    permission: newFamilyMember.permission,
+    color: memberColors[colorIndex] ?? '#9d50ff',
+  }
+
+  familyMembers.value.push(member)
+  localStorage.setItem('familyMembers', JSON.stringify(familyMembers.value))
+
+  // 重置表单
+  newFamilyMember.name = ''
+  newFamilyMember.relation = '妈妈'
+  newFamilyMember.permission = 'edit'
+  showAddFamilyMember.value = false
+
+  ElMessage.success('成员添加成功')
+}
+
+const removeFamilyMember = async (id: string) => {
+  try {
+    await ElMessageBox.confirm('确定要移除该成员吗？', '移除确认')
+    familyMembers.value = familyMembers.value.filter((m) => m.id !== id)
+    localStorage.setItem('familyMembers', JSON.stringify(familyMembers.value))
+    ElMessage.success('已移除')
+  } catch {
+    // 取消
+  }
+}
+
+// ========== 成长报告相关 ==========
+const showReportDialog = ref(false)
+
+const abilityProgress = computed(() => {
+  const abilities = [
+    { name: '大运动', icon: '🏃', key: 'gross' },
+    { name: '精细动作', icon: '✋', key: 'fine' },
+    { name: '认知能力', icon: '🧠', key: 'cognitive' },
+    { name: '语言能力', icon: '💬', key: 'language' },
+    { name: '社交情感', icon: '💕', key: 'social' },
+  ]
+
+  return abilities.map((ability) => {
+    // 简化计算：基于完成的里程碑数量
+    const total = babyStore.totalMilestonesCount
+    const completed = babyStore.completedMilestonesCount
+    const baseProgress = Math.round((completed / total) * 100)
+
+    // 添加一些随机变化使每个能力看起来不同
+    const variation = Math.floor(Math.random() * 20) - 10
+    const progress = Math.max(0, Math.min(100, baseProgress + variation))
+
+    return { ...ability, progress }
+  })
+})
+
+const getMonthCompletionRate = (month: BabyMonthData): number => {
+  const total = month.milestones?.length || 0
+  if (total === 0) return 0
+  const completed = getCompletedCount(month)
+  return Math.round((completed / total) * 100)
+}
+
+const formatBirthday = (): string => {
+  const birthday = babyStore.babyInfo.birthday
+  if (!birthday) return '未设置'
+  return new Date(birthday).toLocaleDateString('zh-CN')
+}
+
+const generateGrowthReport = () => {
+  showReportDialog.value = true
+}
+
+const downloadReport = async () => {
+  if (!reportRef.value) return
+
+  try {
+    ElMessage.info('正在生成报告...')
+
+    const canvas = await html2canvas(reportRef.value, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+    })
+
+    const link = document.createElement('a')
+    link.download = `${
+      babyStore.babyInfo.name || '宝宝'
+    }-成长报告-${new Date().toLocaleDateString()}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+
+    ElMessage.success('报告已下载')
+  } catch (error) {
+    console.error('生成报告失败:', error)
+    ElMessage.error('生成失败，请重试')
+  }
+}
+
+const shareReport = async () => {
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: `${babyStore.babyInfo.name || '宝宝'}的成长报告`,
+        text: `已完成 ${
+          babyStore.completedMilestonesCount
+        } 个里程碑，完成率 ${Math.round(
+          (babyStore.completedMilestonesCount /
+            babyStore.totalMilestonesCount) *
+            100,
+        )}%`,
+      })
+    } else {
+      ElMessage.success('已复制报告链接到剪贴板')
+    }
+  } catch {
+    ElMessage.info('分享已取消')
+  }
+}
+
+// ========== 工具函数 ==========
+const formatDate = (dateStr: string): string => {
+  return new Date(dateStr).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
 
 // 已解锁的月龄数量
 const unlockedMonthsCount = computed(() => {
@@ -851,6 +1702,21 @@ const handleScroll = () => {
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   handleScroll() // 初始化
+
+  // 加载成长瞬间数据
+  loadGrowthMoments()
+
+  // 加载家庭数据
+  loadFamilyData()
+
+  // 检查是否需要显示未打卡提醒
+  checkLastCheckIn()
+
+  // 检查提醒是否今天已被关闭
+  const dismissed = localStorage.getItem('reminderDismissed')
+  if (dismissed === new Date().toDateString()) {
+    showReminderBanner.value = false
+  }
 })
 
 onBeforeUnmount(() => {
@@ -2506,6 +3372,660 @@ onBeforeUnmount(() => {
   .milestone-item {
     font-size: 12px;
     padding: 8px 10px;
+  }
+
+  .feature-shortcuts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ========== 功能快捷入口 ========== */
+.feature-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.shortcut-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.shortcut-card:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.shortcut-icon {
+  font-size: 24px;
+}
+
+.shortcut-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shortcut-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.shortcut-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.shortcut-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff6bcc;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.shortcut-badge.warning {
+  background: #f59e0b;
+}
+
+/* ========== 智能提醒横幅 ========== */
+.smart-reminder-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 16px;
+  margin: 0 16px 16px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.reminder-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reminder-icon {
+  font-size: 28px;
+}
+
+.reminder-text strong {
+  display: block;
+  color: #92400e;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.reminder-text p {
+  margin: 0;
+  color: #a16207;
+  font-size: 12px;
+}
+
+.reminder-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* ========== 未打卡提醒弹窗 ========== */
+.no-checkin-dialog :deep(.el-dialog__body) {
+  padding: 32px;
+}
+
+.no-checkin-content {
+  text-align: center;
+}
+
+.no-checkin-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.no-checkin-text {
+  font-size: 18px;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.no-checkin-text strong {
+  color: #f59e0b;
+  font-size: 24px;
+}
+
+.no-checkin-hint {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ========== 成长相册弹窗 ========== */
+.album-dialog :deep(.el-dialog__body) {
+  padding: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.album-content {
+  padding: 16px;
+}
+
+.album-filter {
+  margin-bottom: 16px;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 8px;
+}
+
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.album-item {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+
+.album-thumb {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.album-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.album-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  color: white;
+}
+
+.album-milestone {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.album-date {
+  display: block;
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.media-count {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.album-footer {
+  text-align: center;
+}
+
+/* ========== 成长瞬间详情 ========== */
+.moment-detail-dialog :deep(.el-dialog__body) {
+  padding: 0;
+}
+
+.moment-media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #f3f4f6;
+}
+
+.moment-info {
+  padding: 16px;
+}
+
+.moment-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.moment-note {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.moment-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* ========== 家庭协作弹窗 ========== */
+.family-dialog :deep(.el-dialog__body) {
+  padding: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.family-content {
+  padding: 20px;
+}
+
+.family-current-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.user-avatar.primary {
+  background: linear-gradient(135deg, #9d50ff 0%, #ff6bcc 100%);
+}
+
+.user-info h4 {
+  font-size: 16px;
+  margin: 0 0 4px 0;
+}
+
+.family-members-section {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header h3 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.family-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.family-member-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+}
+
+.member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.member-relation {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.add-member-form {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.activity-notifications h3 {
+  font-size: 15px;
+  margin: 0 0 12px 0;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.activity-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.activity-content p {
+  margin: 0;
+  font-size: 13px;
+  color: #374151;
+}
+
+.activity-time {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* ========== 成长报告弹窗 ========== */
+.report-dialog :deep(.el-dialog__body) {
+  padding: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.report-content {
+  padding: 24px;
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 50%, #fdf2f8 100%);
+}
+
+.report-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px dashed #e5e7eb;
+}
+
+.report-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9d50ff 0%, #ff6bcc 100%);
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.report-title h2 {
+  font-size: 20px;
+  margin: 0 0 8px 0;
+  color: #1f2937;
+}
+
+.report-title p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0;
+}
+
+.report-section {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.report-section h3 {
+  font-size: 16px;
+  margin: 0 0 16px 0;
+  color: #1f2937;
+}
+
+.report-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.report-stat {
+  text-align: center;
+  padding: 12px;
+  background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+  border-radius: 12px;
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: #9d50ff;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.month-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.month-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.month-label {
+  width: 60px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.progress-bar-wrapper {
+  flex: 1;
+}
+
+.progress-text {
+  width: 50px;
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: right;
+}
+
+.ability-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ability-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ability-name {
+  width: 90px;
+  font-size: 13px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ability-icon {
+  font-size: 16px;
+}
+
+.ability-bar {
+  flex: 1;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ability-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #9d50ff 0%, #ff6bcc 100%);
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+.ability-percent {
+  width: 40px;
+  font-size: 12px;
+  color: #9d50ff;
+  font-weight: 600;
+  text-align: right;
+}
+
+.report-footer {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.report-footer p {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 4px 0;
+}
+
+.report-powered {
+  color: #d1d5db;
+}
+
+.report-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* ========== 响应式：功能快捷入口 ========== */
+@media (max-width: 640px) {
+  .feature-shortcuts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .shortcut-card {
+    padding: 10px;
+  }
+
+  .shortcut-icon {
+    font-size: 20px;
+  }
+
+  .shortcut-title {
+    font-size: 12px;
+  }
+
+  .shortcut-desc {
+    font-size: 10px;
+  }
+
+  .smart-reminder-banner {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+    padding: 12px 16px;
+  }
+
+  .reminder-actions {
+    justify-content: center;
+  }
+
+  .album-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .report-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
 </style>

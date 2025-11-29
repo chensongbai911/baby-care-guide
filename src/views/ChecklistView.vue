@@ -23,10 +23,14 @@
               <el-dropdown-item command="export-pdf" :icon="Document">
                 导出 PDF
               </el-dropdown-item>
-              <el-dropdown-item command="export-report" divided :icon="Document">
+              <el-dropdown-item
+                command="export-report"
+                divided
+                :icon="Document"
+              >
                 📄 生成成长报告
               </el-dropdown-item>
-              
+
               <!-- 导入选项 -->
               <el-dropdown-item command="import-json" :icon="Upload">
                 导入 JSON
@@ -34,7 +38,7 @@
               <el-dropdown-item command="import-excel" :icon="Upload">
                 导入 Excel
               </el-dropdown-item>
-              
+
               <!-- 协作与管理 -->
               <el-dropdown-item command="family" divided :icon="User">
                 👨‍👩‍👧 家庭协作
@@ -1963,7 +1967,9 @@ const exportToExcel = () => {
 
     // 遍历所有月份的里程碑
     for (let month = 0; month <= 12; month++) {
-      const monthData = babyStore.allMonthsData.find((m: { month: number }) => m.month === month)
+      const monthData = babyStore.allMonthsData.find(
+        (m: { month: number }) => m.month === month,
+      )
       if (!monthData) continue
 
       monthData.milestones.forEach((milestone: { title: string }) => {
@@ -1994,7 +2000,9 @@ const exportToExcel = () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${babyStore.babyInfo.name || '宝宝'}-成长记录-${new Date().toLocaleDateString()}.csv`
+    a.download = `${
+      babyStore.babyInfo.name || '宝宝'
+    }-成长记录-${new Date().toLocaleDateString()}.csv`
     a.click()
     URL.revokeObjectURL(url)
 
@@ -2037,9 +2045,9 @@ const importFromExcel = () => {
       // 解析 CSV
       let importedCount = 0
       lines.slice(1).forEach((line) => {
-        const cells = line.split(',').map((cell) =>
-          cell.replace(/^"|"$/g, '').replace(/""/g, '"'),
-        )
+        const cells = line
+          .split(',')
+          .map((cell) => cell.replace(/^"|"$/g, '').replace(/""/g, '"'))
 
         if (cells.length >= 3) {
           const [, title, status, dateStr, note] = cells
@@ -2051,7 +2059,9 @@ const importFromExcel = () => {
             // 保存记录
             if (dateStr || note) {
               milestoneRecords.value[title] = {
-                date: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString(),
+                date: dateStr
+                  ? new Date(dateStr).toISOString()
+                  : new Date().toISOString(),
                 note: note || '',
                 media: [],
               }
@@ -4123,14 +4133,18 @@ onMounted(() => {
   height: 100px;
   margin: 0 auto 20px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #fcd34d 0%, #fbbf24 30%, #f59e0b 70%, #d97706 100%);
+  background: linear-gradient(
+    145deg,
+    #fcd34d 0%,
+    #fbbf24 30%,
+    #f59e0b 70%,
+    #d97706 100%
+  );
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    inset 0 4px 8px rgba(255, 255, 255, 0.5),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.15),
-    0 8px 24px rgba(245, 158, 11, 0.3);
+  box-shadow: inset 0 4px 8px rgba(255, 255, 255, 0.5),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(245, 158, 11, 0.3);
 }
 
 .detail-icon {
@@ -4142,12 +4156,17 @@ onMounted(() => {
   width: 120%;
   height: 120%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.4) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(251, 191, 36, 0.4) 0%,
+    transparent 70%
+  );
   animation: detail-glow-pulse 2s ease-in-out infinite;
 }
 
 @keyframes detail-glow-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.5;
   }
