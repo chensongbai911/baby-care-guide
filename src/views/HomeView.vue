@@ -1,6 +1,97 @@
 <template>
   <div class="home-view">
-    <!-- 页面头部 -->
+    <!-- 面包屑导航 -->
+    <div class="breadcrumb-nav">
+      <el-breadcrumb separator="/">
+        <el-breadcrumb-item :to="{ path: '/' }">
+          <el-icon><HomeFilled /></el-icon>
+          <span>首页</span>
+        </el-breadcrumb-item>
+        <el-breadcrumb-item>宝宝成长指南</el-breadcrumb-item>
+      </el-breadcrumb>
+    </div>
+
+    <!-- 侧边栏快速导航 -->
+    <transition name="slide-fade">
+      <div class="sidebar-nav" v-show="showSidebar">
+        <div class="sidebar-header">
+          <h3>快速导航</h3>
+          <el-button text @click="showSidebar = false" class="close-btn">
+            <el-icon><Close /></el-icon>
+          </el-button>
+        </div>
+
+        <div class="sidebar-sections">
+          <!-- 月龄分类 -->
+          <div class="nav-section">
+            <div class="section-title">
+              <el-icon><Calendar /></el-icon>
+              <span>月龄阶段</span>
+            </div>
+            <div class="nav-items">
+              <div
+                v-for="category in monthCategories"
+                :key="category.id"
+                class="nav-item"
+                @click="scrollToSection(category.id)"
+              >
+                <span class="item-icon">{{ category.icon }}</span>
+                <span class="item-text">{{ category.label }}</span>
+                <span class="item-count">{{ category.count }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 功能分类 -->
+          <div class="nav-section">
+            <div class="section-title">
+              <el-icon><Grid /></el-icon>
+              <span>功能模块</span>
+            </div>
+            <div class="nav-items">
+              <div
+                v-for="func in functionCategories"
+                :key="func.path"
+                class="nav-item"
+                @click="router.push(func.path)"
+              >
+                <span class="item-icon">{{ func.icon }}</span>
+                <span class="item-text">{{ func.label }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 内容分类 -->
+          <div class="nav-section">
+            <div class="section-title">
+              <el-icon><Collection /></el-icon>
+              <span>内容分类</span>
+            </div>
+            <div class="nav-items">
+              <div
+                v-for="content in contentCategories"
+                :key="content.id"
+                class="nav-item"
+                @click="scrollToSection(content.id)"
+              >
+                <span class="item-icon">{{ content.icon }}</span>
+                <span class="item-text">{{ content.label }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 浮动导航按钮 -->
+    <el-button
+      class="floating-nav-btn"
+      type="primary"
+      circle
+      @click="showSidebar = !showSidebar"
+    >
+      <el-icon><Menu /></el-icon>
+    </el-button>
 
     <!-- 头部横幅 -->
     <div class="hero-section">
@@ -156,7 +247,7 @@
     </div>
 
     <!-- 月龄选择网格 -->
-    <div class="months-section">
+    <div class="months-section" id="months-section">
       <div class="section-header">
         <h2>
           <span class="icon-wrapper">📅</span>
@@ -164,9 +255,21 @@
         </h2>
         <p class="section-desc">探索宝宝0-12个月的成长历程</p>
       </div>
+
+      <!-- 月龄分类导航 -->
+      <div class="month-category-tabs">
+        <el-radio-group v-model="selectedCategory" size="large">
+          <el-radio-button value="all">全部阶段</el-radio-button>
+          <el-radio-button value="newborn">新生儿期 (0-3月)</el-radio-button>
+          <el-radio-button value="infant">婴儿期 (4-6月)</el-radio-button>
+          <el-radio-button value="older">较大婴儿 (7-9月)</el-radio-button>
+          <el-radio-button value="toddler">学步期 (10-12月)</el-radio-button>
+        </el-radio-group>
+      </div>
+
       <div class="months-grid">
         <div
-          v-for="(monthData, index) in babyStore.allMonthsData"
+          v-for="(monthData, index) in filteredMonthsData"
           :key="monthData.month"
           class="month-card-wrapper"
           :class="{ 'is-current': monthData.month === babyStore.currentMonth }"
@@ -186,37 +289,45 @@
             <!-- 月龄标识 -->
             <div class="month-number">{{ monthData.month }}</div>
             <div class="month-label">月龄</div>
-            
+
             <!-- 阶段名称 -->
-            <div class="month-stage-name">{{ monthData.title.replace(/[（(].*?[)）]/g, '') }}</div>
-            
+            <div class="month-stage-name">
+              {{ monthData.title.replace(/[（(].*?[)）]/g, '') }}
+            </div>
+
             <!-- 行为简述 -->
             <div class="month-description" v-if="monthData.summary">
               {{ getBriefDescription(monthData) }}
             </div>
-            
+
             <!-- 发育数据 -->
             <div class="month-physical-data">
               <div class="data-item">
                 <span class="data-icon">⚖️</span>
-                <span class="data-text">{{ monthData.physicalDevelopment.weight }}</span>
+                <span class="data-text">
+                  {{ monthData.physicalDevelopment.weight }}
+                </span>
               </div>
               <div class="data-item">
                 <span class="data-icon">📏</span>
-                <span class="data-text">{{ monthData.physicalDevelopment.height }}</span>
+                <span class="data-text">
+                  {{ monthData.physicalDevelopment.height }}
+                </span>
               </div>
             </div>
-            
+
             <!-- 里程碑进度 -->
             <div class="month-milestone-progress" v-if="monthData.milestones">
               <div class="progress-info">
                 <span class="progress-label">里程碑</span>
                 <span class="progress-fraction">
-                  {{ getCompletedMilestones(monthData) }}/{{ monthData.milestones.length }}
+                  {{ getCompletedMilestones(monthData) }}/{{
+                    monthData.milestones.length
+                  }}
                 </span>
               </div>
               <div class="progress-bar-wrapper">
-                <div 
+                <div
                   class="progress-bar-fill"
                   :style="{ width: getMilestoneProgress(monthData) + '%' }"
                 ></div>
@@ -228,13 +339,28 @@
     </div>
 
     <!-- 快捷功能卡片 -->
-    <div class="quick-actions">
+    <div class="quick-actions" id="quick-actions">
       <div class="section-header">
         <h2>
           <span class="icon-wrapper">⚡</span>
           快捷功能
         </h2>
         <p class="section-desc">便捷工具助您育儿更轻松</p>
+      </div>
+
+      <!-- 功能分类标签 -->
+      <div class="function-tags">
+        <el-tag
+          v-for="tag in functionTags"
+          :key="tag.id"
+          :type="tag.type"
+          size="large"
+          effect="plain"
+          class="function-tag"
+        >
+          <span class="tag-icon">{{ tag.icon }}</span>
+          <span>{{ tag.label }}</span>
+        </el-tag>
       </div>
       <el-row :gutter="24">
         <el-col :xs="24" :sm="12" :md="8" :lg="4">
@@ -322,13 +448,28 @@
     </div>
 
     <!-- 育儿小贴士 -->
-    <div class="tips-section">
+    <div class="tips-section" id="tips-section">
       <div class="section-header">
         <h2>
           <span class="icon-wrapper">💡</span>
           每日育儿小贴士
         </h2>
         <p class="section-desc">科学育儿，从这里开始</p>
+      </div>
+
+      <!-- 小贴士分类 -->
+      <div class="tips-category-filter">
+        <el-button
+          v-for="category in tipCategories"
+          :key="category.value"
+          :type="selectedTipCategory === category.value ? 'primary' : ''"
+          size="small"
+          round
+          @click="selectedTipCategory = category.value"
+        >
+          <span class="category-icon">{{ category.icon }}</span>
+          <span>{{ category.label }}</span>
+        </el-button>
       </div>
 
       <!-- 大气轮播图 -->
@@ -475,6 +616,11 @@ import {
   FirstAidKit,
   Notebook,
   Calendar,
+  HomeFilled,
+  Close,
+  Menu,
+  Grid,
+  Collection,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { BabyMonthData } from '@/types/baby'
@@ -483,11 +629,57 @@ const router = useRouter()
 const babyStore = useBabyStore()
 
 const showBabyInfoDialog = ref(false)
+const showSidebar = ref(false)
+const selectedCategory = ref('all')
+const selectedTipCategory = ref('all')
+
 const babyForm = ref({
   name: '宝宝',
   birthday: new Date(),
   gender: 'unknown' as 'boy' | 'girl' | 'unknown',
 })
+
+// 月龄分类
+const monthCategories = [
+  { id: 'newborn', label: '新生儿期', icon: '👶', range: [0, 3], count: 4 },
+  { id: 'infant', label: '婴儿期', icon: '🍼', range: [4, 6], count: 3 },
+  { id: 'older', label: '较大婴儿', icon: '🧸', range: [7, 9], count: 3 },
+  { id: 'toddler', label: '学步期', icon: '👣', range: [10, 12], count: 3 },
+]
+
+// 功能分类
+const functionCategories = [
+  { path: '/timeline', label: '成长时间轴', icon: '⏰' },
+  { path: '/checklist', label: '成长清单', icon: '✅' },
+  { path: '/vaccine', label: '疫苗接种', icon: '💉' },
+  { path: '/growth', label: '成长曲线', icon: '📈' },
+  { path: '/diary', label: '育儿日记', icon: '📔' },
+]
+
+// 内容分类
+const contentCategories = [
+  { id: 'months-section', label: '月龄阶段', icon: '📅' },
+  { id: 'quick-actions', label: '快捷功能', icon: '⚡' },
+  { id: 'tips-section', label: '育儿小贴士', icon: '💡' },
+]
+
+// 功能标签
+const functionTags = [
+  { id: 'record', label: '记录追踪', icon: '📝', type: 'success' },
+  { id: 'health', label: '健康管理', icon: '🏥', type: 'warning' },
+  { id: 'learn', label: '学习成长', icon: '📚', type: 'primary' },
+  { id: 'tools', label: '实用工具', icon: '🔧', type: 'info' },
+]
+
+// 小贴士分类
+const tipCategories = [
+  { value: 'all', label: '全部', icon: '🌟' },
+  { value: 'feeding', label: '喂养', icon: '🍼' },
+  { value: 'sleep', label: '睡眠', icon: '😴' },
+  { value: 'care', label: '护理', icon: '🛁' },
+  { value: 'play', label: '互动', icon: '🎮' },
+  { value: 'safety', label: '安全', icon: '⚠️' },
+]
 
 const currentMonthData = computed(() => babyStore.currentMonthData)
 
@@ -497,6 +689,31 @@ const totalMilestones = computed(() => {
     0,
   )
 })
+
+// 过滤后的月龄数据
+const filteredMonthsData = computed(() => {
+  if (selectedCategory.value === 'all') {
+    return babyStore.allMonthsData
+  }
+
+  const category = monthCategories.find((c) => c.id === selectedCategory.value)
+  if (!category?.range || category.range.length < 2)
+    return babyStore.allMonthsData
+
+  const [min = 0, max = 12] = category.range
+  return babyStore.allMonthsData.filter(
+    (month: BabyMonthData) => month.month >= min && month.month <= max,
+  )
+})
+
+// 滚动到指定区域
+const scrollToSection = (sectionId: string) => {
+  const element = document.getElementById(sectionId)
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    showSidebar.value = false
+  }
+}
 
 const dailyTips = [
   {
@@ -609,14 +826,16 @@ const getBriefDescription = (monthData: BabyMonthData) => {
     11: '迈出人生第一步',
     12: '周岁啦，成长飞速',
   }
-  return summaryMap[monthData.month] || monthData.summary?.substring(0, 20) + '...'
+  return (
+    summaryMap[monthData.month] || monthData.summary?.substring(0, 20) + '...'
+  )
 }
 
 // 获取已完成里程碑数量
 const getCompletedMilestones = (monthData: BabyMonthData) => {
   if (!monthData.milestones) return 0
-  return monthData.milestones.filter(m => 
-    babyStore.isMilestoneCompleted(m.title)
+  return monthData.milestones.filter((m) =>
+    babyStore.isMilestoneCompleted(m.title),
   ).length
 }
 
@@ -648,6 +867,246 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 面包屑导航 */
+.breadcrumb-nav {
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.breadcrumb-nav :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.breadcrumb-nav :deep(.el-breadcrumb__item) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 侧边栏快速导航 */
+.sidebar-nav {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 320px;
+  height: 100vh;
+  background: white;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.close-btn {
+  font-size: 20px;
+  color: #6b7280;
+}
+
+.sidebar-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.nav-section {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3f4f6 100%);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.nav-item:hover {
+  border-color: #a78bfa;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.2);
+}
+
+.item-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.item-text {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.item-count {
+  font-size: 12px;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  color: white;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* 浮动导航按钮 */
+.floating-nav-btn {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 998;
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+  font-size: 24px;
+}
+
+.floating-nav-btn:hover {
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* 侧边栏动画 */
+.slide-fade-enter-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* 月龄分类标签 */
+.month-category-tabs {
+  padding: 0 24px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.month-category-tabs :deep(.el-radio-group) {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.month-category-tabs :deep(.el-radio-button__inner) {
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  border: 2px solid #e5e7eb;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.month-category-tabs
+  :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  border-color: #7c3aed;
+  color: white;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+/* 功能标签 */
+.function-tags {
+  padding: 0 24px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.function-tag {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.function-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tag-icon {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+/* 小贴士分类过滤 */
+.tips-category-filter {
+  padding: 0 24px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tips-category-filter :deep(.el-button) {
+  padding: 8px 18px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.tips-category-filter .category-icon {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
 .home-view {
   max-width: 100%;
   margin: 0 auto;
@@ -2193,6 +2652,62 @@ onMounted(() => {
 
   .progress-fraction {
     font-size: 11px;
+  }
+
+  /* 移动端面包屑 */
+  .breadcrumb-nav {
+    padding: 12px 16px;
+  }
+
+  .breadcrumb-nav :deep(.el-breadcrumb__item) {
+    font-size: 13px;
+  }
+
+  /* 移动端侧边栏 */
+  .sidebar-nav {
+    width: 85%;
+    max-width: 300px;
+  }
+
+  .sidebar-header h3 {
+    font-size: 18px;
+  }
+
+  /* 移动端浮动按钮 */
+  .floating-nav-btn {
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  /* 移动端分类标签 */
+  .month-category-tabs {
+    padding: 0 12px;
+    margin-bottom: 16px;
+  }
+
+  .month-category-tabs :deep(.el-radio-button__inner) {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .function-tags {
+    padding: 0 12px;
+  }
+
+  .function-tag {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .tips-category-filter {
+    padding: 0 12px;
+  }
+
+  .tips-category-filter :deep(.el-button) {
+    padding: 6px 12px;
+    font-size: 12px;
   }
 
   .actions-grid {
