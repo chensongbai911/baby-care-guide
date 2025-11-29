@@ -1,16 +1,5 @@
 <template>
   <div class="home-view">
-    <!-- 面包屑导航 -->
-    <div class="breadcrumb-nav">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/' }">
-          <el-icon><HomeFilled /></el-icon>
-          <span>首页</span>
-        </el-breadcrumb-item>
-        <el-breadcrumb-item>宝宝成长指南</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
-
     <!-- 侧边栏快速导航 -->
     <transition name="slide-fade">
       <div class="sidebar-nav" v-show="showSidebar">
@@ -106,17 +95,22 @@
         <h1 class="hero-title">新手爸爸育儿指南</h1>
         <p class="subtitle">陪伴宝宝0-12个月的成长之旅</p>
         <div class="hero-stats">
-          <div class="stat-item">
+          <!-- 月龄阶段突出显示 -->
+          <div
+            class="stat-item stat-primary"
+            @click="scrollToSection('months-section')"
+          >
             <span class="stat-number">13</span>
             <span class="stat-label">月龄阶段</span>
+            <span class="stat-arrow">→</span>
           </div>
           <div class="stat-divider"></div>
-          <div class="stat-item">
+          <div class="stat-item" @click="goToTimeline">
             <span class="stat-number">{{ totalMilestones }}</span>
             <span class="stat-label">成长里程碑</span>
           </div>
           <div class="stat-divider"></div>
-          <div class="stat-item">
+          <div class="stat-item" @click="goToDetail(babyStore.currentMonth)">
             <span class="stat-number">100+</span>
             <span class="stat-label">护理技巧</span>
           </div>
@@ -127,34 +121,47 @@
             size="large"
             round
             @click="showBabyInfoDialog = true"
+            class="setup-btn"
           >
-            <el-icon><User /></el-icon>
+            <el-icon><Setting /></el-icon>
             {{
               babyStore.babyInfo.name === '宝宝'
-                ? '设置宝宝信息'
+                ? '设置宝宝月龄'
                 : babyStore.babyInfo.name + '的成长档案'
             }}
           </el-button>
-          <el-button
-            size="large"
-            round
-            @click="goToDetail(babyStore.currentMonth)"
-            class="secondary-btn"
+          <el-tooltip
+            content="探索当前月龄的成长内容"
+            placement="top"
+            :show-after="500"
           >
-            开始探索 →
-          </el-button>
+            <el-button
+              size="large"
+              round
+              @click="goToDetail(babyStore.currentMonth)"
+              class="secondary-btn explore-btn"
+            >
+              <span>开始探索</span>
+              <el-icon class="explore-arrow"><ArrowRight /></el-icon>
+            </el-button>
+          </el-tooltip>
         </div>
       </div>
     </div>
 
-    <!-- 当前月龄快速概览 - 全新设计 -->
+    <!-- 当前月龄快速概览 - 优化设计 -->
     <div class="current-section" v-if="currentMonthData">
       <el-card class="current-month-card-enhanced">
-        <!-- 顶部标记 -->
+        <!-- 顶部标记 - 更直观的阶段显示 -->
         <div class="current-badge">
-          <span class="badge-icon">🎯</span>
-          <span class="badge-text">当前阶段</span>
-          <span class="badge-month">{{ babyStore.currentMonth }}月龄</span>
+          <div class="badge-left">
+            <span class="badge-icon">🎯</span>
+            <span class="badge-text">当前阶段</span>
+          </div>
+          <div class="badge-right" @click="showBabyInfoDialog = true">
+            <span class="badge-stage">{{ currentMonthData.title }}</span>
+            <el-icon class="edit-icon"><Edit /></el-icon>
+          </div>
         </div>
 
         <!-- 欢迎语 -->
@@ -163,24 +170,35 @@
             <span class="emoji-wave">👋</span>
             {{ getWelcomeMessage() }}
           </h2>
-          <p class="welcome-subtitle">{{ currentMonthData.title }}</p>
+          <p class="welcome-subtitle">
+            宝宝现在
+            <strong>{{ babyStore.currentMonth }}</strong>
+            个月，
+            {{ getStageDescription() }}
+          </p>
         </div>
 
-        <!-- 发育数据卡片 -->
+        <!-- 发育数据卡片 - 统一视觉风格 -->
         <div class="development-data">
           <div class="data-card weight-card">
-            <div class="data-icon">⚖️</div>
+            <div class="data-icon-wrapper">
+              <span class="data-icon">👶</span>
+              <span class="data-badge">体重</span>
+            </div>
             <div class="data-content">
-              <div class="data-label">体重范围</div>
+              <div class="data-label">参考范围</div>
               <div class="data-value">
                 {{ currentMonthData.physicalDevelopment.weight }}
               </div>
             </div>
           </div>
           <div class="data-card height-card">
-            <div class="data-icon">📏</div>
+            <div class="data-icon-wrapper">
+              <span class="data-icon">👶</span>
+              <span class="data-badge">身高</span>
+            </div>
             <div class="data-content">
-              <div class="data-label">身高范围</div>
+              <div class="data-label">参考范围</div>
               <div class="data-value">
                 {{ currentMonthData.physicalDevelopment.height }}
               </div>
@@ -188,22 +206,44 @@
           </div>
         </div>
 
-        <!-- 关键里程碑 -->
+        <!-- 关键里程碑 - 添加展开收起功能 -->
         <div class="key-milestones">
           <div class="milestone-header">
-            <h3>🏆 关键里程碑</h3>
-            <span class="milestone-subtitle">
-              {{ babyStore.currentMonth }}个月宝宝的重要能力发展
-            </span>
+            <div class="header-left">
+              <h3>🏆 关键里程碑</h3>
+              <span class="milestone-subtitle">
+                {{ babyStore.currentMonth }}个月宝宝的重要能力发展
+              </span>
+            </div>
+            <div class="header-right">
+              <span class="milestone-progress">
+                {{ getCompletedMilestonesForMonth() }}/{{
+                  currentMonthData.milestones?.length || 0
+                }}
+              </span>
+              <el-button
+                text
+                size="small"
+                @click="showAllMilestones = !showAllMilestones"
+                class="expand-btn"
+              >
+                {{ showAllMilestones ? '收起' : '展开' }}
+                <el-icon>
+                  <ArrowUp v-if="showAllMilestones" />
+                  <ArrowDown v-else />
+                </el-icon>
+              </el-button>
+            </div>
           </div>
           <div class="milestone-grid">
             <div
-              v-for="milestone in currentMonthData.milestones.slice(0, 6)"
+              v-for="milestone in (showAllMilestones ? currentMonthData.milestones : currentMonthData.milestones?.slice(0, 6))"
               :key="milestone.title"
               class="milestone-card"
               :class="{
                 completed: babyStore.isMilestoneCompleted(milestone.title),
               }"
+              @click="toggleMilestoneStatus(milestone.title)"
             >
               <div class="milestone-icon">
                 {{ getMilestoneIcon(milestone.title) }}
@@ -218,6 +258,18 @@
                 </el-icon>
               </div>
             </div>
+          </div>
+
+          <!-- 查看更多入口 -->
+          <div
+            v-if="currentMonthData.milestones?.length > 6 && !showAllMilestones"
+            class="view-more-milestones"
+            @click="goToDetail(babyStore.currentMonth)"
+          >
+            <span>
+              查看全部 {{ currentMonthData.milestones.length }} 个里程碑
+            </span>
+            <el-icon><ArrowRight /></el-icon>
           </div>
         </div>
 
@@ -609,6 +661,8 @@ import {
   List,
   User,
   ArrowRight,
+  ArrowUp,
+  ArrowDown,
   Check,
   TrendCharts,
   Histogram,
@@ -621,6 +675,8 @@ import {
   Menu,
   Grid,
   Collection,
+  Setting,
+  Edit,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { BabyMonthData } from '@/types/baby'
@@ -632,6 +688,7 @@ const showBabyInfoDialog = ref(false)
 const showSidebar = ref(false)
 const selectedCategory = ref('all')
 const selectedTipCategory = ref('all')
+const showAllMilestones = ref(false)
 
 const babyForm = ref({
   name: '宝宝',
@@ -781,6 +838,30 @@ const getWelcomeMessage = () => {
   return `${name}，${month}个月啦！`
 }
 
+// 获取当前阶段描述
+const getStageDescription = () => {
+  const month = babyStore.currentMonth
+  if (month <= 1) return '正处于新生儿期，需要特别呵护'
+  if (month <= 3) return '正在快速成长，开始对世界充满好奇'
+  if (month <= 6) return '活动能力增强，互动更加丰富'
+  if (month <= 9) return '开始尝试独立，探索欲旺盛'
+  if (month <= 12) return '即将迎来周岁，能力提升飞快'
+  return '成长进入新阶段'
+}
+
+// 获取当前月龄已完成的里程碑数量
+const getCompletedMilestonesForMonth = () => {
+  if (!currentMonthData.value?.milestones) return 0
+  return currentMonthData.value.milestones.filter((m) =>
+    babyStore.isMilestoneCompleted(m.title),
+  ).length
+}
+
+// 切换里程碑状态
+const toggleMilestoneStatus = (title: string) => {
+  babyStore.toggleMilestone(title)
+}
+
 const getMilestoneIcon = (title: string) => {
   const iconMap: Record<string, string> = {
     抬头: '👀',
@@ -867,29 +948,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 面包屑导航 */
-.breadcrumb-nav {
-  padding: 16px 24px;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(8px);
-  background: rgba(255, 255, 255, 0.95);
-}
-
-.breadcrumb-nav :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-  color: #7c3aed;
-  font-weight: 600;
-}
-
-.breadcrumb-nav :deep(.el-breadcrumb__item) {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
 /* 侧边栏快速导航 */
 .sidebar-nav {
   position: fixed;
@@ -1276,11 +1334,35 @@ onMounted(() => {
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .stat-item:hover {
   transform: scale(1.08) translateY(-4px);
   background: rgba(255, 255, 255, 0.25);
+}
+
+/* 主要数据卡片突出样式 */
+.stat-item.stat-primary {
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  position: relative;
+  padding: 10px 20px;
+}
+
+.stat-item.stat-primary .stat-number {
+  font-size: 32px;
+}
+
+.stat-arrow {
+  font-size: 14px;
+  margin-top: 2px;
+  opacity: 0.8;
+  transition: transform 0.3s ease;
+}
+
+.stat-item:hover .stat-arrow {
+  transform: translateX(4px);
 }
 
 .stat-number {
@@ -1325,6 +1407,16 @@ onMounted(() => {
   transform: translateY(-4px) scale(1.05);
 }
 
+.setup-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup-btn :deep(.el-icon) {
+  font-size: 18px;
+}
+
 .secondary-btn {
   background: rgba(255, 255, 255, 0.2) !important;
   color: white !important;
@@ -1334,6 +1426,20 @@ onMounted(() => {
 
 .secondary-btn:hover {
   background: rgba(255, 255, 255, 0.35) !important;
+}
+
+.explore-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.explore-arrow {
+  transition: transform 0.3s ease;
+}
+
+.explore-btn:hover .explore-arrow {
+  transform: translateX(4px);
 }
 
 /* 通用区域样式 */
@@ -1411,15 +1517,21 @@ onMounted(() => {
     0 0 0 1px rgba(167, 139, 250, 0.2) !important;
 }
 
-/* 顶部标记 */
+/* 顶部标记 - 优化设计 */
 .current-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   padding: 16px 24px;
   background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
   color: white;
   font-weight: 600;
+}
+
+.badge-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .badge-icon {
@@ -1432,14 +1544,31 @@ onMounted(() => {
   letter-spacing: 0.5px;
 }
 
-.badge-month {
-  margin-left: auto;
-  padding: 4px 14px;
-  background: rgba(255, 255, 255, 0.25);
+.badge-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.badge-right:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.02);
+}
+
+.badge-stage {
   font-size: 14px;
   font-weight: 700;
-  backdrop-filter: blur(10px);
+}
+
+.edit-icon {
+  font-size: 14px;
+  opacity: 0.8;
 }
 
 /* 欢迎语 */
@@ -1486,7 +1615,12 @@ onMounted(() => {
   margin: 0;
 }
 
-/* 发育数据卡片 */
+.welcome-subtitle strong {
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+/* 发育数据卡片 - 统一设计 */
 .development-data {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1534,10 +1668,36 @@ onMounted(() => {
   background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
 }
 
+.data-icon-wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
 .data-icon {
   font-size: 36px;
-  z-index: 1;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.data-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #7c3aed;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.weight-card .data-badge {
+  color: #d97706;
+}
+
+.height-card .data-badge {
+  color: #7c3aed;
 }
 
 .data-content {
@@ -1561,20 +1721,53 @@ onMounted(() => {
   line-height: 1.2;
 }
 
-/* 关键里程碑 */
+/* 关键里程碑 - 增强设计 */
 .key-milestones {
   padding: 0 24px 24px;
 }
 
 .milestone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 16px;
 }
 
-.milestone-header h3 {
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-left h3 {
   font-size: 18px;
   font-weight: 700;
-  margin: 0 0 4px 0;
+  margin: 0;
   color: #1f2937;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.milestone-progress {
+  font-size: 14px;
+  font-weight: 700;
+  color: #7c3aed;
+  background: #f3e8ff;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.expand-btn {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.expand-btn:hover {
+  color: #7c3aed;
 }
 
 .milestone-subtitle {
@@ -1611,6 +1804,10 @@ onMounted(() => {
   border-color: #86efac;
 }
 
+.milestone-card:active {
+  transform: scale(0.98);
+}
+
 .milestone-icon {
   font-size: 32px;
   margin-bottom: 8px;
@@ -1635,6 +1832,36 @@ onMounted(() => {
   color: #10b981;
   font-size: 18px;
   font-weight: bold;
+}
+
+/* 查看更多里程碑入口 */
+.view-more-milestones {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+.view-more-milestones:hover {
+  background: linear-gradient(135deg, #e9d5ff 0%, #fbcfe8 100%);
+  transform: translateY(-2px);
+}
+
+.view-more-milestones .el-icon {
+  transition: transform 0.3s ease;
+}
+
+.view-more-milestones:hover .el-icon {
+  transform: translateX(4px);
 }
 
 /* 底部操作按钮 */
