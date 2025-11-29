@@ -349,7 +349,7 @@
           :key="monthData.month"
           class="month-card-wrapper"
           :class="{ 'is-current': monthData.month === babyStore.currentMonth }"
-          :style="{ animationDelay: `${index * 0.05}s` }"
+          :style="{ animationDelay: `${index * 0.03}s` }"
           @click="goToDetail(monthData.month)"
         >
           <!-- 当前标记 -->
@@ -362,87 +362,76 @@
           </div>
 
           <div class="month-card-inner">
-            <!-- 首层：月龄标识 + 核心信息 -->
-            <div class="month-card-primary">
+            <!-- 月龄标识 -->
+            <div class="month-header">
               <div class="month-number">{{ monthData.month }}</div>
               <div class="month-label">月龄</div>
+            </div>
 
-              <!-- 阶段名称 -->
-              <div class="month-stage-name">
-                {{ monthData.title.replace(/[（(].*?[)）]/g, '') }}
+            <!-- 阶段名称 -->
+            <div class="month-stage-name">
+              {{ monthData.title.replace(/[（(].*?[)）]/g, '') }}
+            </div>
+
+            <!-- 行为简述 -->
+            <div class="month-description" v-if="monthData.summary">
+              {{ getBriefDescription(monthData) }}
+            </div>
+
+            <!-- 里程碑进度条 -->
+            <div class="month-milestone-progress" v-if="monthData.milestones">
+              <div class="progress-info">
+                <span class="progress-label">已完成</span>
+                <span
+                  class="progress-fraction"
+                  :class="{
+                    'has-progress': getCompletedMilestones(monthData) > 0,
+                  }"
+                >
+                  {{ getCompletedMilestones(monthData) }}/{{
+                    monthData.milestones.length
+                  }}
+                </span>
               </div>
-
-              <!-- 行为简述 -->
-              <div class="month-description" v-if="monthData.summary">
-                {{ getBriefDescription(monthData) }}
-              </div>
-
-              <!-- 里程碑进度条（始终显示） -->
-              <div class="month-milestone-progress" v-if="monthData.milestones">
-                <div class="progress-info">
-                  <span class="progress-label">已完成</span>
-                  <span class="progress-fraction">
-                    {{ getCompletedMilestones(monthData) }}/{{
-                      monthData.milestones.length
-                    }}
-                  </span>
-                </div>
-                <div class="progress-bar-wrapper">
-                  <div
-                    class="progress-bar-fill"
-                    :style="{ width: getMilestoneProgress(monthData) + '%' }"
-                  ></div>
-                </div>
+              <div class="progress-bar-wrapper">
+                <div
+                  class="progress-bar-fill"
+                  :style="{ width: getMilestoneProgress(monthData) + '%' }"
+                ></div>
               </div>
             </div>
 
-            <!-- 展开层：体格数据 + 里程碑列表（hover显示） -->
-            <div class="month-card-expand">
-              <div class="expand-section physical-section">
-                <div class="expand-title">体格参考</div>
-                <div class="month-physical-data">
-                  <div class="data-item">
-                    <span class="data-icon">⚖️</span>
-                    <span class="data-text">
-                      {{ monthData.physicalDevelopment.weight }}
-                    </span>
-                  </div>
-                  <div class="data-item">
-                    <span class="data-icon">📏</span>
-                    <span class="data-text">
-                      {{ monthData.physicalDevelopment.height }}
-                    </span>
-                  </div>
-                </div>
+            <!-- 体格参考数据 -->
+            <div class="month-physical-data">
+              <div class="data-item">
+                <span class="data-icon">⚖️</span>
+                <span class="data-text">{{ getWeightShort(monthData) }}</span>
               </div>
-              <div
-                class="expand-section milestone-section"
-                v-if="monthData.milestones?.length"
+              <div class="data-item">
+                <span class="data-icon">📏</span>
+                <span class="data-text">{{ getHeightShort(monthData) }}</span>
+              </div>
+            </div>
+
+            <!-- 关键能力标签 -->
+            <div class="month-abilities" v-if="monthData.milestones?.length">
+              <span
+                v-for="(m, idx) in monthData.milestones.slice(0, 3)"
+                :key="idx"
+                class="ability-tag"
+                :class="{ completed: babyStore.isMilestoneCompleted(m.title) }"
               >
-                <div class="expand-title">关键能力</div>
-                <div class="milestone-tags">
-                  <span
-                    v-for="(m, idx) in monthData.milestones.slice(0, 4)"
-                    :key="idx"
-                    class="milestone-tag"
-                    :class="{
-                      completed: babyStore.isMilestoneCompleted(m.title),
-                    }"
-                  >
-                    {{ m.title }}
-                  </span>
-                  <span
-                    v-if="monthData.milestones.length > 4"
-                    class="milestone-more"
-                  >
-                    +{{ monthData.milestones.length - 4 }}
-                  </span>
-                </div>
-              </div>
-              <div class="expand-action">
-                <span>点击查看详情</span>
-                <el-icon><ArrowRight /></el-icon>
-              </div>
+                {{ m.title }}
+              </span>
+              <span v-if="monthData.milestones.length > 3" class="ability-more">
+                +{{ monthData.milestones.length - 3 }}
+              </span>
+            </div>
+
+            <!-- 查看详情按钮 -->
+            <div class="month-action">
+              <span>查看详情</span>
+              <el-icon><ArrowRight /></el-icon>
             </div>
           </div>
         </div>
@@ -1012,6 +1001,28 @@ const getMilestoneProgress = (monthData: BabyMonthData) => {
   if (!monthData.milestones || monthData.milestones.length === 0) return 0
   const completed = getCompletedMilestones(monthData)
   return Math.round((completed / monthData.milestones.length) * 100)
+}
+
+// 获取体重简写（用于卡片展示）
+const getWeightShort = (monthData: BabyMonthData) => {
+  const weight = monthData.physicalDevelopment?.weight || ''
+  // 提取数字范围，如 "4.3-7.1kg" 或 "约4.3kg"
+  const match = weight.match(/[\d.]+[-~]?[\d.]*/)
+  if (match) {
+    return match[0] + 'kg'
+  }
+  return weight.substring(0, 10)
+}
+
+// 获取身高简写（用于卡片展示）
+const getHeightShort = (monthData: BabyMonthData) => {
+  const height = monthData.physicalDevelopment?.height || ''
+  // 提取数字范围，如 "54-60cm" 或 "约55cm"
+  const match = height.match(/[\d.]+[-~]?[\d.]*/)
+  if (match) {
+    return match[0] + 'cm'
+  }
+  return height.substring(0, 10)
 }
 
 const saveBabyInfo = () => {
@@ -2143,15 +2154,16 @@ onMounted(() => {
   z-index: 1;
 }
 
+/* 月龄卡片网格 - PC端固定6列 */
 .months-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(6, 1fr);
   gap: 16px;
 }
 
 .month-card-wrapper {
   position: relative;
-  animation: monthFadeIn 0.6s ease forwards;
+  animation: monthFadeIn 0.5s ease forwards;
   opacity: 0;
 }
 
@@ -2162,170 +2174,91 @@ onMounted(() => {
 .month-card-wrapper.is-current .month-card-inner {
   border: 3px solid #7c3aed;
   background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
-  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.25);
-  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
 }
 
 .month-card-inner {
   background: white;
   border: 2px solid #e5e7eb;
-  border-radius: 20px;
-  padding: 0;
+  border-radius: 16px;
+  padding: 14px 10px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 260px;
-  overflow: hidden;
+  gap: 8px;
+  height: 100%;
+  min-height: 280px;
 }
 
 .month-card-inner:hover {
   border-color: #a78bfa;
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 12px 28px rgba(167, 139, 250, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(167, 139, 250, 0.2);
 }
 
-/* hover时展开详情 */
-.month-card-inner:hover .month-card-expand {
-  max-height: 200px;
-  opacity: 1;
-  padding: 12px;
-}
-
-/* 首层内容 */
-.month-card-primary {
-  padding: 18px 14px;
+/* 月龄头部 */
+.month-header {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-/* 展开层内容 */
-.month-card-expand {
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition: all 0.4s ease;
-  background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%);
-  border-top: 1px dashed #e5e7eb;
-  padding: 0 12px;
-}
-
-.expand-section {
-  margin-bottom: 10px;
-}
-
-.expand-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: #7c3aed;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-  text-align: left;
-}
-
-.milestone-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.milestone-tag {
-  font-size: 10px;
-  padding: 3px 8px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  color: #6b7280;
-  transition: all 0.2s ease;
-}
-
-.milestone-tag.completed {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-  border-color: #86efac;
-  color: #166534;
-}
-
-.milestone-more {
-  font-size: 10px;
-  padding: 3px 8px;
-  background: #f3f4f6;
-  border-radius: 10px;
-  color: #9ca3af;
-  font-weight: 600;
-}
-
-.expand-action {
-  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #7c3aed;
-  font-weight: 600;
-  padding-top: 8px;
-  border-top: 1px solid rgba(124, 58, 237, 0.1);
+  margin-bottom: 4px;
 }
 
 .current-marker {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: -8px;
+  right: -8px;
   background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
   color: white;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
   z-index: 10;
   animation: pulse 2s ease-in-out infinite;
 }
 
 .marker-icon {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .marker-text {
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 /* 月龄标识 */
 .month-number {
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 900;
   background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1;
-  margin-bottom: 2px;
 }
 
 .month-label {
-  font-size: 12px;
+  font-size: 10px;
   color: #9ca3af;
   font-weight: 600;
-  margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 /* 阶段名称 */
 .month-stage-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 8px;
   line-height: 1.3;
-  min-height: 36px;
+  min-height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2333,82 +2266,144 @@ onMounted(() => {
 
 /* 行为简述 */
 .month-description {
-  font-size: 12px;
+  font-size: 11px;
   color: #6b7280;
-  line-height: 1.5;
-  padding: 8px 10px;
+  line-height: 1.4;
+  padding: 6px 8px;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  border-radius: 10px;
-  margin-bottom: 4px;
-  min-height: 40px;
+  border-radius: 8px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
 }
 
-/* 发育数据 */
+/* 体格数据 */
 .month-physical-data {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
-  margin-bottom: 4px;
+  flex-wrap: wrap;
 }
 
-.data-item {
+.month-physical-data .data-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
+  gap: 3px;
+  padding: 4px 8px;
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-radius: 8px;
-  font-size: 11px;
+  border-radius: 6px;
+  font-size: 10px;
   font-weight: 600;
   color: #92400e;
 }
 
-.data-icon {
-  font-size: 14px;
+.month-physical-data .data-icon {
+  font-size: 12px;
   line-height: 1;
 }
 
-.data-text {
+.month-physical-data .data-text {
   white-space: nowrap;
   font-size: 10px;
 }
 
+/* 关键能力标签 */
+.month-abilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.ability-tag {
+  font-size: 9px;
+  padding: 3px 6px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ability-tag.completed {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-color: #86efac;
+  color: #166534;
+}
+
+.ability-more {
+  font-size: 9px;
+  padding: 3px 6px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+/* 查看详情按钮 */
+.month-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #7c3aed;
+  font-weight: 600;
+  padding-top: 8px;
+  margin-top: auto;
+  border-top: 1px solid #f3f4f6;
+  transition: all 0.2s ease;
+}
+
+.month-action:hover {
+  color: #6d28d9;
+}
+
+.month-action .el-icon {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.month-card-inner:hover .month-action .el-icon {
+  transform: translateX(3px);
+}
+
 /* 里程碑进度 */
 .month-milestone-progress {
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 2px solid #f3f4f6;
+  padding: 6px 0;
 }
 
 .progress-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .progress-label {
-  font-size: 11px;
-  color: #6b7280;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 500;
 }
 
 .progress-fraction {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
+  color: #9ca3af;
+}
+
+.progress-fraction.has-progress {
   color: #7c3aed;
 }
 
 /* 进度条 */
 .progress-bar-wrapper {
   width: 100%;
-  height: 6px;
+  height: 5px;
   background: #e5e7eb;
   border-radius: 3px;
   overflow: hidden;
@@ -2417,7 +2412,7 @@ onMounted(() => {
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+  background: linear-gradient(90deg, #22c55e 0%, #10b981 50%, #059669 100%);
   border-radius: 3px;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -2455,7 +2450,8 @@ onMounted(() => {
 }
 
 .month-card-wrapper.is-current .progress-bar-fill {
-  box-shadow: 0 0 8px rgba(124, 58, 237, 0.6);
+  background: linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+  box-shadow: 0 0 6px rgba(124, 58, 237, 0.5);
 }
 
 @keyframes monthFadeIn {
@@ -3152,54 +3148,77 @@ onMounted(() => {
     font-size: 13px;
   }
 
+  /* 平板端4列布局 */
   .months-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
   }
 
   .month-card-inner {
-    padding: 14px 10px;
-    min-height: 240px;
+    padding: 12px 8px;
+    min-height: 260px;
   }
 
   .month-number {
-    font-size: 32px;
+    font-size: 28px;
   }
 
   .month-label {
-    font-size: 11px;
-  }
-
-  .month-stage-name {
-    font-size: 12px;
-    min-height: 32px;
-  }
-
-  .month-description {
-    font-size: 11px;
-    padding: 6px 8px;
-    min-height: 36px;
-  }
-
-  .data-item {
-    padding: 5px 8px;
-    font-size: 10px;
-  }
-
-  .data-icon {
-    font-size: 12px;
-  }
-
-  .data-text {
     font-size: 9px;
   }
 
-  .progress-label {
+  .month-stage-name {
+    font-size: 11px;
+    min-height: 30px;
+  }
+
+  .month-description {
+    font-size: 10px;
+    padding: 5px 6px;
+    min-height: 32px;
+  }
+
+  .month-physical-data .data-item {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+
+  .month-physical-data .data-icon {
     font-size: 10px;
   }
 
+  .month-physical-data .data-text {
+    font-size: 9px;
+  }
+
+  .ability-tag {
+    font-size: 8px;
+    padding: 2px 5px;
+  }
+
+  .ability-more {
+    font-size: 8px;
+    padding: 2px 5px;
+  }
+
+  .month-action {
+    font-size: 10px;
+    padding-top: 6px;
+  }
+
+  .progress-label {
+    font-size: 9px;
+  }
+
   .progress-fraction {
-    font-size: 11px;
+    font-size: 10px;
+  }
+
+  .current-marker {
+    padding: 3px 8px;
+    font-size: 10px;
+    top: -6px;
+    right: -6px;
   }
 
   /* 移动端面包屑 */
@@ -3320,21 +3339,98 @@ onMounted(() => {
     flex: 1 1 100%;
   }
 
+  /* 手机端3列布局 */
   .months-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
   }
 
-  .month-card {
-    padding: 10px 8px;
+  .month-card-inner {
+    padding: 10px 6px;
+    min-height: 220px;
+    border-radius: 12px;
   }
 
-  .month-card-num {
-    font-size: 20px;
+  .month-number {
+    font-size: 24px;
   }
 
-  .month-card-label {
-    font-size: 11px;
+  .month-label {
+    font-size: 8px;
+  }
+
+  .month-stage-name {
+    font-size: 10px;
+    min-height: 26px;
+  }
+
+  .month-description {
+    font-size: 9px;
+    padding: 4px 5px;
+    min-height: 28px;
+    border-radius: 6px;
+  }
+
+  .month-physical-data {
+    gap: 4px;
+  }
+
+  .month-physical-data .data-item {
+    padding: 2px 5px;
+    font-size: 8px;
+    border-radius: 4px;
+  }
+
+  .month-physical-data .data-icon {
+    font-size: 9px;
+  }
+
+  .month-physical-data .data-text {
+    font-size: 8px;
+  }
+
+  .ability-tag {
+    font-size: 7px;
+    padding: 2px 4px;
+    border-radius: 6px;
+  }
+
+  .ability-more {
+    font-size: 7px;
+    padding: 2px 4px;
+  }
+
+  .month-action {
+    font-size: 9px;
+    padding-top: 4px;
+  }
+
+  .month-action .el-icon {
+    font-size: 10px;
+  }
+
+  .progress-bar-wrapper {
+    height: 4px;
+  }
+
+  .progress-label {
+    font-size: 8px;
+  }
+
+  .progress-fraction {
+    font-size: 9px;
+  }
+
+  .current-marker {
+    padding: 2px 6px;
+    font-size: 8px;
+    top: -4px;
+    right: -4px;
+    border-radius: 8px;
+  }
+
+  .marker-icon {
+    font-size: 10px;
   }
 
   .actions-grid {
