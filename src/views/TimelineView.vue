@@ -47,7 +47,7 @@
         >
           <el-icon><ArrowLeft /></el-icon>
         </el-button>
-        
+
         <div class="timeline-nav-track" ref="timelineNavRef">
           <div class="timeline-nav-items">
             <div
@@ -55,28 +55,32 @@
               :key="month.month"
               :class="[
                 'timeline-nav-item',
-                { 
+                {
                   'is-current': month.month === currentMonth,
                   'is-completed': getMonthStatus(month.month) === 'completed',
-                  'is-locked': getMonthStatus(month.month) === 'locked'
-                }
+                  'is-locked': getMonthStatus(month.month) === 'locked',
+                },
               ]"
               @click="jumpToMonth(month.month)"
             >
               <div class="nav-item-marker">
-                <span v-if="getMonthStatus(month.month) === 'completed'">✓</span>
-                <span v-else-if="getMonthStatus(month.month) === 'locked'">🔒</span>
+                <span v-if="getMonthStatus(month.month) === 'completed'">
+                  ✓
+                </span>
+                <span v-else-if="getMonthStatus(month.month) === 'locked'">
+                  🔒
+                </span>
                 <span v-else>{{ month.month }}</span>
               </div>
               <div class="nav-item-label">{{ month.month }}月</div>
-              <div 
-                class="nav-item-progress" 
+              <div
+                class="nav-item-progress"
                 :style="{ width: getMilestoneProgress(month) + '%' }"
               ></div>
             </div>
           </div>
         </div>
-        
+
         <el-button
           circle
           size="small"
@@ -86,7 +90,7 @@
           <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
-      
+
       <!-- 进度提示 -->
       <div class="timeline-progress-hint">
         <span class="hint-icon">🎯</span>
@@ -157,50 +161,256 @@
             </div>
           </div>
 
-          <!-- 发育亮点 -->
+          <!-- 发育亮点 - 按维度分类 -->
           <div class="highlights-section">
             <div class="section-title">
               <span class="title-icon">✨</span>
               <span>发育亮点</span>
+              <el-button
+                text
+                size="small"
+                class="expand-btn"
+                @click.stop="toggleDevelopment(month.month)"
+              >
+                {{ expandedMonths.includes(month.month) ? '收起' : '展开' }}
+              </el-button>
             </div>
+
+            <!-- 维度标签 -->
+            <div class="dimension-tabs">
+              <div
+                v-for="dim in developmentDimensions"
+                :key="dim.id"
+                :class="[
+                  'dimension-tab',
+                  { active: activeDimension === dim.id },
+                ]"
+                @click.stop="activeDimension = dim.id"
+              >
+                <span class="dim-icon">{{ dim.icon }}</span>
+                <span class="dim-label">{{ dim.label }}</span>
+              </div>
+            </div>
+
+            <!-- 维度内容 -->
             <div class="highlights-grid">
-              <div
-                class="highlight-item"
-                v-for="(skill, idx) in month.cognitiveSkills.slice(0, 2)"
-                :key="idx"
+              <!-- 大运动 -->
+              <template
+                v-if="
+                  activeDimension === 'gross' ||
+                  expandedMonths.includes(month.month)
+                "
               >
-                <span class="highlight-icon">🧠</span>
-                <span class="highlight-text">{{ skill }}</span>
-              </div>
-              <div
-                class="highlight-item"
-                v-for="(skill, idx) in month.motorSkills.gross.slice(0, 1)"
-                :key="'motor-' + idx"
+                <div
+                  class="dimension-section"
+                  v-if="month.motorSkills?.gross?.length"
+                >
+                  <div
+                    class="dim-header"
+                    v-if="expandedMonths.includes(month.month)"
+                  >
+                    <span class="dim-icon">🏃</span>
+                    <span>大运动</span>
+                  </div>
+                  <div
+                    class="highlight-item"
+                    v-for="(skill, idx) in month.motorSkills.gross.slice(
+                      0,
+                      expandedMonths.includes(month.month) ? 3 : 1,
+                    )"
+                    :key="'gross-' + idx"
+                  >
+                    <span class="highlight-icon">🏃</span>
+                    <span class="highlight-text">{{ skill }}</span>
+                  </div>
+                </div>
+              </template>
+
+              <!-- 精细动作 -->
+              <template
+                v-if="
+                  activeDimension === 'fine' ||
+                  expandedMonths.includes(month.month)
+                "
               >
-                <span class="highlight-icon">🏃</span>
-                <span class="highlight-text">{{ skill }}</span>
-              </div>
+                <div
+                  class="dimension-section"
+                  v-if="month.motorSkills?.fine?.length"
+                >
+                  <div
+                    class="dim-header"
+                    v-if="expandedMonths.includes(month.month)"
+                  >
+                    <span class="dim-icon">✋</span>
+                    <span>精细动作</span>
+                  </div>
+                  <div
+                    class="highlight-item"
+                    v-for="(skill, idx) in month.motorSkills.fine.slice(
+                      0,
+                      expandedMonths.includes(month.month) ? 2 : 1,
+                    )"
+                    :key="'fine-' + idx"
+                  >
+                    <span class="highlight-icon">✋</span>
+                    <span class="highlight-text">{{ skill }}</span>
+                  </div>
+                </div>
+              </template>
+
+              <!-- 认知 -->
+              <template
+                v-if="
+                  activeDimension === 'cognitive' ||
+                  expandedMonths.includes(month.month)
+                "
+              >
+                <div
+                  class="dimension-section"
+                  v-if="month.cognitiveSkills?.length"
+                >
+                  <div
+                    class="dim-header"
+                    v-if="expandedMonths.includes(month.month)"
+                  >
+                    <span class="dim-icon">🧠</span>
+                    <span>认知发展</span>
+                  </div>
+                  <div
+                    class="highlight-item"
+                    v-for="(skill, idx) in month.cognitiveSkills.slice(
+                      0,
+                      expandedMonths.includes(month.month) ? 2 : 1,
+                    )"
+                    :key="'cog-' + idx"
+                  >
+                    <span class="highlight-icon">🧠</span>
+                    <span class="highlight-text">{{ skill }}</span>
+                  </div>
+                </div>
+              </template>
+
+              <!-- 社交情感 -->
+              <template
+                v-if="
+                  activeDimension === 'social' ||
+                  expandedMonths.includes(month.month)
+                "
+              >
+                <div
+                  class="dimension-section"
+                  v-if="month.socialEmotional?.length"
+                >
+                  <div
+                    class="dim-header"
+                    v-if="expandedMonths.includes(month.month)"
+                  >
+                    <span class="dim-icon">💕</span>
+                    <span>社交情感</span>
+                  </div>
+                  <div
+                    class="highlight-item"
+                    v-for="(skill, idx) in month.socialEmotional.slice(
+                      0,
+                      expandedMonths.includes(month.month) ? 2 : 1,
+                    )"
+                    :key="'social-' + idx"
+                  >
+                    <span class="highlight-icon">💕</span>
+                    <span class="highlight-text">{{ skill }}</span>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
 
-          <!-- 里程碑进度 -->
+          <!-- 里程碑打卡 -->
           <div class="milestones-preview">
             <div class="section-title">
               <span class="title-icon">🏆</span>
-              <span>里程碑完成度</span>
+              <span>里程碑打卡</span>
+              <span class="milestone-count">
+                {{ getCompletedCount(month) }}/{{
+                  month.milestones?.length || 0
+                }}
+              </span>
             </div>
-            <div class="progress-bar-container">
-              <div class="progress-bar">
-                <div
-                  class="progress-fill"
-                  :style="{ width: getMilestoneProgress(month) + '%' }"
-                >
-                  <div class="progress-shimmer"></div>
+
+            <!-- 里程碑列表 -->
+            <div class="milestone-checklist" v-if="month.milestones">
+              <div
+                v-for="(milestone, idx) in month.milestones.slice(0, 4)"
+                :key="idx"
+                :class="[
+                  'milestone-check-item',
+                  {
+                    completed: babyStore.isMilestoneCompleted(milestone.title),
+                  },
+                ]"
+                @click.stop="toggleMilestone(milestone.title)"
+              >
+                <div class="check-box">
+                  <el-icon
+                    v-if="babyStore.isMilestoneCompleted(milestone.title)"
+                  >
+                    <Check />
+                  </el-icon>
+                </div>
+                <span class="milestone-text">{{ milestone.title }}</span>
+              </div>
+              <div v-if="month.milestones.length > 4" class="more-milestones">
+                +{{ month.milestones.length - 4 }} 更多里程碑
+              </div>
+            </div>
+
+            <!-- 进度环 -->
+            <div class="progress-ring-container">
+              <div class="progress-ring">
+                <svg viewBox="0 0 100 100">
+                  <circle
+                    class="ring-bg"
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    stroke-width="8"
+                  />
+                  <circle
+                    class="ring-progress"
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="url(#progressGradient)"
+                    stroke-width="8"
+                    stroke-linecap="round"
+                    :stroke-dasharray="251.2"
+                    :stroke-dashoffset="
+                      251.2 - (251.2 * getMilestoneProgress(month)) / 100
+                    "
+                    transform="rotate(-90 50 50)"
+                  />
+                  <defs>
+                    <linearGradient
+                      id="progressGradient"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stop-color="#667eea" />
+                      <stop offset="100%" stop-color="#764ba2" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="ring-text">
+                  <span class="ring-value">
+                    {{ getMilestoneProgress(month) }}%
+                  </span>
+                  <span class="ring-label">完成</span>
                 </div>
               </div>
-              <span class="progress-text">
-                {{ getMilestoneProgress(month) }}%
-              </span>
             </div>
           </div>
 
@@ -264,7 +474,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBabyStore } from '@/stores/babyStore'
-import { ArrowRight, Top, ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowRight, Top, ArrowLeft, Check } from '@element-plus/icons-vue'
 import type { BabyMonthData } from '@/types/baby'
 
 const router = useRouter()
@@ -279,6 +489,38 @@ const scrollProgress = ref(0)
 const showScrollTop = ref(false)
 const currentMonth = ref(babyStore.currentMonth)
 const visitedMonths = ref<number[]>([0]) // 已浏览的月龄
+const expandedMonths = ref<number[]>([]) // 已展开的月龄
+const activeDimension = ref('gross') // 当前选中的发育维度
+
+// 发育维度配置
+const developmentDimensions = [
+  { id: 'gross', label: '大运动', icon: '🏃' },
+  { id: 'fine', label: '精细', icon: '✋' },
+  { id: 'cognitive', label: '认知', icon: '🧠' },
+  { id: 'social', label: '社交', icon: '💕' },
+]
+
+// 切换发育详情展开状态
+const toggleDevelopment = (monthId: number) => {
+  const index = expandedMonths.value.indexOf(monthId)
+  if (index === -1) {
+    expandedMonths.value.push(monthId)
+  } else {
+    expandedMonths.value.splice(index, 1)
+  }
+}
+
+// 获取已完成里程碑数量
+const getCompletedCount = (month: BabyMonthData) => {
+  if (!month.milestones) return 0
+  return month.milestones.filter((m) => babyStore.isMilestoneCompleted(m.title))
+    .length
+}
+
+// 切换里程碑完成状态
+const toggleMilestone = (title: string) => {
+  babyStore.toggleMilestone(title)
+}
 
 // 获取月龄状态
 const getMonthStatus = (monthId: number) => {
@@ -302,13 +544,13 @@ const jumpToMonth = (monthId: number) => {
   if (!visitedMonths.value.includes(monthId)) {
     visitedMonths.value.push(monthId)
   }
-  
+
   // 平滑滚动到对应卡片
-  const targetIndex = monthsData.value.findIndex(m => m.month === monthId)
+  const targetIndex = monthsData.value.findIndex((m) => m.month === monthId)
   if (targetIndex !== -1 && monthRefs.value[targetIndex]) {
     monthRefs.value[targetIndex].scrollIntoView({
       behavior: 'smooth',
-      block: 'center'
+      block: 'center',
     })
   }
 }
@@ -1191,6 +1433,207 @@ onBeforeUnmount(() => {
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 12px;
+}
+
+.expand-btn {
+  margin-left: auto;
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* 维度标签 */
+.dimension-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.dimension-tab {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dimension-tab:hover {
+  border-color: #a78bfa;
+  color: #7c3aed;
+}
+
+.dimension-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.dim-icon {
+  font-size: 14px;
+}
+
+.dimension-section {
+  margin-bottom: 12px;
+}
+
+.dim-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* 里程碑打卡 */
+.milestone-count {
+  margin-left: auto;
+  font-size: 13px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.milestone-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.milestone-check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.milestone-check-item:hover {
+  border-color: #a78bfa;
+  transform: translateX(4px);
+}
+
+.milestone-check-item.completed {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #86efac;
+}
+
+.milestone-check-item.completed .milestone-text {
+  color: #16a34a;
+  text-decoration: line-through;
+}
+
+.check-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.milestone-check-item.completed .check-box {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: transparent;
+  color: white;
+}
+
+.milestone-text {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+  flex: 1;
+}
+
+.more-milestones {
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.more-milestones:hover {
+  text-decoration: underline;
+}
+
+/* 圆形进度环 */
+.progress-ring-container {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.progress-ring {
+  width: 100px;
+  height: 100px;
+  position: relative;
+}
+
+.progress-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  stroke: #e5e7eb;
+}
+
+.ring-progress {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ring-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.ring-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.ring-label {
+  display: block;
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 600;
+  margin-top: 4px;
 }
 
 .title-icon {
