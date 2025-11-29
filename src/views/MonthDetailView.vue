@@ -685,6 +685,85 @@
               </div>
             </div>
 
+            <!-- 📈 能力发展趋势图 -->
+            <div class="ability-trend-section">
+              <div class="trend-header">
+                <h4>📈 能力发展趋势</h4>
+                <el-radio-group v-model="selectedAbilityType" size="small">
+                  <el-radio-button label="gross">大运动</el-radio-button>
+                  <el-radio-button label="fine">精细动作</el-radio-button>
+                  <el-radio-button label="cognitive">认知</el-radio-button>
+                  <el-radio-button label="language">语言</el-radio-button>
+                </el-radio-group>
+              </div>
+              <div class="trend-chart">
+                <svg viewBox="0 0 320 160" class="chart-svg">
+                  <!-- 背景网格 -->
+                  <defs>
+                    <linearGradient
+                      id="trendGradient"
+                      x1="0%"
+                      y1="0%"
+                      x2="0%"
+                      y2="100%"
+                    >
+                      <stop
+                        offset="0%"
+                        style="stop-color: #667eea; stop-opacity: 0.3;"
+                      />
+                      <stop
+                        offset="100%"
+                        style="stop-color: #667eea; stop-opacity: 0.05;"
+                      />
+                    </linearGradient>
+                  </defs>
+
+                  <!-- Y轴标签 -->
+                  <text x="5" y="20" class="axis-label">100%</text>
+                  <text x="5" y="80" class="axis-label">50%</text>
+                  <text x="5" y="140" class="axis-label">0%</text>
+
+                  <!-- 网格线 -->
+                  <line x1="30" y1="15" x2="310" y2="15" class="grid-line" />
+                  <line x1="30" y1="75" x2="310" y2="75" class="grid-line" />
+                  <line x1="30" y1="135" x2="310" y2="135" class="grid-line" />
+
+                  <!-- 趋势区域填充 -->
+                  <path :d="trendAreaPath" fill="url(#trendGradient)" />
+
+                  <!-- 趋势线 -->
+                  <path :d="trendLinePath" class="trend-line" />
+
+                  <!-- 数据点 -->
+                  <g v-for="(point, idx) in trendDataPoints" :key="idx">
+                    <circle
+                      :cx="point.x"
+                      :cy="point.y"
+                      r="6"
+                      class="data-point"
+                      :class="{ current: point.isCurrent }"
+                    />
+                    <text :x="point.x" :y="155" class="x-label">
+                      {{ point.month }}月
+                    </text>
+                  </g>
+                </svg>
+              </div>
+              <div class="trend-legend">
+                <div class="legend-item">
+                  <span class="legend-dot current"></span>
+                  <span>当前月龄</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot"></span>
+                  <span>历史记录</span>
+                </div>
+                <div class="legend-summary">
+                  {{ abilityTrendSummary }}
+                </div>
+              </div>
+            </div>
+
             <div class="milestones-grid">
               <div
                 v-for="(milestone, index) in monthData.milestones"
@@ -1002,6 +1081,173 @@
                 </el-button>
               </template>
             </el-dialog>
+
+            <!-- 📚 个性化学习资源推荐 -->
+            <div class="learning-resources-section">
+              <div class="resources-header">
+                <h4>📚 个性化学习资源</h4>
+                <span class="resources-subtitle">
+                  根据{{ monthData?.month }}月龄精选推荐
+                </span>
+              </div>
+
+              <!-- 资源分类Tab -->
+              <el-tabs v-model="activeResourceTab" class="resource-tabs">
+                <!-- 早教游戏 -->
+                <el-tab-pane label="🎮 早教游戏" name="games">
+                  <div class="resource-list">
+                    <div
+                      v-for="(game, idx) in recommendedGames"
+                      :key="idx"
+                      class="resource-card game-card"
+                    >
+                      <div class="resource-icon">{{ game.icon }}</div>
+                      <div class="resource-info">
+                        <h5>{{ game.name }}</h5>
+                        <p>{{ game.description }}</p>
+                        <div class="resource-tags">
+                          <el-tag size="small" type="success" effect="plain">
+                            {{ game.ability }}
+                          </el-tag>
+                          <el-tag size="small" type="info" effect="plain">
+                            {{ game.duration }}
+                          </el-tag>
+                        </div>
+                      </div>
+                      <div class="resource-actions">
+                        <el-button
+                          :type="
+                            isResourceFavorited('game', game.name)
+                              ? 'warning'
+                              : 'default'
+                          "
+                          circle
+                          size="small"
+                          @click="toggleFavorite('game', game.name)"
+                        >
+                          <el-icon><Star /></el-icon>
+                        </el-button>
+                        <el-button
+                          circle
+                          size="small"
+                          @click="shareResource(game)"
+                        >
+                          <el-icon><Share /></el-icon>
+                        </el-button>
+                      </div>
+                    </div>
+                  </div>
+                </el-tab-pane>
+
+                <!-- 绘本儿歌 -->
+                <el-tab-pane label="📖 绘本儿歌" name="books">
+                  <div class="resource-list">
+                    <div
+                      v-for="(book, idx) in recommendedBooks"
+                      :key="idx"
+                      class="resource-card book-card"
+                    >
+                      <div class="resource-cover">{{ book.cover }}</div>
+                      <div class="resource-info">
+                        <h5>{{ book.name }}</h5>
+                        <p class="book-author">{{ book.author }}</p>
+                        <p>{{ book.description }}</p>
+                        <div class="resource-tags">
+                          <el-tag
+                            size="small"
+                            :type="book.type === '绘本' ? 'primary' : 'success'"
+                            effect="plain"
+                          >
+                            {{ book.type }}
+                          </el-tag>
+                          <el-tag size="small" type="info" effect="plain">
+                            {{ book.ageRange }}
+                          </el-tag>
+                        </div>
+                      </div>
+                      <div class="resource-actions">
+                        <el-button
+                          :type="
+                            isResourceFavorited('book', book.name)
+                              ? 'warning'
+                              : 'default'
+                          "
+                          circle
+                          size="small"
+                          @click="toggleFavorite('book', book.name)"
+                        >
+                          <el-icon><Star /></el-icon>
+                        </el-button>
+                        <el-button
+                          circle
+                          size="small"
+                          @click="shareResource(book)"
+                        >
+                          <el-icon><Share /></el-icon>
+                        </el-button>
+                      </div>
+                    </div>
+                  </div>
+                </el-tab-pane>
+
+                <!-- 视频教程 -->
+                <el-tab-pane label="🎬 视频教程" name="videos">
+                  <div class="resource-list">
+                    <div
+                      v-for="(video, idx) in recommendedVideos"
+                      :key="idx"
+                      class="resource-card video-card"
+                    >
+                      <div class="video-thumbnail">
+                        <span class="play-icon">▶</span>
+                        <span class="video-duration">{{ video.duration }}</span>
+                      </div>
+                      <div class="resource-info">
+                        <h5>{{ video.title }}</h5>
+                        <p>{{ video.description }}</p>
+                        <div class="resource-tags">
+                          <el-tag size="small" type="danger" effect="plain">
+                            {{ video.category }}
+                          </el-tag>
+                          <el-tag size="small" type="info" effect="plain">
+                            {{ video.source }}
+                          </el-tag>
+                        </div>
+                      </div>
+                      <div class="resource-actions">
+                        <el-button
+                          :type="
+                            isResourceFavorited('video', video.title)
+                              ? 'warning'
+                              : 'default'
+                          "
+                          circle
+                          size="small"
+                          @click="toggleFavorite('video', video.title)"
+                        >
+                          <el-icon><Star /></el-icon>
+                        </el-button>
+                        <el-button
+                          circle
+                          size="small"
+                          @click="shareResource(video)"
+                        >
+                          <el-icon><Share /></el-icon>
+                        </el-button>
+                      </div>
+                    </div>
+                  </div>
+                </el-tab-pane>
+              </el-tabs>
+
+              <!-- 查看收藏 -->
+              <div class="favorites-action" v-if="favoritesCount > 0">
+                <el-button text type="primary" @click="showFavorites">
+                  <el-icon><Star /></el-icon>
+                  查看我的收藏 ({{ favoritesCount }})
+                </el-button>
+              </div>
+            </div>
 
             <!-- 📊 成长报告对话框 -->
             <el-dialog
@@ -1449,6 +1695,7 @@ import {
   Document,
   Share,
   Download,
+  Star,
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { BabyMonthData, Milestone } from '@/types/baby'
@@ -2871,6 +3118,1037 @@ const shareReport = () => {
   } else {
     // 不支持原生分享，显示分享选项
     ElMessage.info('请截图后分享至微信/朋友圈')
+  }
+}
+
+// 📈 能力发展趋势图相关
+const selectedAbilityType = ref<'gross' | 'fine' | 'cognitive' | 'language'>(
+  'gross',
+)
+
+// 模拟历史打卡数据（实际应从store获取）
+const abilityHistoryData = computed(() => {
+  const currentMonth = monthData.value?.month ?? 0
+  const historyMap: Record<string, Record<number, number>> = {
+    gross: {
+      0: 20,
+      1: 35,
+      2: 50,
+      3: 65,
+      4: 75,
+      5: 80,
+      6: 85,
+      7: 88,
+      8: 90,
+      9: 92,
+      10: 94,
+      11: 96,
+      12: 100,
+    },
+    fine: {
+      0: 15,
+      1: 25,
+      2: 40,
+      3: 55,
+      4: 65,
+      5: 72,
+      6: 78,
+      7: 82,
+      8: 86,
+      9: 89,
+      10: 92,
+      11: 95,
+      12: 98,
+    },
+    cognitive: {
+      0: 10,
+      1: 22,
+      2: 38,
+      3: 52,
+      4: 62,
+      5: 70,
+      6: 76,
+      7: 81,
+      8: 85,
+      9: 88,
+      10: 91,
+      11: 94,
+      12: 97,
+    },
+    language: {
+      0: 5,
+      1: 15,
+      2: 28,
+      3: 42,
+      4: 55,
+      5: 65,
+      6: 72,
+      7: 78,
+      8: 83,
+      9: 87,
+      10: 90,
+      11: 93,
+      12: 96,
+    },
+  }
+
+  // 生成从0到当前月龄的数据点
+  const data: Array<{ month: number; value: number }> = []
+  const baseData = historyMap[selectedAbilityType.value] || historyMap.gross
+
+  // 显示当前月龄前后各2个月的数据
+  const startMonth = Math.max(0, currentMonth - 2)
+  const endMonth = Math.min(12, currentMonth + 2)
+
+  for (let m = startMonth; m <= endMonth; m++) {
+    // 添加一些随机波动使数据更真实
+    const baseValue = (baseData && baseData[m]) ?? 50
+    const actualValue =
+      m <= currentMonth
+        ? Math.min(100, Math.max(0, baseValue + (Math.random() * 10 - 5)))
+        : baseValue
+    data.push({ month: m, value: actualValue })
+  }
+
+  return data
+})
+
+// 趋势数据点坐标
+const trendDataPoints = computed(() => {
+  const data = abilityHistoryData.value
+  const currentMonth = monthData.value?.month ?? 0
+  const chartWidth = 280
+  const chartHeight = 120
+  const padding = 30
+
+  return data.map((item, idx) => ({
+    x: padding + (idx * chartWidth) / Math.max(data.length - 1, 1),
+    y: 15 + ((100 - item.value) * chartHeight) / 100,
+    month: item.month,
+    value: item.value,
+    isCurrent: item.month === currentMonth,
+  }))
+})
+
+// 趋势线路径
+const trendLinePath = computed(() => {
+  const points = trendDataPoints.value
+  if (points.length < 2) return ''
+
+  return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+})
+
+// 趋势区域填充路径
+const trendAreaPath = computed(() => {
+  const points = trendDataPoints.value
+  if (points.length < 2) return ''
+
+  const firstX = points[0]?.x ?? 0
+  const lastX = points[points.length - 1]?.x ?? 0
+  const bottomY = 135
+
+  let path = `M ${firstX} ${bottomY}`
+  points.forEach((p) => {
+    path += ` L ${p.x} ${p.y}`
+  })
+  path += ` L ${lastX} ${bottomY} Z`
+
+  return path
+})
+
+// 趋势分析总结
+const abilityTrendSummary = computed(() => {
+  const abilityNames: Record<string, string> = {
+    gross: '大运动',
+    fine: '精细动作',
+    cognitive: '认知能力',
+    language: '语言能力',
+  }
+  const data = abilityHistoryData.value
+  const currentMonth = monthData.value?.month ?? 0
+  const currentData = data.find((d) => d.month === currentMonth)
+  const value = currentData?.value ?? 0
+
+  let status = '发展正常'
+  if (value >= 85) status = '发展优秀'
+  else if (value >= 70) status = '发展良好'
+  else if (value < 50) status = '需要加强训练'
+
+  return `${
+    abilityNames[selectedAbilityType.value]
+  }：${status}（完成度${Math.round(value)}%）`
+})
+
+// 📚 学习资源推荐相关
+const activeResourceTab = ref('games')
+
+// 早教游戏推荐
+const recommendedGames = computed(() => {
+  const gamesMap: Record<
+    number,
+    Array<{
+      icon: string
+      name: string
+      description: string
+      ability: string
+      duration: string
+    }>
+  > = {
+    0: [
+      {
+        icon: '👀',
+        name: '追视训练',
+        description: '用黑白卡片在宝宝面前20-30cm处缓慢移动，锻炼视觉追踪',
+        ability: '视觉发育',
+        duration: '每次2-3分钟',
+      },
+      {
+        icon: '🤱',
+        name: '肌肤接触',
+        description: '袋鼠式护理，增进亲子依恋关系',
+        ability: '情感发育',
+        duration: '每天多次',
+      },
+      {
+        icon: '🎵',
+        name: '音乐胎教延续',
+        description: '播放柔和音乐，观察宝宝反应',
+        ability: '听觉发育',
+        duration: '每次5-10分钟',
+      },
+    ],
+    1: [
+      {
+        icon: '😊',
+        name: '表情互动',
+        description: '对宝宝做夸张的表情，等待宝宝回应微笑',
+        ability: '社交能力',
+        duration: '随时进行',
+      },
+      {
+        icon: '🔔',
+        name: '声音定位',
+        description: '在宝宝两侧摇铃，观察转头反应',
+        ability: '听觉定位',
+        duration: '每次1-2分钟',
+      },
+      {
+        icon: '💪',
+        name: '趴趴时间',
+        description: '让宝宝趴着，锻炼颈部力量',
+        ability: '大运动',
+        duration: '每次3-5分钟',
+      },
+    ],
+    2: [
+      {
+        icon: '🪞',
+        name: '镜子游戏',
+        description: '让宝宝看镜子中的自己，发展自我认知',
+        ability: '认知发育',
+        duration: '每次2-3分钟',
+      },
+      {
+        icon: '🗣️',
+        name: '对话回应',
+        description: '模仿宝宝的声音，鼓励咿呀发声',
+        ability: '语言启蒙',
+        duration: '随时进行',
+      },
+      {
+        icon: '✋',
+        name: '抓握练习',
+        description: '把摇铃放入宝宝手中，锻炼抓握反射',
+        ability: '精细动作',
+        duration: '每次2-3分钟',
+      },
+    ],
+    3: [
+      {
+        icon: '🔄',
+        name: '翻身辅助',
+        description: '用玩具引导宝宝翻身，轻推髋部辅助',
+        ability: '大运动',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '🎯',
+        name: '抓取训练',
+        description: '悬挂彩色玩具让宝宝伸手触碰',
+        ability: '手眼协调',
+        duration: '每次3-5分钟',
+      },
+      {
+        icon: '📚',
+        name: '看图说话',
+        description: '看高对比度图片，描述图中内容',
+        ability: '认知语言',
+        duration: '每次3-5分钟',
+      },
+    ],
+    4: [
+      {
+        icon: '🙈',
+        name: '躲猫猫',
+        description: '用手或布遮脸后露出，培养物体恒存概念',
+        ability: '认知发育',
+        duration: '每次3-5分钟',
+      },
+      {
+        icon: '🎤',
+        name: '声音模仿',
+        description: '模仿各种动物叫声让宝宝听',
+        ability: '听觉语言',
+        duration: '每次2-3分钟',
+      },
+      {
+        icon: '🧸',
+        name: '物品传递',
+        description: '和宝宝互相传递玩具，发展社交',
+        ability: '社交能力',
+        duration: '每次5分钟',
+      },
+    ],
+    5: [
+      {
+        icon: '🪑',
+        name: '扶坐练习',
+        description: '用枕头支撑宝宝练习坐',
+        ability: '大运动',
+        duration: '每次3-5分钟',
+      },
+      {
+        icon: '🥄',
+        name: '喂食游戏',
+        description: '用勺子模拟喂食，为辅食做准备',
+        ability: '口腔发育',
+        duration: '每次2-3分钟',
+      },
+      {
+        icon: '📦',
+        name: '因果玩具',
+        description: '按键发声玩具，理解因果关系',
+        ability: '认知发育',
+        duration: '每次5分钟',
+      },
+    ],
+    6: [
+      {
+        icon: '🥣',
+        name: '辅食探索',
+        description: '让宝宝用手触碰食物，培养进食兴趣',
+        ability: '感官发育',
+        duration: '每餐进行',
+      },
+      {
+        icon: '👋',
+        name: '再见挥手',
+        description: '示范挥手动作，等宝宝模仿',
+        ability: '社交模仿',
+        duration: '每次分别时',
+      },
+      {
+        icon: '🧱',
+        name: '叠叠乐',
+        description: '用大积木示范叠起再推倒',
+        ability: '认知动作',
+        duration: '每次5分钟',
+      },
+    ],
+    7: [
+      {
+        icon: '🧗',
+        name: '爬行追逐',
+        description: '用玩具引诱宝宝向前爬',
+        ability: '大运动',
+        duration: '每次10分钟',
+      },
+      {
+        icon: '📦',
+        name: '找玩具',
+        description: '把玩具藏在布下让宝宝找',
+        ability: '物体恒存',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '👏',
+        name: '拍手歌',
+        description: '唱拍手歌配合动作',
+        ability: '模仿能力',
+        duration: '每次3分钟',
+      },
+    ],
+    8: [
+      {
+        icon: '🎯',
+        name: '投球入桶',
+        description: '让宝宝把球投入桶中',
+        ability: '手眼协调',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '📚',
+        name: '翻页游戏',
+        description: '让宝宝自己翻书页',
+        ability: '精细动作',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '🗣️',
+        name: '指物命名',
+        description: '指着物品说名字让宝宝跟读',
+        ability: '语言发育',
+        duration: '随时进行',
+      },
+    ],
+    9: [
+      {
+        icon: '🧍',
+        name: '扶站练习',
+        description: '扶着宝宝在沙发旁站立',
+        ability: '大运动',
+        duration: '每次3-5分钟',
+      },
+      {
+        icon: '🧩',
+        name: '形状配对',
+        description: '简单的形状配对玩具',
+        ability: '认知能力',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '🎵',
+        name: '动作歌谣',
+        description: '唱歌配合简单动作让宝宝模仿',
+        ability: '模仿协调',
+        duration: '每次5分钟',
+      },
+    ],
+    10: [
+      {
+        icon: '🚶',
+        name: '扶走练习',
+        description: '牵着宝宝的手练习迈步',
+        ability: '大运动',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '✏️',
+        name: '涂鸦启蒙',
+        description: '用安全蜡笔让宝宝随意涂画',
+        ability: '精细动作',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '📖',
+        name: '绘本共读',
+        description: '指读简单绘本，让宝宝指认',
+        ability: '语言认知',
+        duration: '每次10分钟',
+      },
+    ],
+    11: [
+      {
+        icon: '👣',
+        name: '独立迈步',
+        description: '在短距离放开手让宝宝走来',
+        ability: '大运动',
+        duration: '每次多次尝试',
+      },
+      {
+        icon: '🧱',
+        name: '叠高塔',
+        description: '叠2-3块积木，锻炼精细动作',
+        ability: '精细动作',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '🗣️',
+        name: '词汇扩展',
+        description: '每天教2-3个新词汇',
+        ability: '语言发育',
+        duration: '随时进行',
+      },
+    ],
+    12: [
+      {
+        icon: '⚽',
+        name: '踢球游戏',
+        description: '让宝宝尝试踢球',
+        ability: '大运动协调',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '🎨',
+        name: '颜色认知',
+        description: '教宝宝认识基本颜色',
+        ability: '认知发育',
+        duration: '每次5分钟',
+      },
+      {
+        icon: '🧩',
+        name: '简单拼图',
+        description: '2-3片的简单拼图',
+        ability: '问题解决',
+        duration: '每次10分钟',
+      },
+    ],
+  }
+  return gamesMap[monthData.value?.month ?? 0] ?? gamesMap[0] ?? []
+})
+
+// 绘本儿歌推荐
+const recommendedBooks = computed(() => {
+  const booksMap: Record<
+    number,
+    Array<{
+      cover: string
+      name: string
+      author: string
+      description: string
+      type: string
+      ageRange: string
+    }>
+  > = {
+    0: [
+      {
+        cover: '📕',
+        name: '《黑白卡》',
+        author: '各品牌',
+        description: '高对比度黑白图案，刺激新生儿视觉发育',
+        type: '视觉卡',
+        ageRange: '0-3月',
+      },
+      {
+        cover: '🎵',
+        name: '《摇篮曲精选》',
+        author: '经典儿歌',
+        description: '柔和舒缓的摇篮曲，帮助宝宝入睡',
+        type: '儿歌',
+        ageRange: '0-12月',
+      },
+    ],
+    1: [
+      {
+        cover: '📗',
+        name: '《彩色卡》',
+        author: '各品牌',
+        description: '鲜艳的彩色图案，进阶视觉训练',
+        type: '视觉卡',
+        ageRange: '1-4月',
+      },
+      {
+        cover: '🎵',
+        name: '《小星星》',
+        author: '经典儿歌',
+        description: '简单重复的旋律，适合早期音乐启蒙',
+        type: '儿歌',
+        ageRange: '0-12月',
+      },
+    ],
+    2: [
+      {
+        cover: '📘',
+        name: '《脸谱书》',
+        author: '各品牌',
+        description: '各种表情的脸谱，帮助宝宝认识情绪',
+        type: '绘本',
+        ageRange: '2-6月',
+      },
+      {
+        cover: '🎵',
+        name: '《拍手歌》',
+        author: '经典儿歌',
+        description: '配合拍手动作的儿歌，培养节奏感',
+        type: '儿歌',
+        ageRange: '2-12月',
+      },
+    ],
+    3: [
+      {
+        cover: '📙',
+        name: '《小熊宝宝绘本》',
+        author: '佐佐木洋子',
+        description: '经典低幼绘本系列，涵盖生活场景',
+        type: '绘本',
+        ageRange: '0-3岁',
+      },
+      {
+        cover: '🎵',
+        name: '《两只老虎》',
+        author: '经典儿歌',
+        description: '欢快有趣的儿歌，宝宝喜欢听',
+        type: '儿歌',
+        ageRange: '3-24月',
+      },
+    ],
+    4: [
+      {
+        cover: '📕',
+        name: '《躲猫猫》',
+        author: '各品牌',
+        description: '翻翻书设计，配合躲猫猫游戏',
+        type: '互动书',
+        ageRange: '4-12月',
+      },
+      {
+        cover: '🎵',
+        name: '《数鸭子》',
+        author: '经典儿歌',
+        description: '简单数字启蒙儿歌',
+        type: '儿歌',
+        ageRange: '4-24月',
+      },
+    ],
+    5: [
+      {
+        cover: '📗',
+        name: '《好饿的毛毛虫》',
+        author: '艾瑞·卡尔',
+        description: '经典洞洞书，认识食物和数字',
+        type: '绘本',
+        ageRange: '0-3岁',
+      },
+      {
+        cover: '🎵',
+        name: '《小兔子乖乖》',
+        author: '经典儿歌',
+        description: '有情节的儿歌，培养安全意识',
+        type: '儿歌',
+        ageRange: '6-36月',
+      },
+    ],
+    6: [
+      {
+        cover: '📘',
+        name: '《米菲系列》',
+        author: '迪克·布鲁纳',
+        description: '简洁明快的画风，适合低幼宝宝',
+        type: '绘本',
+        ageRange: '0-3岁',
+      },
+      {
+        cover: '📙',
+        name: '《我爸爸》',
+        author: '安东尼·布朗',
+        description: '温馨的亲子绘本',
+        type: '绘本',
+        ageRange: '0-6岁',
+      },
+    ],
+    7: [
+      {
+        cover: '📕',
+        name: '《棕色的熊》',
+        author: '艾瑞·卡尔',
+        description: '认识颜色和动物的经典绘本',
+        type: '绘本',
+        ageRange: '0-3岁',
+      },
+      {
+        cover: '🎵',
+        name: '《如果感到幸福》',
+        author: '经典儿歌',
+        description: '配合动作的互动儿歌',
+        type: '儿歌',
+        ageRange: '6-36月',
+      },
+    ],
+    8: [
+      {
+        cover: '📗',
+        name: '《猜猜我有多爱你》',
+        author: '山姆·麦克布雷尼',
+        description: '表达爱的温馨绘本',
+        type: '绘本',
+        ageRange: '0-6岁',
+      },
+      {
+        cover: '📘',
+        name: '《点点点》',
+        author: '埃尔维·杜莱',
+        description: '互动式创意绘本',
+        type: '互动书',
+        ageRange: '0-6岁',
+      },
+    ],
+    9: [
+      {
+        cover: '📙',
+        name: '《晚安月亮》',
+        author: '玛格丽特·怀兹·布朗',
+        description: '经典睡前绘本',
+        type: '绘本',
+        ageRange: '0-3岁',
+      },
+      {
+        cover: '🎵',
+        name: '《世上只有妈妈好》',
+        author: '经典儿歌',
+        description: '温馨感人的亲子儿歌',
+        type: '儿歌',
+        ageRange: '0-36月',
+      },
+    ],
+    10: [
+      {
+        cover: '📕',
+        name: '《抱抱》',
+        author: '杰兹·阿波罗',
+        description: '简单重复的词汇，适合语言启蒙',
+        type: '绘本',
+        ageRange: '0-3岁',
+      },
+      {
+        cover: '📗',
+        name: '《小蓝和小黄》',
+        author: '李欧·李奥尼',
+        description: '认识颜色和友谊的绘本',
+        type: '绘本',
+        ageRange: '0-6岁',
+      },
+    ],
+    11: [
+      {
+        cover: '📘',
+        name: '《逃家小兔》',
+        author: '玛格丽特·怀兹·布朗',
+        description: '关于母爱的经典绘本',
+        type: '绘本',
+        ageRange: '0-6岁',
+      },
+      {
+        cover: '🎵',
+        name: '《生日快乐歌》',
+        author: '经典儿歌',
+        description: '庆祝宝宝即将周岁',
+        type: '儿歌',
+        ageRange: '0-36月',
+      },
+    ],
+    12: [
+      {
+        cover: '📙',
+        name: '《我的第一本认知书》',
+        author: '各品牌',
+        description: '常见物品认知学习',
+        type: '认知书',
+        ageRange: '1-3岁',
+      },
+      {
+        cover: '📕',
+        name: '《大卫不可以》',
+        author: '大卫·香农',
+        description: '趣味规则启蒙绘本',
+        type: '绘本',
+        ageRange: '1-6岁',
+      },
+    ],
+  }
+  return booksMap[monthData.value?.month ?? 0] ?? booksMap[0] ?? []
+})
+
+// 视频教程推荐
+const recommendedVideos = computed(() => {
+  const videosMap: Record<
+    number,
+    Array<{
+      title: string
+      description: string
+      duration: string
+      category: string
+      source: string
+    }>
+  > = {
+    0: [
+      {
+        title: '新生儿护理全攻略',
+        description: '包含喂养、睡眠、洗护等基础护理知识',
+        duration: '15:30',
+        category: '护理技巧',
+        source: '专业医生',
+      },
+      {
+        title: '如何正确拍嗝',
+        description: '三种拍嗝姿势详解，预防吐奶',
+        duration: '05:20',
+        category: '喂养技巧',
+        source: '育儿专家',
+      },
+      {
+        title: '脐带护理指南',
+        description: '新生儿脐带消毒和护理方法',
+        duration: '03:45',
+        category: '护理技巧',
+        source: '专业护士',
+      },
+    ],
+    1: [
+      {
+        title: '黑白卡训练方法',
+        description: '如何正确使用黑白卡进行视觉训练',
+        duration: '06:15',
+        category: '早教游戏',
+        source: '早教专家',
+      },
+      {
+        title: '1月龄宝宝互动游戏',
+        description: '适合1个月宝宝的亲子互动方式',
+        duration: '08:30',
+        category: '早教游戏',
+        source: '育儿博主',
+      },
+      {
+        title: '婴儿抚触按摩教程',
+        description: '促进宝宝身体发育的抚触手法',
+        duration: '10:20',
+        category: '护理技巧',
+        source: '专业医生',
+      },
+    ],
+    2: [
+      {
+        title: '俯卧抬头训练',
+        description: '如何帮助宝宝练习抬头',
+        duration: '05:45',
+        category: '大运动训练',
+        source: '康复治疗师',
+      },
+      {
+        title: '宝宝笑声引导',
+        description: '让宝宝开心大笑的互动技巧',
+        duration: '04:30',
+        category: '亲子互动',
+        source: '育儿博主',
+      },
+    ],
+    3: [
+      {
+        title: '翻身训练全攻略',
+        description: '帮助宝宝学会翻身的完整方法',
+        duration: '08:20',
+        category: '大运动训练',
+        source: '康复治疗师',
+      },
+      {
+        title: '抓握能力训练',
+        description: '锻炼宝宝抓握能力的游戏',
+        duration: '06:15',
+        category: '精细动作',
+        source: '早教专家',
+      },
+    ],
+    4: [
+      {
+        title: '躲猫猫游戏教程',
+        description: '正确玩躲猫猫培养认知能力',
+        duration: '04:30',
+        category: '认知训练',
+        source: '早教专家',
+      },
+      {
+        title: '4月龄感官游戏',
+        description: '多感官刺激促进大脑发育',
+        duration: '07:45',
+        category: '早教游戏',
+        source: '育儿博主',
+      },
+    ],
+    5: [
+      {
+        title: '辅食添加准备',
+        description: '辅食添加前的准备工作和信号判断',
+        duration: '12:30',
+        category: '喂养指导',
+        source: '营养师',
+      },
+      {
+        title: '出牙期护理',
+        description: '缓解出牙不适的方法',
+        duration: '06:20',
+        category: '护理技巧',
+        source: '儿科医生',
+      },
+    ],
+    6: [
+      {
+        title: '辅食添加第一课',
+        description: '从米粉开始的辅食添加详解',
+        duration: '15:40',
+        category: '喂养指导',
+        source: '营养师',
+      },
+      {
+        title: '独坐训练方法',
+        description: '帮助宝宝学会独坐的技巧',
+        duration: '07:30',
+        category: '大运动训练',
+        source: '康复治疗师',
+      },
+    ],
+    7: [
+      {
+        title: '爬行训练全攻略',
+        description: '从匍匐到四肢爬行的完整训练',
+        duration: '10:25',
+        category: '大运动训练',
+        source: '康复治疗师',
+      },
+      {
+        title: '7月龄辅食食谱',
+        description: '营养均衡的辅食制作方法',
+        duration: '12:15',
+        category: '喂养指导',
+        source: '营养师',
+      },
+    ],
+    8: [
+      {
+        title: '精细动作训练',
+        description: '锻炼手指灵活性的游戏方法',
+        duration: '08:40',
+        category: '精细动作',
+        source: '早教专家',
+      },
+      {
+        title: '分离焦虑应对',
+        description: '帮助宝宝度过分离焦虑期',
+        duration: '09:30',
+        category: '心理发育',
+        source: '心理咨询师',
+      },
+    ],
+    9: [
+      {
+        title: '扶站安全指南',
+        description: '扶站训练的安全注意事项',
+        duration: '06:50',
+        category: '大运动训练',
+        source: '康复治疗师',
+      },
+      {
+        title: '语言启蒙方法',
+        description: '促进宝宝语言发展的技巧',
+        duration: '11:20',
+        category: '语言发育',
+        source: '语言治疗师',
+      },
+    ],
+    10: [
+      {
+        title: '学步准备与安全',
+        description: '学步期的准备和安全防护',
+        duration: '09:15',
+        category: '大运动训练',
+        source: '康复治疗师',
+      },
+      {
+        title: '10月龄认知游戏',
+        description: '提升认知能力的亲子游戏',
+        duration: '07:40',
+        category: '认知训练',
+        source: '早教专家',
+      },
+    ],
+    11: [
+      {
+        title: '独立行走训练',
+        description: '帮助宝宝迈出第一步',
+        duration: '08:30',
+        category: '大运动训练',
+        source: '康复治疗师',
+      },
+      {
+        title: '叠词语言训练',
+        description: '教宝宝说简单叠词的方法',
+        duration: '06:25',
+        category: '语言发育',
+        source: '语言治疗师',
+      },
+    ],
+    12: [
+      {
+        title: '周岁宝宝能力评估',
+        description: '12月龄发育里程碑检查清单',
+        duration: '10:45',
+        category: '发育评估',
+        source: '儿科医生',
+      },
+      {
+        title: '周岁后喂养指导',
+        description: '1岁后的饮食安排和注意事项',
+        duration: '14:20',
+        category: '喂养指导',
+        source: '营养师',
+      },
+    ],
+  }
+  return videosMap[monthData.value?.month ?? 0] ?? videosMap[0] ?? []
+})
+
+// 收藏功能
+const favorites = ref<Set<string>>(new Set())
+
+// 从localStorage加载收藏
+const loadFavorites = () => {
+  const saved = localStorage.getItem('resourceFavorites')
+  if (saved) {
+    favorites.value = new Set(JSON.parse(saved))
+  }
+}
+
+// 保存收藏到localStorage
+const saveFavorites = () => {
+  localStorage.setItem(
+    'resourceFavorites',
+    JSON.stringify([...favorites.value]),
+  )
+}
+
+// 检查是否已收藏
+const isResourceFavorited = (type: string, name: string) => {
+  return favorites.value.has(`${type}:${name}`)
+}
+
+// 切换收藏状态
+const toggleFavorite = (type: string, name: string) => {
+  const key = `${type}:${name}`
+  if (favorites.value.has(key)) {
+    favorites.value.delete(key)
+    ElMessage.info('已取消收藏')
+  } else {
+    favorites.value.add(key)
+    ElMessage.success('已添加到收藏')
+  }
+  saveFavorites()
+}
+
+// 收藏数量
+const favoritesCount = computed(() => favorites.value.size)
+
+// 查看收藏
+const showFavorites = () => {
+  ElMessage.info(`您已收藏${favoritesCount.value}个学习资源`)
+  // TODO: 可以跳转到收藏页面或显示收藏列表弹窗
+}
+
+// 分享资源
+const shareResource = (resource: {
+  name?: string
+  title?: string
+  description?: string
+}) => {
+  const title = resource.name || resource.title || '学习资源'
+  if (navigator.share) {
+    navigator
+      .share({
+        title: title,
+        text: resource.description,
+        url: window.location.href,
+      })
+      .catch(() => {})
+  } else {
+    ElMessage.info('请截图后分享给好友')
   }
 }
 
@@ -4573,6 +5851,404 @@ watch(
   background: #ef4444 !important;
   border-color: #ef4444 !important;
   color: white !important;
+}
+
+/* 能力发展趋势图 */
+.ability-trend-section {
+  margin-top: 30px;
+  padding: 0 20px;
+}
+
+.trend-card {
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 2px solid #ddd6fe;
+}
+
+.trend-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.trend-icon {
+  font-size: 28px;
+}
+
+.trend-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #5b21b6;
+}
+
+.trend-chart-container {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.trend-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.trend-grid-line {
+  stroke: #e5e7eb;
+  stroke-width: 1;
+}
+
+.trend-x-axis {
+  stroke: #d1d5db;
+  stroke-width: 2;
+}
+
+.trend-area {
+  opacity: 0.3;
+}
+
+.trend-line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-dot {
+  stroke: white;
+  stroke-width: 2;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.trend-dot:hover {
+  transform: scale(1.3);
+}
+
+.trend-x-label {
+  font-size: 11px;
+  fill: #6b7280;
+  text-anchor: middle;
+}
+
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* 学习资源推荐 */
+.learning-resources-section {
+  margin-top: 30px;
+  padding: 0 20px;
+}
+
+.resources-card {
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+  border: 2px solid #fde047;
+}
+
+.resources-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.resources-icon {
+  font-size: 28px;
+}
+
+.resources-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #a16207;
+}
+
+.resource-tabs {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.resource-tabs :deep(.el-tabs__header) {
+  margin: 0;
+  background: #fffbeb;
+  border-bottom: 2px solid #fde68a;
+}
+
+.resource-tabs :deep(.el-tabs__nav-wrap::after) {
+  display: none;
+}
+
+.resource-tabs :deep(.el-tabs__item) {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #92400e;
+  transition: all 0.3s ease;
+}
+
+.resource-tabs :deep(.el-tabs__item.is-active) {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.resource-tabs :deep(.el-tabs__active-bar) {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  height: 3px;
+  border-radius: 3px;
+}
+
+.resource-tabs :deep(.el-tabs__content) {
+  padding: 16px;
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.resource-card {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  border: 2px solid #fef3c7;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.resource-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+  border-color: #fbbf24;
+}
+
+.resource-card-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.resource-thumb {
+  font-size: 36px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fffbeb;
+  border-radius: 12px;
+}
+
+.resource-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #78350f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resource-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #92400e;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.resource-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.resource-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #fef9c3;
+  color: #a16207;
+  border-radius: 10px;
+}
+
+.resource-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.favorite-btn {
+  border-color: #fcd34d !important;
+  color: #b45309 !important;
+}
+
+.favorite-btn:hover,
+.favorite-btn.is-favorited {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #d97706 !important;
+}
+
+.favorite-btn.is-favorited {
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+}
+
+.share-btn {
+  border-color: #bae6fd !important;
+  color: #0369a1 !important;
+}
+
+.share-btn:hover {
+  background: #e0f2fe !important;
+  border-color: #38bdf8 !important;
+}
+
+/* 资源详情弹窗 */
+.resource-detail-dialog :deep(.el-dialog) {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.resource-detail-dialog :deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  padding: 20px;
+  margin: 0;
+}
+
+.resource-detail-dialog :deep(.el-dialog__title) {
+  font-size: 18px;
+  font-weight: 700;
+  color: #78350f;
+}
+
+.resource-detail-dialog :deep(.el-dialog__body) {
+  padding: 0;
+}
+
+.resource-detail-content {
+  padding: 24px;
+}
+
+.detail-hero {
+  text-align: center;
+  padding: 30px;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef9c3 100%);
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.detail-hero .hero-icon {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.detail-hero h2 {
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  color: #78350f;
+}
+
+.detail-hero p {
+  margin: 0;
+  font-size: 14px;
+  color: #92400e;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #78350f;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-section h4::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: linear-gradient(to bottom, #f59e0b, #fbbf24);
+  border-radius: 2px;
+}
+
+.benefit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.benefit-item::before {
+  content: '✓';
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detail-tags .resource-tag {
+  font-size: 12px;
+  padding: 4px 12px;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 20px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
 }
 
 /* 下月预告区域 - 增强版 */
