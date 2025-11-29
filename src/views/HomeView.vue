@@ -56,76 +56,101 @@
       </div>
     </div>
 
-    <!-- 当前月龄快速概览 -->
+    <!-- 当前月龄快速概览 - 全新设计 -->
     <div class="current-section" v-if="currentMonthData">
-      <div class="section-header">
-        <h2>
-          <span class="icon-wrapper">🎯</span>
-          当前阶段
-        </h2>
-        <el-tag type="success" size="large" effect="dark">
-          {{ babyStore.currentMonth }}月龄
-        </el-tag>
-      </div>
-      <el-card class="current-month-card">
-        <div class="current-month-content">
-          <div class="month-info">
-            <div class="month-badge">
-              <span class="month-num">{{ babyStore.currentMonth }}</span>
-              <span class="month-text">月</span>
-            </div>
-            <div class="month-details">
-              <h3>{{ currentMonthData.title }}</h3>
-              <p class="overview-summary">{{ currentMonthData.summary }}</p>
-              <div class="month-highlights">
-                <div class="highlight-item">
-                  <el-icon><TrendCharts /></el-icon>
-                  <span>
-                    体重：{{ currentMonthData.physicalDevelopment.weight }}
-                  </span>
-                </div>
-                <div class="highlight-item">
-                  <el-icon><Histogram /></el-icon>
-                  <span>
-                    身高：{{ currentMonthData.physicalDevelopment.height }}
-                  </span>
-                </div>
+      <el-card class="current-month-card-enhanced">
+        <!-- 顶部标记 -->
+        <div class="current-badge">
+          <span class="badge-icon">🎯</span>
+          <span class="badge-text">当前阶段</span>
+          <span class="badge-month">{{ babyStore.currentMonth }}月龄</span>
+        </div>
+
+        <!-- 欢迎语 -->
+        <div class="welcome-section">
+          <h2 class="welcome-title">
+            <span class="emoji-wave">👋</span>
+            {{ getWelcomeMessage() }}
+          </h2>
+          <p class="welcome-subtitle">{{ currentMonthData.title }}</p>
+        </div>
+
+        <!-- 发育数据卡片 -->
+        <div class="development-data">
+          <div class="data-card weight-card">
+            <div class="data-icon">⚖️</div>
+            <div class="data-content">
+              <div class="data-label">体重范围</div>
+              <div class="data-value">
+                {{ currentMonthData.physicalDevelopment.weight }}
               </div>
             </div>
           </div>
-          <div class="month-actions">
-            <el-button
-              type="primary"
-              size="large"
-              @click="goToDetail(babyStore.currentMonth)"
-            >
-              查看详细指南
-              <el-icon class="el-icon--right"><ArrowRight /></el-icon>
-            </el-button>
+          <div class="data-card height-card">
+            <div class="data-icon">📏</div>
+            <div class="data-content">
+              <div class="data-label">身高范围</div>
+              <div class="data-value">
+                {{ currentMonthData.physicalDevelopment.height }}
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- 里程碑预览 -->
-        <div class="milestones-preview">
-          <h4>🏆 本月关键里程碑</h4>
-          <div class="milestone-tags">
-            <el-tag
-              v-for="milestone in currentMonthData.milestones.slice(0, 4)"
-              :key="milestone.title"
-              :type="
-                babyStore.isMilestoneCompleted(milestone.title)
-                  ? 'success'
-                  : 'info'
-              "
-              effect="plain"
-              round
-            >
-              <el-icon v-if="babyStore.isMilestoneCompleted(milestone.title)">
-                <Check />
-              </el-icon>
-              {{ milestone.title }}
-            </el-tag>
+        <!-- 关键里程碑 -->
+        <div class="key-milestones">
+          <div class="milestone-header">
+            <h3>🏆 关键里程碑</h3>
+            <span class="milestone-subtitle">
+              {{ babyStore.currentMonth }}个月宝宝的重要能力发展
+            </span>
           </div>
+          <div class="milestone-grid">
+            <div
+              v-for="milestone in currentMonthData.milestones.slice(0, 6)"
+              :key="milestone.title"
+              class="milestone-card"
+              :class="{
+                completed: babyStore.isMilestoneCompleted(milestone.title),
+              }"
+            >
+              <div class="milestone-icon">
+                {{ getMilestoneIcon(milestone.title) }}
+              </div>
+              <div class="milestone-title">{{ milestone.title }}</div>
+              <div class="milestone-status">
+                <el-icon
+                  v-if="babyStore.isMilestoneCompleted(milestone.title)"
+                  class="check-icon"
+                >
+                  <Check />
+                </el-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部操作按钮 -->
+        <div class="current-actions">
+          <el-button
+            type="primary"
+            size="large"
+            round
+            @click="goToDetail(babyStore.currentMonth)"
+            class="detail-btn"
+          >
+            <span>查看详细指南</span>
+            <el-icon class="el-icon--right"><ArrowRight /></el-icon>
+          </el-button>
+          <el-button
+            size="large"
+            round
+            @click="goToTimeline"
+            class="timeline-btn"
+          >
+            <el-icon><Calendar /></el-icon>
+            <span>查看成长时间轴</span>
+          </el-button>
         </div>
       </el-card>
     </div>
@@ -135,32 +160,40 @@
       <div class="section-header">
         <h2>
           <span class="icon-wrapper">📅</span>
-          选择宝宝月龄
+          全部月龄阶段
         </h2>
-        <p class="section-desc">点击查看每个阶段的详细发育指南</p>
+        <p class="section-desc">探索宝宝0-12个月的成长历程</p>
       </div>
-      <el-row :gutter="20">
-        <el-col
+      <div class="months-grid">
+        <div
           v-for="(monthData, index) in babyStore.allMonthsData"
           :key="monthData.month"
-          :xs="12"
-          :sm="8"
-          :md="6"
-          :lg="4"
-          class="month-col"
+          class="month-card-wrapper"
+          :class="{ 'is-current': monthData.month === babyStore.currentMonth }"
           :style="{ animationDelay: `${index * 0.05}s` }"
+          @click="goToDetail(monthData.month)"
         >
-          <MonthCard
-            :month="monthData.month"
-            :title="monthData.title"
-            :summary="monthData.summary"
-            :is-active="monthData.month === babyStore.currentMonth"
-            :physical-data="monthData.physicalDevelopment"
-            :milestones-count="monthData.milestones.length"
-            @click="goToDetail"
-          />
-        </el-col>
-      </el-row>
+          <!-- 当前标记 -->
+          <div
+            v-if="monthData.month === babyStore.currentMonth"
+            class="current-marker"
+          >
+            <span class="marker-icon">⭐</span>
+            <span class="marker-text">当前</span>
+          </div>
+
+          <div class="month-card-inner">
+            <div class="month-number">{{ monthData.month }}</div>
+            <div class="month-label">月</div>
+            <div class="month-title-small">{{ monthData.title }}</div>
+            <div class="month-progress" v-if="monthData.milestones">
+              <div class="progress-text">
+                {{ getMonthProgress(monthData) }}个里程碑
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 快捷功能卡片 -->
@@ -410,6 +443,7 @@ import {
   Reading,
   FirstAidKit,
   Notebook,
+  Calendar,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { BabyMonthData } from '@/types/baby'
@@ -484,6 +518,47 @@ const dailyTips = [
 const goToDetail = (month: number) => {
   babyStore.setCurrentMonth(month)
   router.push(`/month/${month}`)
+}
+
+const goToTimeline = () => {
+  router.push('/timeline')
+}
+
+const getWelcomeMessage = () => {
+  const name = babyStore.babyInfo.name
+  const month = babyStore.currentMonth
+  if (month === 0) {
+    return `欢迎来到${name}的成长之旅`
+  }
+  return `${name}，${month}个月啦！`
+}
+
+const getMilestoneIcon = (title: string) => {
+  const iconMap: Record<string, string> = {
+    抬头: '👀',
+    追视: '👁️',
+    微笑: '😊',
+    翻身: '🔄',
+    坐: '🪑',
+    爬: '🐛',
+    站: '🧍',
+    走: '👣',
+    说话: '🗣️',
+    抓握: '✋',
+    视觉: '👁️',
+    听觉: '👂',
+    触觉: '👋',
+  }
+
+  for (const [key, icon] of Object.entries(iconMap)) {
+    if (title.includes(key)) return icon
+  }
+  return '✨'
+}
+
+const getMonthProgress = (monthData: BabyMonthData) => {
+  if (!monthData.milestones) return 0
+  return monthData.milestones.length
 }
 
 const saveBabyInfo = () => {
@@ -786,106 +861,296 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* 当前月龄卡片 */
+/* 当前月龄卡片 - 全新设计 */
 .current-section {
   padding: 0 24px;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
   position: relative;
   z-index: 1;
 }
 
-.current-month-card {
-  border-radius: 24px !important;
+.current-month-card-enhanced {
+  border-radius: 28px !important;
   overflow: hidden;
-  background: linear-gradient(
-    135deg,
-    #ffffff 0%,
-    #fef3ff 25%,
-    #fae8ff 50%,
-    #f3e8ff 75%,
-    #ede9fe 100%
-  ) !important;
-  border: 2px solid transparent !important;
-  background-image: linear-gradient(white, white),
-    linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
-  background-origin: border-box !important;
-  background-clip: padding-box, border-box !important;
-  box-shadow: 0 16px 48px rgba(102, 126, 234, 0.18) !important;
-  transition: all 0.4s ease !important;
+  background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%) !important;
+  border: 3px solid #a78bfa !important;
+  box-shadow: 0 20px 60px rgba(167, 139, 250, 0.25),
+    0 0 0 1px rgba(167, 139, 250, 0.1) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
 }
 
-.current-month-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 24px 64px rgba(102, 126, 234, 0.25) !important;
+.current-month-card-enhanced:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 28px 80px rgba(167, 139, 250, 0.35),
+    0 0 0 1px rgba(167, 139, 250, 0.2) !important;
 }
 
-.current-month-content {
+/* 顶部标记 */
+.current-badge {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 16px;
-}
-
-.month-info {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex: 1;
-}
-
-.month-badge {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  gap: 10px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
   color: white;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-  flex-shrink: 0;
-}
-
-.month-num {
-  font-size: 32px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.month-text {
-  font-size: 13px;
   font-weight: 600;
-  opacity: 0.9;
 }
 
-.month-details {
-  flex: 1;
+.badge-icon {
+  font-size: 22px;
+  animation: pulse 2s ease-in-out infinite;
 }
 
-.month-details h3 {
-  font-size: 20px;
-  margin: 0 0 6px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.badge-text {
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+.badge-month {
+  margin-left: auto;
+  padding: 4px 14px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+
+/* 欢迎语 */
+.welcome-section {
+  padding: 24px 24px 16px;
+  text-align: center;
+}
+
+.welcome-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  display: inline-block;
+}
+
+.emoji-wave {
+  font-size: 28px;
+  display: inline-block;
+  animation: wave 1.5s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(20deg);
+  }
+  75% {
+    transform: rotate(-15deg);
+  }
+}
+
+.welcome-subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 发育数据卡片 */
+.development-data {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.data-card {
+  padding: 20px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.data-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.data-card:hover {
+  transform: translateY(-4px);
+}
+
+.data-card:hover::before {
+  opacity: 1;
+}
+
+.weight-card {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.height-card {
+  background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+}
+
+.data-icon {
+  font-size: 36px;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.data-content {
+  flex: 1;
+  z-index: 1;
+}
+
+.data-label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.data-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+/* 关键里程碑 */
+.key-milestones {
+  padding: 0 24px 24px;
+}
+
+.milestone-header {
+  margin-bottom: 16px;
+}
+
+.milestone-header h3 {
+  font-size: 18px;
   font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #1f2937;
 }
 
-.overview-summary {
-  font-size: 15px;
-  color: var(--text-secondary);
-  margin: 0 0 10px 0;
-  line-height: 1.6;
+.milestone-subtitle {
+  font-size: 13px;
+  color: #9ca3af;
+  font-weight: 500;
 }
 
-.month-highlights {
+.milestone-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.milestone-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px 12px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.milestone-card:hover {
+  border-color: #a78bfa;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(167, 139, 250, 0.2);
+}
+
+.milestone-card.completed {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #86efac;
+}
+
+.milestone-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+.milestone-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.milestone-status {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.check-icon {
+  color: #10b981;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* 底部操作按钮 */
+.current-actions {
   display: flex;
   gap: 12px;
+  padding: 0 24px 24px;
   flex-wrap: wrap;
+}
+
+.detail-btn {
+  flex: 1;
+  min-width: 200px;
+  height: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+}
+
+.detail-btn:hover {
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.4);
+  transform: translateY(-2px);
+}
+
+.timeline-btn {
+  flex: 1;
+  min-width: 160px;
+  height: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  background: white !important;
+  border: 2px solid #e5e7eb !important;
+  color: #6b7280 !important;
+}
+
+.timeline-btn:hover {
+  border-color: #a78bfa !important;
+  color: #7c3aed !important;
+  background: #faf5ff !important;
 }
 
 .highlight-item {
@@ -930,18 +1195,118 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* 月龄网格 */
+/* 月龄网格 - 全新设计 */
 .months-section {
   padding: 0 24px;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
   position: relative;
   z-index: 1;
 }
 
-.month-col {
-  margin-bottom: 20px;
+.months-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.month-card-wrapper {
+  position: relative;
   animation: monthFadeIn 0.6s ease forwards;
   opacity: 0;
+}
+
+.month-card-wrapper.is-current {
+  z-index: 2;
+}
+
+.month-card-wrapper.is-current .month-card-inner {
+  border: 3px solid #7c3aed;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.25);
+  transform: scale(1.05);
+}
+
+.month-card-inner {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 20px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.month-card-inner:hover {
+  border-color: #a78bfa;
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 28px rgba(167, 139, 250, 0.2);
+}
+
+.current-marker {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+  z-index: 10;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.marker-icon {
+  font-size: 14px;
+}
+
+.marker-text {
+  letter-spacing: 0.5px;
+}
+
+.month-number {
+  font-size: 48px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.month-label {
+  font-size: 14px;
+  color: #9ca3af;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.month-title-small {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.month-progress {
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 @keyframes monthFadeIn {
