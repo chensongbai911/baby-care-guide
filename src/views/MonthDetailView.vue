@@ -179,23 +179,82 @@
 
     <!-- 页面头部 - 优化版 -->
     <div class="page-hero">
-      <div class="hero-decoration">
-        <div class="deco-circle deco-1"></div>
-        <div class="deco-circle deco-2"></div>
-        <div class="deco-circle deco-3"></div>
-      </div>
       <div class="hero-content">
-        <div class="month-badge-large">
-          <span class="month-num">{{ monthData.month }}</span>
-          <span class="month-unit">月龄</span>
+        <div class="hero-top-row">
+          <div class="month-badge-large">
+            <span class="month-num">{{ monthData.month }}</span>
+            <span class="month-unit">月龄</span>
+          </div>
+          <div class="hero-title-area">
+            <h1>{{ monthData.title }}</h1>
+            <el-tag effect="dark" round class="hero-stage-tag">
+              {{ getStageLabel(monthData.month) }}
+            </el-tag>
+          </div>
         </div>
-        <h1>{{ monthData.title }}</h1>
-        <div class="hero-stage-tags">
-          <el-tag effect="dark" round class="hero-stage-tag">
-            {{ getStageLabel(monthData.month) }}
-          </el-tag>
+
+        <!-- 🎯 本月成长关键词 + 里程碑进度（核心优化区域） -->
+        <div class="growth-highlight-card">
+          <div class="highlight-left">
+            <div class="keyword-section">
+              <span class="section-label">本月关键词</span>
+              <div class="keyword-tags">
+                <span
+                  v-for="(keyword, idx) in monthKeywords"
+                  :key="idx"
+                  class="keyword-tag"
+                  @click="handleKeywordClick(keyword)"
+                >
+                  <span class="keyword-icon">{{ keyword.icon }}</span>
+                  <span class="keyword-text">{{ keyword.text }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="highlight-divider"></div>
+          <div class="highlight-right">
+            <div class="milestone-progress">
+              <div class="progress-ring-mini">
+                <svg viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18" />
+                  <circle
+                    class="ring-fill"
+                    cx="22"
+                    cy="22"
+                    r="18"
+                    :style="{ strokeDashoffset: milestoneProgressOffset }"
+                  />
+                </svg>
+                <span class="progress-text">
+                  {{ milestoneCompletedCount }}/{{ milestoneTotalCount }}
+                </span>
+              </div>
+              <div class="progress-info">
+                <span class="progress-label">里程碑完成</span>
+                <span class="progress-detail">
+                  {{ milestoneProgressPercent }}%
+                </span>
+              </div>
+            </div>
+            <el-button
+              type="primary"
+              size="small"
+              round
+              class="checkin-btn"
+              @click="activeTab = 'milestones'"
+            >
+              去打卡
+              <el-icon class="el-icon--right"><ArrowRight /></el-icon>
+            </el-button>
+          </div>
         </div>
-        <p class="hero-summary">{{ monthData.summary }}</p>
+
+        <!-- 个性化成长小贴士 -->
+        <div class="growth-tip-banner" @click="showTipDetail">
+          <span class="tip-icon">💡</span>
+          <span class="tip-text">{{ currentGrowthTip }}</span>
+          <span class="tip-more">了解更多 ›</span>
+        </div>
 
         <!-- 快速统计 -->
         <div class="quick-stats">
@@ -995,6 +1054,150 @@ const milestoneProgress = computed(() => {
   )
 })
 
+// 🎯 新增：里程碑进度相关计算
+const milestoneTotalCount = computed(() => {
+  return monthData.value?.milestones?.length || 0
+})
+
+const milestoneCompletedCount = computed(() => {
+  return completedMilestonesCount.value
+})
+
+const milestoneProgressPercent = computed(() => {
+  return milestoneProgress.value
+})
+
+const milestoneProgressOffset = computed(() => {
+  const circumference = 2 * Math.PI * 18
+  return circumference * (1 - milestoneProgress.value / 100)
+})
+
+// 🎯 新增：本月成长关键词
+const monthKeywords = computed(() => {
+  const keywordsMap: Record<
+    number,
+    Array<{ icon: string; text: string; tab: string }>
+  > = {
+    0: [
+      { icon: '👀', text: '视觉追踪', tab: 'development' },
+      { icon: '🤱', text: '亲密依恋', tab: 'care' },
+      { icon: '😴', text: '睡眠规律', tab: 'care' },
+    ],
+    1: [
+      { icon: '😊', text: '社交微笑', tab: 'development' },
+      { icon: '👂', text: '声音定位', tab: 'development' },
+      { icon: '💪', text: '抬头训练', tab: 'milestones' },
+    ],
+    2: [
+      { icon: '🗣️', text: '咿呀学语', tab: 'development' },
+      { icon: '👐', text: '手眼协调', tab: 'milestones' },
+      { icon: '😄', text: '情绪表达', tab: 'development' },
+    ],
+    3: [
+      { icon: '🎯', text: '抓握能力', tab: 'milestones' },
+      { icon: '🔄', text: '翻身练习', tab: 'milestones' },
+      { icon: '📅', text: '作息规律', tab: 'care' },
+    ],
+    4: [
+      { icon: '🎭', text: '情绪识别', tab: 'development' },
+      { icon: '🤝', text: '社交互动', tab: 'development' },
+      { icon: '🎮', text: '游戏探索', tab: 'care' },
+    ],
+    5: [
+      { icon: '🦷', text: '出牙准备', tab: 'care' },
+      { icon: '🍎', text: '辅食预备', tab: 'nutrition' },
+      { icon: '🧸', text: '物品探索', tab: 'milestones' },
+    ],
+    6: [
+      { icon: '🥣', text: '辅食添加', tab: 'nutrition' },
+      { icon: '🪑', text: '独坐练习', tab: 'milestones' },
+      { icon: '👋', text: '再见挥手', tab: 'development' },
+    ],
+    7: [
+      { icon: '🧗', text: '爬行萌芽', tab: 'milestones' },
+      { icon: '📦', text: '物体恒存', tab: 'development' },
+      { icon: '🗣️', text: '叫名反应', tab: 'development' },
+    ],
+    8: [
+      { icon: '🐛', text: '爬行探索', tab: 'milestones' },
+      { icon: '👆', text: '精细动作', tab: 'development' },
+      { icon: '😰', text: '分离焦虑', tab: 'development' },
+    ],
+    9: [
+      { icon: '🧍', text: '扶站练习', tab: 'milestones' },
+      { icon: '👏', text: '拍手游戏', tab: 'development' },
+      { icon: '🔤', text: '语言理解', tab: 'development' },
+    ],
+    10: [
+      { icon: '🚶', text: '学步准备', tab: 'milestones' },
+      { icon: '🎯', text: '精准抓取', tab: 'development' },
+      { icon: '📚', text: '绘本互动', tab: 'care' },
+    ],
+    11: [
+      { icon: '👣', text: '独立迈步', tab: 'milestones' },
+      { icon: '🗣️', text: '叠词表达', tab: 'development' },
+      { icon: '🧩', text: '因果认知', tab: 'development' },
+    ],
+    12: [
+      { icon: '🎂', text: '周岁里程', tab: 'milestones' },
+      { icon: '🚶', text: '独立行走', tab: 'milestones' },
+      { icon: '💬', text: '简单词汇', tab: 'development' },
+    ],
+  }
+  return keywordsMap[monthData.value?.month || 0] || keywordsMap[0]
+})
+
+// 🎯 新增：个性化成长小贴士
+const currentGrowthTip = computed(() => {
+  const tipsMap: Record<number, string[]> = {
+    0: [
+      '新生儿每天需要16-20小时睡眠，记得保持安静的睡眠环境',
+      '脐带护理很重要，保持干燥清洁',
+    ],
+    1: [
+      '多和宝宝说话唱歌，这是语言发展的基础',
+      '黑白卡片能有效刺激宝宝视觉发育',
+    ],
+    2: ['这个月宝宝开始学会社交微笑啦', '俯卧时间可以锻炼颈部力量'],
+    3: ['开始建立规律作息的好时机', '宝宝可能开始尝试翻身了'],
+    4: ['多进行亲子互动游戏，增进感情', '注意观察宝宝的情绪变化'],
+    5: ['为辅食添加做准备，观察宝宝对食物的兴趣', '出牙期可能会有些烦躁'],
+    6: ['辅食添加从单一到多样，观察过敏反应', '独坐训练可以开始啦'],
+    7: ['爬行是重要的发育里程碑，多创造爬行机会', '叫宝宝名字时注意观察反应'],
+    8: ['爬行能促进大脑发育，别着急让宝宝学走', '这个阶段分离焦虑是正常的'],
+    9: ['扶站练习要注意安全防护', '可以开始教简单的手势如拍手'],
+    10: ['学步期要选择合适的学步环境', '精细动作训练可以用小积木'],
+    11: ['迈出第一步是激动人心的时刻', '鼓励宝宝用简单词汇表达'],
+    12: ['周岁是重要的成长节点，记得拍照留念', '持续鼓励语言和运动发展'],
+  }
+  const tips = tipsMap[monthData.value?.month ?? 0] ??
+    tipsMap[0] ?? ['宝宝每天都在成长']
+  return tips[Math.floor(Math.random() * tips.length)] ?? '宝宝每天都在成长'
+})
+
+// 处理关键词点击
+const handleKeywordClick = (keyword: {
+  icon: string
+  text: string
+  tab: string
+}) => {
+  activeTab.value = keyword.tab
+  ElMessage({
+    message: `查看"${keyword.text}"相关内容`,
+    type: 'info',
+    duration: 1500,
+  })
+}
+
+// 显示小贴士详情
+const showTipDetail = () => {
+  ElMessage({
+    message: currentGrowthTip.value,
+    type: 'success',
+    duration: 3000,
+  })
+}
+
 const isMilestoneCompleted = (title: string) => {
   return babyStore.isMilestoneCompleted(title)
 }
@@ -1116,40 +1319,210 @@ watch(
   margin-bottom: 30px;
 }
 
-.hero-decoration {
+/* 🎯 新版头部布局 */
+.hero-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.hero-title-area {
+  text-align: left;
+}
+
+.hero-title-area h1 {
+  font-size: 22px;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.hero-stage-tag {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border: none !important;
+  color: white !important;
+}
+
+/* 🎯 成长关键词 + 里程碑进度卡片 */
+.growth-highlight-card {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.highlight-left {
+  flex: 1;
+}
+
+.keyword-section {
+  text-align: left;
+}
+
+.section-label {
+  font-size: 11px;
+  opacity: 0.8;
+  display: block;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.keyword-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.keyword-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.keyword-tag:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.keyword-icon {
+  font-size: 14px;
+}
+
+.keyword-text {
+  font-weight: 500;
+}
+
+.highlight-divider {
+  width: 1px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.highlight-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.milestone-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-ring-mini {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.progress-ring-mini svg {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-mini .ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 4;
+}
+
+.progress-ring-mini .ring-fill {
+  fill: none;
+  stroke: #4ade80;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 113.1;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.progress-ring-mini .progress-text {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  font-weight: 700;
 }
 
-.deco-circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+.progress-info {
+  text-align: left;
 }
 
-.deco-1 {
-  width: 200px;
-  height: 200px;
-  top: -50px;
-  right: -30px;
+.progress-label {
+  display: block;
+  font-size: 11px;
+  opacity: 0.8;
 }
 
-.deco-2 {
-  width: 150px;
-  height: 150px;
-  bottom: -30px;
-  left: 10%;
+.progress-detail {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.deco-3 {
-  width: 100px;
-  height: 100px;
-  top: 30%;
-  left: -20px;
+.checkin-btn {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.checkin-btn:hover {
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 🎯 成长小贴士横幅 */
+.growth-tip-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(251, 191, 36, 0.2) 0%,
+    rgba(251, 146, 60, 0.15) 100%
+  );
+  padding: 10px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.growth-tip-banner:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(251, 191, 36, 0.3) 0%,
+    rgba(251, 146, 60, 0.25) 100%
+  );
+}
+
+.tip-icon {
+  font-size: 18px;
+}
+
+.tip-text {
+  flex: 1;
+  font-size: 13px;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.tip-more {
+  font-size: 12px;
+  opacity: 0.8;
+  white-space: nowrap;
 }
 
 .hero-content {
@@ -1162,34 +1535,33 @@ watch(
   flex-direction: column;
   align-items: center;
   background: rgba(255, 255, 255, 0.2);
-  padding: 16px 32px; /* 从 20px 40px 减小 */
-  border-radius: 24px;
-  margin-bottom: 16px; /* 从 20px 减小 */
+  padding: 12px 24px;
+  border-radius: 20px;
   backdrop-filter: blur(10px);
 }
 
 .month-num {
-  font-size: 44px; /* 从 56px 减小 */
+  font-size: 36px;
   font-weight: 900;
   line-height: 1;
 }
 
 .month-unit {
-  font-size: 14px; /* 从 16px 减小 */
+  font-size: 12px;
   opacity: 0.9;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .page-hero h1 {
-  font-size: 26px; /* 从 32px 减小 */
-  margin: 0 0 10px 0; /* 从 12px 减小 */
+  font-size: 26px;
+  margin: 0 0 10px 0;
   font-weight: 800;
 }
 
 .hero-summary {
-  font-size: 14px; /* 从 16px 减小 */
+  font-size: 14px;
   opacity: 0.9;
-  margin: 0 0 20px 0; /* 从 30px 减小 */
+  margin: 0 0 20px 0;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
@@ -1199,16 +1571,16 @@ watch(
 .quick-stats {
   display: flex;
   justify-content: center;
-  gap: 16px; /* 从 20px 减小 */
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 10px; /* 从 12px 减小 */
+  gap: 10px;
   background: rgba(255, 255, 255, 0.15);
-  padding: 12px 20px; /* 从 16px 24px 减小 */
+  padding: 12px 20px;
   border-radius: 16px;
   backdrop-filter: blur(10px);
 }
@@ -2096,15 +2468,70 @@ watch(
 /* 响应式 */
 @media (max-width: 768px) {
   .page-hero {
-    padding: 40px 20px;
+    padding: 30px 16px;
+  }
+
+  /* 🎯 新增头部区域响应式 */
+  .hero-top-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hero-title-area {
+    text-align: center;
+  }
+
+  .growth-highlight-card {
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .highlight-divider {
+    width: 80%;
+    height: 1px;
+  }
+
+  .highlight-left {
+    width: 100%;
+  }
+
+  .keyword-section {
+    text-align: center;
+  }
+
+  .keyword-tags {
+    justify-content: center;
+  }
+
+  .keyword-tag {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .highlight-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .growth-tip-banner {
+    padding: 10px 14px;
+  }
+
+  .tip-text {
+    font-size: 12px;
   }
 
   .month-num {
-    font-size: 42px;
+    font-size: 32px;
+  }
+
+  .month-badge-large {
+    padding: 10px 20px;
   }
 
   .page-hero h1 {
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .quick-stats {
