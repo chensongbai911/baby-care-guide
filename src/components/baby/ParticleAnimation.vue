@@ -1,17 +1,33 @@
 <template>
   <div class="particle-animation" ref="containerRef">
-    <svg class="particle-svg" :viewBox="`0 0 ${width} ${height}`" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      class="particle-svg"
+      :viewBox="`0 0 ${width} ${height}`"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <defs>
         <!-- 星星形状 -->
-        <path id="star" d="M 0,-5 L 1.5,-1.5 L 5,0 L 1.5,1.5 L 0,5 L -1.5,1.5 L -5,0 L -1.5,-1.5 Z" />
+        <path
+          id="star"
+          d="M 0,-5 L 1.5,-1.5 L 5,0 L 1.5,1.5 L 0,5 L -1.5,1.5 L -5,0 L -1.5,-1.5 Z"
+        />
 
         <!-- 心形 -->
-        <path id="heart" d="M 0,-3 C -1,-5 -4,-5 -4,-2 C -4,1 0,4 0,4 C 0,4 4,1 4,-2 C 4,-5 1,-5 0,-3 Z" />
+        <path
+          id="heart"
+          d="M 0,-3 C -1,-5 -4,-5 -4,-2 C -4,1 0,4 0,4 C 0,4 4,1 4,-2 C 4,-5 1,-5 0,-3 Z"
+        />
 
         <!-- 圆形渐变 -->
         <radialGradient id="particle-gradient" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" style="stop-color:rgb(255,255,255);stop-opacity:1" />
-          <stop offset="100%" style="stop-color:rgb(168,139,250);stop-opacity:0.5" />
+          <stop
+            offset="0%"
+            style="stop-color: rgb(255, 255, 255); stop-opacity: 1;"
+          />
+          <stop
+            offset="100%"
+            style="stop-color: rgb(168, 139, 250); stop-opacity: 0.5;"
+          />
         </radialGradient>
       </defs>
 
@@ -34,7 +50,9 @@
           :y="particle.y"
           :fill="particle.color"
           :opacity="particle.opacity"
-          :transform="`scale(${particle.size / 5}) rotate(${particle.rotation})`"
+          :transform="`scale(${particle.size / 5}) rotate(${
+            particle.rotation
+          })`"
           class="particle"
         />
 
@@ -45,7 +63,9 @@
           :y="particle.y"
           :fill="particle.color"
           :opacity="particle.opacity"
-          :transform="`scale(${particle.size / 3}) rotate(${particle.rotation})`"
+          :transform="`scale(${particle.size / 3}) rotate(${
+            particle.rotation
+          })`"
           class="particle"
         />
       </g>
@@ -84,7 +104,7 @@ const props = withDefaults(defineProps<Props>(), {
   height: 400,
   colors: () => ['#a78bfa', '#ec4899', '#fbbf24', '#34d399'],
   particleTypes: () => ['circle', 'star', 'heart'],
-  autoStart: false
+  autoStart: false,
 })
 
 const containerRef = ref<HTMLElement>()
@@ -96,7 +116,9 @@ let particleId = 0
 const createParticle = (x: number, y: number) => {
   const angle = Math.random() * Math.PI * 2
   const speed = 2 + Math.random() * 4
-  const type = props.particleTypes[Math.floor(Math.random() * props.particleTypes.length)] as 'circle' | 'star' | 'heart'
+  const type = props.particleTypes[
+    Math.floor(Math.random() * props.particleTypes.length)
+  ] as 'circle' | 'star' | 'heart'
 
   return {
     id: particleId++,
@@ -105,12 +127,14 @@ const createParticle = (x: number, y: number) => {
     vx: Math.cos(angle) * speed,
     vy: Math.sin(angle) * speed - 2, // 向上的初始速度
     size: 3 + Math.random() * 5,
-    color: props.colors[Math.floor(Math.random() * props.colors.length)] as string,
+    color: props.colors[
+      Math.floor(Math.random() * props.colors.length)
+    ] as string,
     opacity: 1,
     life: 0,
     maxLife: 60 + Math.random() * 60,
     type,
-    rotation: Math.random() * 360
+    rotation: Math.random() * 360,
   }
 }
 
@@ -126,7 +150,7 @@ const explode = (x?: number, y?: number, count: number = 30) => {
 
 // 更新粒子
 const updateParticles = () => {
-  particles.value = particles.value.filter(p => {
+  particles.value = particles.value.filter((p) => {
     p.x += p.vx
     p.y += p.vy
     p.vy += 0.15 // 重力
@@ -177,7 +201,7 @@ defineExpose({
   explode,
   clear: () => {
     particles.value = []
-  }
+  },
 })
 </script>
 

@@ -31,11 +31,25 @@
           </div>
         </div>
         <div class="hero-buttons">
-          <el-button type="primary" size="large" round @click="showBabyInfoDialog = true">
+          <el-button
+            type="primary"
+            size="large"
+            round
+            @click="showBabyInfoDialog = true"
+          >
             <el-icon><User /></el-icon>
-            {{ babyStore.babyInfo.name === '宝宝' ? '设置宝宝信息' : babyStore.babyInfo.name + '的成长档案' }}
+            {{
+              babyStore.babyInfo.name === '宝宝'
+                ? '设置宝宝信息'
+                : babyStore.babyInfo.name + '的成长档案'
+            }}
           </el-button>
-          <el-button size="large" round @click="goToDetail(babyStore.currentMonth)" class="secondary-btn">
+          <el-button
+            size="large"
+            round
+            @click="goToDetail(babyStore.currentMonth)"
+            class="secondary-btn"
+          >
             开始探索 →
           </el-button>
         </div>
@@ -45,8 +59,13 @@
     <!-- 当前月龄快速概览 -->
     <div class="current-section" v-if="currentMonthData">
       <div class="section-header">
-        <h2><span class="icon-wrapper">🎯</span> 当前阶段</h2>
-        <el-tag type="success" size="large" effect="dark">{{ babyStore.currentMonth }}月龄</el-tag>
+        <h2>
+          <span class="icon-wrapper">🎯</span>
+          当前阶段
+        </h2>
+        <el-tag type="success" size="large" effect="dark">
+          {{ babyStore.currentMonth }}月龄
+        </el-tag>
       </div>
       <el-card class="current-month-card">
         <div class="current-month-content">
@@ -61,18 +80,27 @@
               <div class="month-highlights">
                 <div class="highlight-item">
                   <el-icon><TrendCharts /></el-icon>
-                  <span>体重：{{ currentMonthData.physicalDevelopment.weight }}</span>
+                  <span>
+                    体重：{{ currentMonthData.physicalDevelopment.weight }}
+                  </span>
                 </div>
                 <div class="highlight-item">
                   <el-icon><Histogram /></el-icon>
-                  <span>身高：{{ currentMonthData.physicalDevelopment.height }}</span>
+                  <span>
+                    身高：{{ currentMonthData.physicalDevelopment.height }}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
           <div class="month-actions">
-            <el-button type="primary" size="large" @click="goToDetail(babyStore.currentMonth)">
-              查看详细指南 <el-icon class="el-icon--right"><ArrowRight /></el-icon>
+            <el-button
+              type="primary"
+              size="large"
+              @click="goToDetail(babyStore.currentMonth)"
+            >
+              查看详细指南
+              <el-icon class="el-icon--right"><ArrowRight /></el-icon>
             </el-button>
           </div>
         </div>
@@ -84,11 +112,17 @@
             <el-tag
               v-for="milestone in currentMonthData.milestones.slice(0, 4)"
               :key="milestone.title"
-              :type="babyStore.isMilestoneCompleted(milestone.title) ? 'success' : 'info'"
+              :type="
+                babyStore.isMilestoneCompleted(milestone.title)
+                  ? 'success'
+                  : 'info'
+              "
               effect="plain"
               round
             >
-              <el-icon v-if="babyStore.isMilestoneCompleted(milestone.title)"><Check /></el-icon>
+              <el-icon v-if="babyStore.isMilestoneCompleted(milestone.title)">
+                <Check />
+              </el-icon>
               {{ milestone.title }}
             </el-tag>
           </div>
@@ -99,7 +133,10 @@
     <!-- 月龄选择网格 -->
     <div class="months-section">
       <div class="section-header">
-        <h2><span class="icon-wrapper">📅</span> 选择宝宝月龄</h2>
+        <h2>
+          <span class="icon-wrapper">📅</span>
+          选择宝宝月龄
+        </h2>
         <p class="section-desc">点击查看每个阶段的详细发育指南</p>
       </div>
       <el-row :gutter="20">
@@ -129,12 +166,18 @@
     <!-- 快捷功能卡片 -->
     <div class="quick-actions">
       <div class="section-header">
-        <h2><span class="icon-wrapper">⚡</span> 快捷功能</h2>
+        <h2>
+          <span class="icon-wrapper">⚡</span>
+          快捷功能
+        </h2>
         <p class="section-desc">便捷工具助您育儿更轻松</p>
       </div>
       <el-row :gutter="24">
         <el-col :xs="24" :sm="12" :md="8" :lg="4">
-          <div class="action-card timeline-card" @click="router.push('/timeline')">
+          <div
+            class="action-card timeline-card"
+            @click="router.push('/timeline')"
+          >
             <div class="action-icon">
               <el-icon :size="48"><Timer /></el-icon>
             </div>
@@ -146,7 +189,10 @@
           </div>
         </el-col>
         <el-col :xs="24" :sm="12" :md="8" :lg="4">
-          <div class="action-card checklist-card" @click="router.push('/checklist')">
+          <div
+            class="action-card checklist-card"
+            @click="router.push('/checklist')"
+          >
             <div class="action-icon">
               <el-icon :size="48"><List /></el-icon>
             </div>
@@ -158,7 +204,10 @@
           </div>
         </el-col>
         <el-col :xs="24" :sm="12" :md="8" :lg="4">
-          <div class="action-card vaccine-card" @click="router.push('/vaccine')">
+          <div
+            class="action-card vaccine-card"
+            @click="router.push('/vaccine')"
+          >
             <div class="action-icon">
               <el-icon :size="48"><FirstAidKit /></el-icon>
             </div>
@@ -211,7 +260,10 @@
     <!-- 育儿小贴士 -->
     <div class="tips-section">
       <div class="section-header">
-        <h2><span class="icon-wrapper">💡</span> 每日育儿小贴士</h2>
+        <h2>
+          <span class="icon-wrapper">💡</span>
+          每日育儿小贴士
+        </h2>
         <p class="section-desc">科学育儿，从这里开始</p>
       </div>
 
@@ -243,13 +295,19 @@
                 </div>
 
                 <div class="tip-text-content">
-                  <div class="tip-category">{{ tip.category || '育儿贴士' }}</div>
+                  <div class="tip-category">
+                    {{ tip.category || '育儿贴士' }}
+                  </div>
                   <h3 class="tip-title-large">{{ tip.title }}</h3>
                   <p class="tip-desc-large">{{ tip.content }}</p>
 
                   <div class="tip-footer">
                     <div class="tip-tags">
-                      <span class="tip-tag" v-for="(tag, idx) in (tip.tags || ['实用', '科学'])" :key="idx">
+                      <span
+                        class="tip-tag"
+                        v-for="(tag, idx) in (tip.tags || ['实用', '科学'])"
+                        :key="idx"
+                      >
                         {{ tag }}
                       </span>
                     </div>
@@ -282,7 +340,11 @@
     >
       <el-form :model="babyForm" label-width="100px" label-position="top">
         <el-form-item label="宝宝昵称">
-          <el-input v-model="babyForm.name" placeholder="给宝宝取一个可爱的昵称吧" size="large">
+          <el-input
+            v-model="babyForm.name"
+            placeholder="给宝宝取一个可爱的昵称吧"
+            size="large"
+          >
             <template #prefix>
               <el-icon><User /></el-icon>
             </template>
@@ -294,7 +356,7 @@
             type="date"
             placeholder="选择宝宝的生日"
             size="large"
-            style="width: 100%"
+            style="width: 100%;"
             :disabled-date="disabledDate"
           />
         </el-form-item>
@@ -313,7 +375,9 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showBabyInfoDialog = false" size="large">取消</el-button>
+        <el-button @click="showBabyInfoDialog = false" size="large">
+          取消
+        </el-button>
         <el-button type="primary" @click="saveBabyInfo" size="large">
           <el-icon><Check /></el-icon>
           保存信息
@@ -335,7 +399,18 @@ import { useBabyStore } from '@/stores/babyStore'
 import MonthCard from '@/components/baby/MonthCard.vue'
 import AnimatedNumber from '@/components/baby/AnimatedNumber.vue'
 import ConfettiEffect from '@/components/baby/ConfettiEffect.vue'
-import { Timer, List, User, ArrowRight, Check, TrendCharts, Histogram, Reading, FirstAidKit, Notebook } from '@element-plus/icons-vue'
+import {
+  Timer,
+  List,
+  User,
+  ArrowRight,
+  Check,
+  TrendCharts,
+  Histogram,
+  Reading,
+  FirstAidKit,
+  Notebook,
+} from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { BabyMonthData } from '@/types/baby'
 
@@ -346,56 +421,64 @@ const showBabyInfoDialog = ref(false)
 const babyForm = ref({
   name: '宝宝',
   birthday: new Date(),
-  gender: 'unknown' as 'boy' | 'girl' | 'unknown'
+  gender: 'unknown' as 'boy' | 'girl' | 'unknown',
 })
 
 const currentMonthData = computed(() => babyStore.currentMonthData)
 
 const totalMilestones = computed(() => {
-  return babyStore.allMonthsData.reduce((sum: number, month: BabyMonthData) => sum + month.milestones.length, 0)
+  return babyStore.allMonthsData.reduce(
+    (sum: number, month: BabyMonthData) => sum + month.milestones.length,
+    0,
+  )
 })
 
 const dailyTips = [
   {
     icon: '🍼',
     title: '喂养小贴士',
-    content: '母乳是宝宝最好的食物，按需喂养能帮助建立良好的供需关系。建议新生儿每2-3小时喂一次，每次10-20分钟。',
+    content:
+      '母乳是宝宝最好的食物，按需喂养能帮助建立良好的供需关系。建议新生儿每2-3小时喂一次，每次10-20分钟。',
     type: 'feeding',
     category: '科学喂养',
-    tags: ['母乳喂养', '按需哺乳']
+    tags: ['母乳喂养', '按需哺乳'],
   },
   {
     icon: '😴',
     title: '睡眠小贴士',
-    content: '建立规律的睡前仪式，帮助宝宝区分白天和夜晚。可以通过洗澡、换睡衣、讲故事等方式，让宝宝慢慢进入睡眠状态。',
+    content:
+      '建立规律的睡前仪式，帮助宝宝区分白天和夜晚。可以通过洗澡、换睡衣、讲故事等方式，让宝宝慢慢进入睡眠状态。',
     type: 'sleep',
     category: '健康睡眠',
-    tags: ['睡眠习惯', '作息规律']
+    tags: ['睡眠习惯', '作息规律'],
   },
   {
     icon: '🛁',
     title: '护理小贴士',
-    content: '新生儿洗澡水温保持在37-38°C，每次洗澡时间不超过10分钟。注意保持脐部干燥，避免感染。',
+    content:
+      '新生儿洗澡水温保持在37-38°C，每次洗澡时间不超过10分钟。注意保持脐部干燥，避免感染。',
     type: 'care',
     category: '日常护理',
-    tags: ['洗澡技巧', '脐带护理']
+    tags: ['洗澡技巧', '脐带护理'],
   },
   {
     icon: '🎮',
     title: '互动小贴士',
-    content: '多和宝宝说话、唱歌，有助于宝宝的语言发展和情感联结。每天抽出固定时间进行亲子互动游戏。',
+    content:
+      '多和宝宝说话、唱歌，有助于宝宝的语言发展和情感联结。每天抽出固定时间进行亲子互动游戏。',
     type: 'play',
     category: '亲子互动',
-    tags: ['语言发展', '情感培养']
+    tags: ['语言发展', '情感培养'],
   },
   {
     icon: '⚠️',
     title: '安全小贴士',
-    content: '宝宝睡觉时保持仰卧姿势，床上不放置枕头和毛绒玩具。确保婴儿床符合安全标准，护栏间隙小于6厘米。',
+    content:
+      '宝宝睡觉时保持仰卧姿势，床上不放置枕头和毛绒玩具。确保婴儿床符合安全标准，护栏间隙小于6厘米。',
     type: 'safety',
     category: '安全防护',
-    tags: ['睡眠安全', '防护措施']
-  }
+    tags: ['睡眠安全', '防护措施'],
+  },
 ]
 
 const goToDetail = (month: number) => {
@@ -441,10 +524,21 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(240, 147, 251, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(79, 172, 254, 0.05) 0%, transparent 50%);
+  background: radial-gradient(
+      circle at 20% 30%,
+      rgba(102, 126, 234, 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(240, 147, 251, 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(79, 172, 254, 0.05) 0%,
+      transparent 50%
+    );
   pointer-events: none;
   z-index: 0;
 }
@@ -474,7 +568,12 @@ onMounted(() => {
 .shape {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 70%, transparent 100%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.05) 70%,
+    transparent 100%
+  );
   animation: floatShape 12s ease-in-out infinite;
   filter: blur(1px);
 }
@@ -512,12 +611,13 @@ onMounted(() => {
   font-size: 60px;
   margin-bottom: 12px;
   animation: emojiFloat 3s ease-in-out infinite;
-  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.25));
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.25));
   display: inline-block;
 }
 
 @keyframes emojiFloat {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg) scale(1);
   }
   25% {
@@ -537,7 +637,11 @@ onMounted(() => {
   font-weight: 800;
   text-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   letter-spacing: 1px;
-  background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.95) 100%);
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -548,7 +652,7 @@ onMounted(() => {
   margin-bottom: 22px;
   opacity: 0.95;
   font-weight: 500;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.5px;
   color: rgba(255, 255, 255, 0.95);
 }
@@ -582,7 +686,7 @@ onMounted(() => {
 .stat-number {
   font-size: 26px;
   font-weight: 800;
-  text-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
   color: #fff;
 }
 
@@ -597,7 +701,7 @@ onMounted(() => {
 .stat-divider {
   width: 1px;
   height: 32px;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 1px;
   align-self: center;
 }
@@ -614,7 +718,7 @@ onMounted(() => {
   font-size: 15px !important;
   border-radius: 24px !important;
   font-weight: 600 !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
 }
 
 .hero-buttons :deep(.el-button:hover) {
@@ -660,10 +764,19 @@ onMounted(() => {
 }
 
 @keyframes iconBounce {
-  0%, 100% { transform: translateY(0) rotate(-5deg) scale(1); }
-  25% { transform: translateY(-6px) rotate(5deg) scale(1.1); }
-  50% { transform: translateY(0) rotate(-5deg) scale(1); }
-  75% { transform: translateY(-4px) rotate(5deg) scale(1.08); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(-5deg) scale(1);
+  }
+  25% {
+    transform: translateY(-6px) rotate(5deg) scale(1.1);
+  }
+  50% {
+    transform: translateY(0) rotate(-5deg) scale(1);
+  }
+  75% {
+    transform: translateY(-4px) rotate(5deg) scale(1.08);
+  }
 }
 
 .section-desc {
@@ -684,10 +797,16 @@ onMounted(() => {
 .current-month-card {
   border-radius: 24px !important;
   overflow: hidden;
-  background: linear-gradient(135deg, #ffffff 0%, #fef3ff 25%, #fae8ff 50%, #f3e8ff 75%, #ede9fe 100%) !important;
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #fef3ff 25%,
+    #fae8ff 50%,
+    #f3e8ff 75%,
+    #ede9fe 100%
+  ) !important;
   border: 2px solid transparent !important;
-  background-image:
-    linear-gradient(white, white),
+  background-image: linear-gradient(white, white),
     linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
   background-origin: border-box !important;
   background-clip: padding-box, border-box !important;
@@ -1043,7 +1162,11 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.85) 100%
+  );
   z-index: 1;
 }
 
@@ -1117,13 +1240,22 @@ onMounted(() => {
 }
 
 @keyframes tipBlobFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(20px, -20px) scale(1.1); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(20px, -20px) scale(1.1);
+  }
 }
 
 @keyframes tipCircleRotate {
-  from { transform: translateY(-50%) rotate(0deg); }
-  to { transform: translateY(-50%) rotate(360deg); }
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
 }
 
 /* 内容包装器 */
@@ -1152,12 +1284,17 @@ onMounted(() => {
   position: relative;
   z-index: 2;
   animation: iconFloat 3s ease-in-out infinite;
-  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
 }
 
 @keyframes iconFloat {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-8px) scale(1.05); }
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.05);
+  }
 }
 
 .icon-ring {
@@ -1170,8 +1307,15 @@ onMounted(() => {
 }
 
 @keyframes iconRingPulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.15); opacity: 0.5; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.5;
+  }
 }
 
 .icon-pulse {
@@ -1179,13 +1323,24 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.2) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  );
   animation: iconPulseAnim 2s ease-in-out infinite;
 }
 
 @keyframes iconPulseAnim {
-  0%, 100% { transform: scale(0.8); opacity: 0.8; }
-  50% { transform: scale(1.2); opacity: 0; }
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
 }
 
 /* 文本内容 */
@@ -1320,8 +1475,13 @@ onMounted(() => {
 }
 
 @keyframes iconBounce {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
 }
 
 /* 响应式设计 - 移动端优化 */
@@ -1624,15 +1784,26 @@ onMounted(() => {
 }
 
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  25% { background-position: 50% 50%; }
-  50% { background-position: 100% 50%; }
-  75% { background-position: 50% 100%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes floatShape {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0) rotate(0deg) scale(1);
   }
   25% {

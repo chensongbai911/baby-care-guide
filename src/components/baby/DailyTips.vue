@@ -24,7 +24,12 @@
       </div>
       <div class="tip-footer">
         <div class="tip-tags">
-          <el-tag v-for="tag in currentTip?.tags || []" :key="tag" size="small" effect="plain">
+          <el-tag
+            v-for="tag in currentTip?.tags || []"
+            :key="tag"
+            size="small"
+            effect="plain"
+          >
             {{ tag }}
           </el-tag>
         </div>
@@ -101,7 +106,9 @@
         <div class="dialog-tips">
           <h5>实用建议：</h5>
           <ul>
-            <li v-for="(advice, i) in selectedTip.advice" :key="i">{{ advice }}</li>
+            <li v-for="(advice, i) in selectedTip.advice" :key="i">
+              {{ advice }}
+            </li>
           </ul>
         </div>
       </div>
@@ -141,7 +148,9 @@ const currentTipIndex = ref(0)
 
 const formattedDate = computed(() => {
   const date = new Date()
-  return `${date.getMonth() + 1}月${date.getDate()}日 星期${'日一二三四五六'[date.getDay()]}`
+  return `${date.getMonth() + 1}月${date.getDate()}日 星期${
+    '日一二三四五六'[date.getDay()]
+  }`
 })
 
 const categories = [
@@ -149,40 +158,47 @@ const categories = [
   { id: 'sleep', name: '睡眠', icon: '😴' },
   { id: 'health', name: '健康', icon: '💪' },
   { id: 'development', name: '发育', icon: '🌱' },
-  { id: 'care', name: '护理', icon: '🛁' }
+  { id: 'care', name: '护理', icon: '🛁' },
 ]
 
 const tips: Tip[] = [
   {
-    content: '母乳喂养时，确保宝宝含住整个乳晕而不只是乳头，这样可以避免乳头疼痛，也能让宝宝吃得更饱。',
+    content:
+      '母乳喂养时，确保宝宝含住整个乳晕而不只是乳头，这样可以避免乳头疼痛，也能让宝宝吃得更饱。',
     tags: ['母乳喂养', '新手必看'],
-    category: 'feeding'
+    category: 'feeding',
   },
   {
-    content: '给宝宝洗澡时，水温保持在37-38°C最佳，可以用手肘试温。浴室要温暖，避免宝宝着凉。',
+    content:
+      '给宝宝洗澡时，水温保持在37-38°C最佳，可以用手肘试温。浴室要温暖，避免宝宝着凉。',
     tags: ['洗澡', '日常护理'],
-    category: 'care'
+    category: 'care',
   },
   {
-    content: '宝宝睡觉时应该仰卧，这是最安全的睡姿。确保婴儿床上没有多余的被褥和玩具。',
+    content:
+      '宝宝睡觉时应该仰卧，这是最安全的睡姿。确保婴儿床上没有多余的被褥和玩具。',
     tags: ['安全睡眠', '重要'],
-    category: 'sleep'
+    category: 'sleep',
   },
   {
-    content: '每天给宝宝做抚触按摩，不仅能促进亲子关系，还能帮助宝宝消化、改善睡眠质量。',
+    content:
+      '每天给宝宝做抚触按摩，不仅能促进亲子关系，还能帮助宝宝消化、改善睡眠质量。',
     tags: ['抚触按摩', '亲子互动'],
-    category: 'development'
+    category: 'development',
   },
   {
-    content: '注意观察宝宝的大便颜色，正常的母乳宝宝大便是金黄色糊状。如果出现白色或红色要及时就医。',
+    content:
+      '注意观察宝宝的大便颜色，正常的母乳宝宝大便是金黄色糊状。如果出现白色或红色要及时就医。',
     tags: ['健康观察', '重要'],
-    category: 'health'
-  }
+    category: 'health',
+  },
 ]
 
 const currentTip = computed(() => tips[currentTipIndex.value])
-const currentCategory = computed(() =>
-  categories.find(c => c.id === currentTip.value?.category) || categories[0]
+const currentCategory = computed(
+  () =>
+    categories.find((c) => c.id === currentTip.value?.category) ||
+    categories[0],
 )
 
 const quickTips: QuickTip[] = [
@@ -190,46 +206,40 @@ const quickTips: QuickTip[] = [
     icon: '🌡️',
     title: '体温监测',
     preview: '正常体温范围',
-    detail: '婴儿正常腋下体温为36.0-37.3°C。超过37.5°C可能发烧，低于36°C要注意保暖。',
+    detail:
+      '婴儿正常腋下体温为36.0-37.3°C。超过37.5°C可能发烧，低于36°C要注意保暖。',
     advice: [
       '每天固定时间测量体温',
       '使用电子体温计更安全',
-      '发烧时多喝水、物理降温'
-    ]
+      '发烧时多喝水、物理降温',
+    ],
   },
   {
     icon: '💧',
     title: '补水指南',
     preview: '何时需要喝水',
-    detail: '6个月前纯母乳/配方奶喂养的宝宝一般不需要额外喝水。开始添加辅食后可以适当补水。',
+    detail:
+      '6个月前纯母乳/配方奶喂养的宝宝一般不需要额外喝水。开始添加辅食后可以适当补水。',
     advice: [
       '母乳已含足够水分',
       '天热或发烧时可适量补水',
-      '用小勺子喂水更安全'
-    ]
+      '用小勺子喂水更安全',
+    ],
   },
   {
     icon: '🧴',
     title: '皮肤护理',
     preview: '保持皮肤健康',
     detail: '宝宝皮肤娇嫩，每次换尿布后要清洁干净，涂抹护臀霜预防红屁屁。',
-    advice: [
-      '使用温和无香的护肤品',
-      '勤换尿布保持干爽',
-      '出现湿疹要及时处理'
-    ]
+    advice: ['使用温和无香的护肤品', '勤换尿布保持干爽', '出现湿疹要及时处理'],
   },
   {
     icon: '🎵',
     title: '听力发育',
     preview: '声音刺激很重要',
     detail: '多和宝宝说话、唱歌，播放轻柔音乐，有助于听力和语言发育。',
-    advice: [
-      '每天和宝宝说话聊天',
-      '播放轻柔的音乐',
-      '避免过于吵闹的环境'
-    ]
-  }
+    advice: ['每天和宝宝说话聊天', '播放轻柔的音乐', '避免过于吵闹的环境'],
+  },
 ]
 
 const reminders = ref<Reminder[]>([
@@ -238,7 +248,7 @@ const reminders = ref<Reminder[]>([
   { time: '12:00', text: '午餐喂奶', emoji: '🍼', completed: false },
   { time: '14:00', text: '午睡时间', emoji: '😴', completed: false },
   { time: '16:00', text: '亲子游戏', emoji: '🎮', completed: false },
-  { time: '18:00', text: '洗澡时间', emoji: '🛁', completed: false }
+  { time: '18:00', text: '洗澡时间', emoji: '🛁', completed: false },
 ])
 
 const funFacts = [
@@ -246,7 +256,7 @@ const funFacts = [
   '宝宝出生时有300多块骨头，成年后会融合成206块。',
   '婴儿能识别妈妈的声音，因为在子宫里就已经开始听了！',
   '宝宝的微笑最早出现在睡梦中，这叫做"天使微笑"。',
-  '新生儿每天要睡16-17小时，睡眠对大脑发育非常重要！'
+  '新生儿每天要睡16-17小时，睡眠对大脑发育非常重要！',
 ]
 
 const funFact = computed(() => {
@@ -299,8 +309,13 @@ const toggleReminder = (index: number) => {
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .header-text h3 {
@@ -383,13 +398,32 @@ const toggleReminder = (index: number) => {
   animation: twinkle 2s ease-in-out infinite;
 }
 
-.deco-1 { top: 10px; right: 20px; animation-delay: 0s; }
-.deco-2 { top: 40px; right: 60px; animation-delay: 0.5s; }
-.deco-3 { bottom: 20px; right: 30px; animation-delay: 1s; }
+.deco-1 {
+  top: 10px;
+  right: 20px;
+  animation-delay: 0s;
+}
+.deco-2 {
+  top: 40px;
+  right: 60px;
+  animation-delay: 0.5s;
+}
+.deco-3 {
+  bottom: 20px;
+  right: 30px;
+  animation-delay: 1s;
+}
 
 @keyframes twinkle {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.2); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
 }
 
 .quick-tips-grid {
@@ -530,8 +564,13 @@ const toggleReminder = (index: number) => {
 }
 
 @keyframes swing {
-  0%, 100% { transform: rotate(-5deg); }
-  50% { transform: rotate(5deg); }
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
 }
 
 .fact-content h5 {

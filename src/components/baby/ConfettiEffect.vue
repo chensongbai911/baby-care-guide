@@ -23,7 +23,18 @@ const props = withDefaults(defineProps<Props>(), {
   active: false,
   count: 50,
   duration: 3000,
-  colors: () => ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#38f9d7', '#fa709a', '#fee140']
+  colors: () => [
+    '#667eea',
+    '#764ba2',
+    '#f093fb',
+    '#f5576c',
+    '#4facfe',
+    '#00f2fe',
+    '#43e97b',
+    '#38f9d7',
+    '#fa709a',
+    '#fee140',
+  ],
 })
 
 const emit = defineEmits<{
@@ -51,19 +62,22 @@ const getConfettiStyle = (_index: number) => {
     animationDuration: `${animationDuration}s`,
     '--x-movement': `${xMovement}px`,
     '--rotation': `${rotation}deg`,
-    '--final-rotation': `${rotation + 360}deg`
+    '--final-rotation': `${rotation + 360}deg`,
   }
 }
 
-watch(() => props.active, (newValue) => {
-  isActive.value = newValue
-  if (newValue) {
-    setTimeout(() => {
-      isActive.value = false
-      emit('complete')
-    }, props.duration)
-  }
-})
+watch(
+  () => props.active,
+  (newValue) => {
+    isActive.value = newValue
+    if (newValue) {
+      setTimeout(() => {
+        isActive.value = false
+        emit('complete')
+      }, props.duration)
+    }
+  },
+)
 </script>
 
 <style scoped>
@@ -92,7 +106,8 @@ watch(() => props.active, (newValue) => {
     opacity: 1;
   }
   100% {
-    transform: translateY(110vh) translateX(var(--x-movement)) rotate(var(--final-rotation));
+    transform: translateY(110vh) translateX(var(--x-movement))
+      rotate(var(--final-rotation));
     opacity: 0;
   }
 }
@@ -102,16 +117,21 @@ watch(() => props.active, (newValue) => {
   animation: confetti-fall linear forwards, sway 1s ease-in-out infinite;
 }
 
-.confetti:nth-child(3n+1) {
+.confetti:nth-child(3n + 1) {
   animation: confetti-fall linear forwards, sway 1.5s ease-in-out infinite;
 }
 
-.confetti:nth-child(3n+2) {
+.confetti:nth-child(3n + 2) {
   animation: confetti-fall linear forwards, sway 2s ease-in-out infinite;
 }
 
 @keyframes sway {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(20px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(20px);
+  }
 }
 </style>

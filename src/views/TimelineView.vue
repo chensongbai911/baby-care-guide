@@ -19,7 +19,12 @@
 
         <!-- 总体进度统计 -->
         <div class="overall-stats">
-          <div class="stat-card" v-for="(stat, index) in stats" :key="index" :style="{ animationDelay: `${index * 0.1}s` }">
+          <div
+            class="stat-card"
+            v-for="(stat, index) in stats"
+            :key="index"
+            :style="{ animationDelay: `${index * 0.1}s` }"
+          >
             <div class="stat-icon">{{ stat.icon }}</div>
             <div class="stat-info">
               <div class="stat-value">{{ stat.value }}</div>
@@ -35,7 +40,10 @@
     <div class="timeline-container" ref="timelineRef">
       <!-- 中央时间线 -->
       <div class="timeline-line">
-        <div class="timeline-progress" :style="{ height: scrollProgress + '%' }">
+        <div
+          class="timeline-progress"
+          :style="{ height: scrollProgress + '%' }"
+        >
           <div class="progress-glow"></div>
         </div>
       </div>
@@ -44,8 +52,15 @@
       <div
         v-for="(month, index) in monthsData"
         :key="month.month"
-        :class="['timeline-item', { 'left': index % 2 === 0, 'right': index % 2 !== 0 }]"
-        :ref="el => { if (el) monthRefs[index] = el }"
+        :class="[
+          'timeline-item',
+          { left: index % 2 === 0, right: index % 2 !== 0 },
+        ]"
+        :ref="
+          (el) => {
+            if (el) monthRefs[index] = el
+          }
+        "
         @mouseenter="onCardHover(index)"
         @mouseleave="onCardLeave(index)"
       >
@@ -89,11 +104,19 @@
               <span>发育亮点</span>
             </div>
             <div class="highlights-grid">
-              <div class="highlight-item" v-for="(skill, idx) in month.cognitiveSkills.slice(0, 2)" :key="idx">
+              <div
+                class="highlight-item"
+                v-for="(skill, idx) in month.cognitiveSkills.slice(0, 2)"
+                :key="idx"
+              >
                 <span class="highlight-icon">🧠</span>
                 <span class="highlight-text">{{ skill }}</span>
               </div>
-              <div class="highlight-item" v-for="(skill, idx) in month.motorSkills.gross.slice(0, 1)" :key="'motor-' + idx">
+              <div
+                class="highlight-item"
+                v-for="(skill, idx) in month.motorSkills.gross.slice(0, 1)"
+                :key="'motor-' + idx"
+              >
                 <span class="highlight-icon">🏃</span>
                 <span class="highlight-text">{{ skill }}</span>
               </div>
@@ -108,11 +131,16 @@
             </div>
             <div class="progress-bar-container">
               <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: getMilestoneProgress(month) + '%' }">
+                <div
+                  class="progress-fill"
+                  :style="{ width: getMilestoneProgress(month) + '%' }"
+                >
                   <div class="progress-shimmer"></div>
                 </div>
               </div>
-              <span class="progress-text">{{ getMilestoneProgress(month) }}%</span>
+              <span class="progress-text">
+                {{ getMilestoneProgress(month) }}%
+              </span>
             </div>
           </div>
 
@@ -120,11 +148,15 @@
           <div class="quick-info">
             <div class="info-item">
               <span class="info-icon">📏</span>
-              <span class="info-text">{{ month.physicalDevelopment.height }}</span>
+              <span class="info-text">
+                {{ month.physicalDevelopment.height }}
+              </span>
             </div>
             <div class="info-item">
               <span class="info-icon">⚖️</span>
-              <span class="info-text">{{ month.physicalDevelopment.weight }}</span>
+              <span class="info-text">
+                {{ month.physicalDevelopment.weight }}
+              </span>
             </div>
           </div>
 
@@ -150,7 +182,12 @@
     <!-- 浮动操作按钮 -->
     <transition name="fade-slide">
       <div v-if="showScrollTop" class="floating-actions">
-        <el-button circle size="large" @click="scrollToTop" class="scroll-top-btn">
+        <el-button
+          circle
+          size="large"
+          @click="scrollToTop"
+          class="scroll-top-btn"
+        >
           <el-icon><Top /></el-icon>
         </el-button>
       </div>
@@ -182,14 +219,28 @@ const showScrollTop = ref(false)
 
 const stats = computed(() => [
   { icon: '📅', value: '13', label: '月龄阶段' },
-  { icon: '🏆', value: babyStore.completedMilestonesCount, label: '已完成里程碑' },
-  { icon: '📈', value: Math.round((babyStore.completedMilestonesCount / babyStore.totalMilestonesCount) * 100) + '%', label: '总体进度' }
+  {
+    icon: '🏆',
+    value: babyStore.completedMilestonesCount,
+    label: '已完成里程碑',
+  },
+  {
+    icon: '📈',
+    value:
+      Math.round(
+        (babyStore.completedMilestonesCount / babyStore.totalMilestonesCount) *
+          100,
+      ) + '%',
+    label: '总体进度',
+  },
 ])
 
 // 获取里程碑进度
 const getMilestoneProgress = (month: BabyMonthData) => {
   if (!month.milestones || month.milestones.length === 0) return 0
-  const completed = month.milestones.filter(m => babyStore.isMilestoneCompleted(m.title)).length
+  const completed = month.milestones.filter((m) =>
+    babyStore.isMilestoneCompleted(m.title),
+  ).length
   return Math.round((completed / month.milestones.length) * 100)
 }
 
@@ -221,7 +272,9 @@ const scrollToTop = () => {
 // 滚动事件处理
 const handleScroll = () => {
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-  const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight
+  const docHeight =
+    document.documentElement.scrollHeight -
+    document.documentElement.clientHeight
   scrollProgress.value = (scrollTop / docHeight) * 100
   showScrollTop.value = scrollTop > 300
 
@@ -279,7 +332,11 @@ onBeforeUnmount(() => {
   left: 0;
   right: 0;
   height: 40px;
-  background: linear-gradient(180deg, transparent 0%, rgba(102, 126, 234, 0.05) 100%);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(102, 126, 234, 0.05) 100%
+  );
 }
 
 /* 时间轴头部 */
@@ -353,9 +410,16 @@ onBeforeUnmount(() => {
 }
 
 @keyframes blob-float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -30px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
 }
 
 .header-content {
@@ -375,7 +439,11 @@ onBeforeUnmount(() => {
   font-size: 24px;
   font-weight: 900;
   margin: 0 0 6px 0;
-  background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.95) 100%);
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -388,8 +456,13 @@ onBeforeUnmount(() => {
 }
 
 @keyframes rotate-scale {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(10deg) scale(1.1); }
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(10deg) scale(1.1);
+  }
 }
 
 @keyframes title-entrance {
@@ -466,13 +539,23 @@ onBeforeUnmount(() => {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.8),
+    transparent
+  );
   animation: glow-sweep 3s ease-in-out infinite;
 }
 
 @keyframes glow-sweep {
-  0%, 100% { left: -100%; }
-  50% { left: 100%; }
+  0%,
+  100% {
+    left: -100%;
+  }
+  50% {
+    left: 100%;
+  }
 }
 
 .stat-icon {
@@ -481,8 +564,13 @@ onBeforeUnmount(() => {
 }
 
 @keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .stat-info {
@@ -553,8 +641,15 @@ onBeforeUnmount(() => {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
-  50% { transform: translateX(-50%) scale(1.5); opacity: 0.7; }
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.5);
+    opacity: 0.7;
+  }
 }
 
 /* 时间轴项目 */
@@ -640,8 +735,15 @@ onBeforeUnmount(() => {
 }
 
 @keyframes ring-pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.5; }
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.5;
+  }
 }
 
 .dot-pulse {
@@ -657,8 +759,14 @@ onBeforeUnmount(() => {
 }
 
 @keyframes pulse-expand {
-  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0;
+  }
 }
 
 /* 月份卡片 */
@@ -690,7 +798,12 @@ onBeforeUnmount(() => {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
   transform: rotate(45deg);
   transition: all 0.5s ease;
   opacity: 0;
@@ -702,8 +815,12 @@ onBeforeUnmount(() => {
 }
 
 @keyframes shine-sweep {
-  from { transform: translateX(-100%) rotate(45deg); }
-  to { transform: translateX(100%) rotate(45deg); }
+  from {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  to {
+    transform: translateX(100%) rotate(45deg);
+  }
 }
 
 /* 卡片装饰 */
@@ -726,13 +843,32 @@ onBeforeUnmount(() => {
   animation: twinkle 2s ease-in-out infinite;
 }
 
-.deco-star:nth-child(1) { top: 20px; right: 30px; animation-delay: 0s; }
-.deco-star:nth-child(2) { top: 40px; right: 50px; animation-delay: 0.5s; }
-.deco-star:nth-child(3) { top: 30px; right: 70px; animation-delay: 1s; }
+.deco-star:nth-child(1) {
+  top: 20px;
+  right: 30px;
+  animation-delay: 0s;
+}
+.deco-star:nth-child(2) {
+  top: 40px;
+  right: 50px;
+  animation-delay: 0.5s;
+}
+.deco-star:nth-child(3) {
+  top: 30px;
+  right: 70px;
+  animation-delay: 1s;
+}
 
 @keyframes twinkle {
-  0%, 100% { opacity: 0.2; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.3); }
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.3);
+  }
 }
 
 /* 卡片头部 */
@@ -875,13 +1011,22 @@ onBeforeUnmount(() => {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
   animation: shimmer-slide 2s ease-in-out infinite;
 }
 
 @keyframes shimmer-slide {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .progress-text {
@@ -947,7 +1092,11 @@ onBeforeUnmount(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.05) 0%,
+    rgba(118, 75, 162, 0.05) 100%
+  );
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -984,8 +1133,13 @@ onBeforeUnmount(() => {
 }
 
 @keyframes connector-flow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* 浮动按钮 */

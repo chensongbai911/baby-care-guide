@@ -1,19 +1,29 @@
 <template>
   <div class="bubble-animation" :class="{ active: isActive }">
-    <svg class="bubble-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      class="bubble-svg"
+      viewBox="0 0 200 200"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <!-- 定义渐变 -->
       <defs>
         <linearGradient :id="gradientId" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" :style="{ stopColor: colors[0], stopOpacity: 0.8 }" />
-          <stop offset="100%" :style="{ stopColor: colors[1], stopOpacity: 0.9 }" />
+          <stop
+            offset="0%"
+            :style="{ stopColor: colors[0], stopOpacity: 0.8 }"
+          />
+          <stop
+            offset="100%"
+            :style="{ stopColor: colors[1], stopOpacity: 0.9 }"
+          />
         </linearGradient>
 
         <!-- 发光滤镜 -->
         <filter :id="glowId" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+          <feGaussianBlur stdDeviation="4" result="coloredBlur" />
           <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
+            <feMergeNode in="coloredBlur" />
+            <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
       </defs>
@@ -77,7 +87,7 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   size: 200,
   colors: () => ['#a78bfa', '#ec4899'],
-  isActive: false
+  isActive: false,
 })
 
 const mainRadius = ref(40)
@@ -89,14 +99,14 @@ const glowId = `glow-${Math.random().toString(36).substr(2, 9)}`
 const smallBubbles = computed(() => {
   const bubbles = []
   for (let i = 0; i < 6; i++) {
-    const angle = (i * 60) * Math.PI / 180
+    const angle = (i * 60 * Math.PI) / 180
     const distance = 60
     bubbles.push({
       x: 100 + Math.cos(angle) * distance,
       y: 100 + Math.sin(angle) * distance,
       r: 4 + Math.random() * 3,
       opacity: 0.4 + Math.random() * 0.3,
-      delay: i * 0.2
+      delay: i * 0.2,
     })
   }
   return bubbles
@@ -119,7 +129,7 @@ defineExpose({
     setTimeout(() => {
       showRipple.value = false
     }, 600)
-  }
+  },
 })
 </script>
 
@@ -140,7 +150,8 @@ defineExpose({
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -160,7 +171,8 @@ defineExpose({
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -173,7 +185,8 @@ defineExpose({
 }
 
 @keyframes bubbleFloat {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
     opacity: 0.5;
   }
@@ -188,7 +201,8 @@ defineExpose({
 }
 
 @keyframes ringPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.3;
   }
   50% {
