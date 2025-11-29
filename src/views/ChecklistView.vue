@@ -13,16 +13,35 @@
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="export-json">
-                📁 导出JSON
+              <!-- 导出选项 -->
+              <el-dropdown-item command="export-json" :icon="Document">
+                导出 JSON
               </el-dropdown-item>
-              <el-dropdown-item command="export-report">
+              <el-dropdown-item command="export-excel" :icon="Document">
+                导出 Excel
+              </el-dropdown-item>
+              <el-dropdown-item command="export-pdf" :icon="Document">
+                导出 PDF
+              </el-dropdown-item>
+              <el-dropdown-item command="export-report" divided :icon="Document">
                 📄 生成成长报告
               </el-dropdown-item>
-              <el-dropdown-item command="family">
+              
+              <!-- 导入选项 -->
+              <el-dropdown-item command="import-json" :icon="Upload">
+                导入 JSON
+              </el-dropdown-item>
+              <el-dropdown-item command="import-excel" :icon="Upload">
+                导入 Excel
+              </el-dropdown-item>
+              
+              <!-- 协作与管理 -->
+              <el-dropdown-item command="family" divided :icon="User">
                 👨‍👩‍👧 家庭协作
               </el-dropdown-item>
-              <el-dropdown-item command="import">📥 导入记录</el-dropdown-item>
+              <el-dropdown-item command="time-range" :icon="Calendar">
+                📅 自定义时间段
+              </el-dropdown-item>
               <el-dropdown-item command="reset" divided>
                 🔄 重置记录
               </el-dropdown-item>
@@ -1079,6 +1098,10 @@ import {
   Picture,
   Trophy,
   Lock,
+  Document,
+  Upload,
+  User,
+  Calendar,
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -1894,25 +1917,162 @@ watch(
   { deep: true },
 )
 
+// 导出时间段对话框
+const showTimeRangeDialog = ref(false)
+const exportTimeRange = ref<[Date, Date] | null>(null)
+
 // 导出命令处理
 const handleExportCommand = (command: string) => {
   switch (command) {
     case 'export-json':
       exportProgress()
       break
+    case 'export-excel':
+      exportToExcel()
+      break
+    case 'export-pdf':
+      exportToPDF()
+      break
     case 'export-report':
       generateReport()
+      break
+    case 'import-json':
+      fileInput.value?.click()
+      break
+    case 'import-excel':
+      importFromExcel()
       break
     case 'family':
       openFamilyDialog()
       break
-    case 'import':
-      fileInput.value?.click()
+    case 'time-range':
+      showTimeRangeDialog.value = true
       break
     case 'reset':
       resetProgress()
       break
   }
+}
+
+// 导出为 Excel
+const exportToExcel = () => {
+  try {
+    // 构建 CSV 数据（简易 Excel 格式）
+    const headers = ['月龄', '里程碑', '状态', '完成日期', '备注']
+    const rows: string[][] = [headers]
+
+    // 遍历所有月份的里程碑
+    for (let month = 0; month <= 12; month++) {
+      const monthData = babyStore.allMonthsData.find((m: { month: number }) => m.month === month)
+      if (!monthData) continue
+
+      monthData.milestones.forEach((milestone: { title: string }) => {
+        const isCompleted = babyStore.isMilestoneCompleted(milestone.title)
+        const record = milestoneRecords.value[milestone.title]
+        rows.push([
+          `${month}个月`,
+          milestone.title,
+          isCompleted ? '已完成' : '未完成',
+          record ? formatDate(record.date) : '',
+          record?.note || '',
+        ])
+      })
+    }
+
+    // 转换为 CSV
+    const csvContent = rows
+      .map((row) =>
+        row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','),
+      )
+      .join('\n')
+
+    // 添加 BOM 头以支持中文
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csvContent], {
+      type: 'text/csv;charset=utf-8',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${babyStore.babyInfo.name || '宝宝'}-成长记录-${new Date().toLocaleDateString()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+
+    ElMessage.success('Excel 文件已导出！📊')
+  } catch (error) {
+    console.error('导出 Excel 失败:', error)
+    ElMessage.error('导出失败，请重试')
+  }
+}
+
+// 导出为 PDF (使用成长报告)
+const exportToPDF = async () => {
+  showReportDialog.value = true
+  // 延迟提示用户下载
+  setTimeout(() => {
+    ElMessage.info('请点击"下载图片"按钮保存报告')
+  }, 500)
+}
+
+// 从 Excel 导入
+const importFromExcel = () => {
+  // 创建隐藏的文件输入
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.csv,.xlsx,.xls'
+  input.onchange = async (e: Event) => {
+    const target = e.target as HTMLInputElement
+    const file = target.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const lines = text.split('\n').filter((line) => line.trim())
+
+      if (lines.length < 2) {
+        ElMessage.warning('文件内容为空')
+        return
+      }
+
+      // 解析 CSV
+      let importedCount = 0
+      lines.slice(1).forEach((line) => {
+        const cells = line.split(',').map((cell) =>
+          cell.replace(/^"|"$/g, '').replace(/""/g, '"'),
+        )
+
+        if (cells.length >= 3) {
+          const [, title, status, dateStr, note] = cells
+          if (title && status === '已完成') {
+            // 标记为已完成
+            if (!babyStore.isMilestoneCompleted(title)) {
+              babyStore.toggleMilestone(title)
+            }
+            // 保存记录
+            if (dateStr || note) {
+              milestoneRecords.value[title] = {
+                date: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString(),
+                note: note || '',
+                media: [],
+              }
+            }
+            importedCount++
+          }
+        }
+      })
+
+      localStorage.setItem(
+        'milestoneRecords',
+        JSON.stringify(milestoneRecords.value),
+      )
+
+      ElMessage.success(`成功导入 ${importedCount} 条里程碑记录！`)
+    } catch (error) {
+      console.error('导入失败:', error)
+      ElMessage.error('导入失败，请检查文件格式')
+    }
+  }
+  input.click()
 }
 
 // 家庭协作功能
