@@ -213,8 +213,18 @@
     </div>
 
     <!-- 月龄快速切换 -->
-    <div class="month-nav">
-      <el-button circle @click="prevMonth" :disabled="activeMonth <= 0">
+    <div
+      class="month-nav"
+      @keydown="handleKeyNavigation"
+      tabindex="0"
+      ref="monthNavRef"
+    >
+      <el-button
+        circle
+        @click="prevMonth"
+        :disabled="activeMonth <= 0"
+        class="nav-btn"
+      >
         <el-icon><ArrowLeft /></el-icon>
       </el-button>
       <div class="month-tabs-scroll" ref="monthTabsRef">
@@ -230,8 +240,15 @@
             },
           ]"
           :ref="el => { if (monthData.month === activeMonth) activeTabRef = el as HTMLElement }"
-          @click="activeMonth = monthData.month"
+          @click="switchToMonth(monthData.month)"
         >
+          <!-- 当前月龄星标 -->
+          <span
+            v-if="monthData.month === babyStore.currentMonth"
+            class="current-star"
+          >
+            ⭐
+          </span>
           <span class="tab-month">{{ monthData.month }}月</span>
           <div class="tab-progress-bar">
             <div
@@ -242,7 +259,7 @@
           <span class="tab-status">
             <el-icon
               v-if="getMonthCompletion(monthData.month) === 100"
-              color="#10b981"
+              color="#4CAF50"
             >
               <Check />
             </el-icon>
@@ -254,7 +271,12 @@
           </span>
         </div>
       </div>
-      <el-button circle @click="nextMonth" :disabled="activeMonth >= 12">
+      <el-button
+        circle
+        @click="nextMonth"
+        :disabled="activeMonth >= 12"
+        class="nav-btn"
+      >
         <el-icon><ArrowRight /></el-icon>
       </el-button>
     </div>
@@ -297,11 +319,15 @@
           ]"
           :style="{ animationDelay: `${index * 0.05}s` }"
           @click="openMilestoneDialog(milestone)"
+          @mouseenter="hoveredMilestone = milestone.title"
+          @mouseleave="hoveredMilestone = null"
         >
+          <!-- 状态图标 -->
           <div class="card-check">
             <div
               class="check-circle"
-              @click.stop="quickToggle(milestone.title)"
+              :class="{ checked: isMilestoneCompleted(milestone.title) }"
+              @click.stop="confirmToggleMilestone(milestone)"
             >
               <transition name="check-pop">
                 <el-icon
@@ -310,12 +336,25 @@
                 >
                   <Check />
                 </el-icon>
+                <span v-else class="empty-circle"></span>
               </transition>
             </div>
           </div>
           <div class="card-body">
-            <h3>{{ milestone.title }}</h3>
-            <p>{{ milestone.description }}</p>
+            <h3
+              :class="{
+                'completed-text': isMilestoneCompleted(milestone.title),
+              }"
+            >
+              {{ milestone.title }}
+            </h3>
+            <p
+              :class="{
+                'completed-desc': isMilestoneCompleted(milestone.title),
+              }"
+            >
+              {{ milestone.description }}
+            </p>
             <div class="card-footer">
               <el-tag
                 :type="
@@ -324,9 +363,14 @@
                 size="small"
                 effect="plain"
                 round
+                :class="{
+                  'status-pending': !isMilestoneCompleted(milestone.title),
+                }"
               >
                 {{
-                  isMilestoneCompleted(milestone.title) ? '✓ 已达成' : '待完成'
+                  isMilestoneCompleted(milestone.title)
+                    ? '✅ 已达成'
+                    : '○ 待完成'
                 }}
               </el-tag>
               <span
@@ -337,9 +381,32 @@
               </span>
             </div>
           </div>
+          <!-- 悬停提示：发展意义 -->
+          <Transition name="tooltip-fade">
+            <div
+              v-if="
+                hoveredMilestone === milestone.title &&
+                getMilestoneSignificance(milestone)
+              "
+              class="milestone-tooltip"
+            >
+              <div class="tooltip-arrow"></div>
+              <div class="tooltip-content">
+                <span class="tooltip-icon">💡</span>
+                <span class="tooltip-text">
+                  {{ getMilestoneSignificance(milestone) }}
+                </span>
+              </div>
+            </div>
+          </Transition>
           <div
             class="card-glow"
             v-if="isMilestoneCompleted(milestone.title)"
+          ></div>
+          <!-- 粒子效果容器 -->
+          <div
+            class="card-particles"
+            :ref="el => cardParticlesRefs[milestone.title] = el as HTMLElement"
           ></div>
         </div>
       </div>
@@ -358,7 +425,7 @@
       </el-button>
     </div>
 
-    <!-- 成就展示 -->
+    <!-- 成就展示 - 横向滚动优化 -->
     <div class="achievements-section">
       <div class="achievements-header">
         <h2>🏆 成就徽章</h2>
@@ -387,53 +454,113 @@
         </div>
       </div>
 
-      <div class="achievements-grid">
-        <div
-          v-for="(achievement, index) in achievements"
-          :key="achievement.id"
-          :class="[
-            'achievement-card',
-            {
-              unlocked: achievement.unlocked,
-              'newly-unlocked':
-                achievement.unlocked && isNewlyUnlocked(achievement.id),
-            },
-          ]"
-          :style="{ animationDelay: `${index * 0.08}s` }"
-          @click="showAchievementDetail(achievement)"
-        >
-          <!-- 徽章图标 -->
-          <div :class="['achievement-badge', { shine: achievement.unlocked }]">
-            <span class="badge-icon">{{ achievement.icon }}</span>
-            <div v-if="achievement.unlocked" class="badge-glow"></div>
-          </div>
-
-          <!-- 徽章信息 -->
-          <div class="achievement-info">
-            <h4>{{ achievement.title }}</h4>
-            <p>{{ achievement.description }}</p>
-            <div v-if="achievement.unlocked" class="unlock-time">
-              {{ getUnlockTimeText(achievement.id) }}
+      <!-- 横向滚动徽章展示 -->
+      <div class="achievements-scroll-container">
+        <div class="achievements-scroll">
+          <div
+            v-for="(achievement, index) in achievements"
+            :key="achievement.id"
+            :class="[
+              'achievement-card',
+              'metal-badge',
+              {
+                unlocked: achievement.unlocked,
+                'newly-unlocked':
+                  achievement.unlocked && isNewlyUnlocked(achievement.id),
+                gold: achievement.level >= 5 && achievement.unlocked,
+                silver:
+                  achievement.level >= 3 &&
+                  achievement.level < 5 &&
+                  achievement.unlocked,
+                bronze: achievement.level < 3 && achievement.unlocked,
+              },
+            ]"
+            :style="{ animationDelay: `${index * 0.08}s` }"
+            @click="showAchievementModal(achievement)"
+          >
+            <!-- 徽章图标 - 金属质感 -->
+            <div
+              :class="[
+                'achievement-badge',
+                'metallic',
+                { shine: achievement.unlocked },
+              ]"
+            >
+              <span class="badge-icon">{{ achievement.icon }}</span>
+              <div
+                v-if="achievement.unlocked"
+                class="badge-glow metallic-glow"
+              ></div>
+              <div class="badge-ring"></div>
             </div>
-          </div>
 
-          <!-- 状态标识 -->
-          <div class="achievement-status">
-            <Transition name="trophy-pop">
-              <div v-if="achievement.unlocked" class="status-unlocked">
-                <span class="sparkle">✨</span>
+            <!-- 徽章信息 -->
+            <div class="achievement-info">
+              <h4>{{ achievement.title }}</h4>
+              <p>{{ achievement.description }}</p>
+              <div v-if="achievement.unlocked" class="unlock-time">
+                {{ getUnlockTimeText(achievement.id) }}
               </div>
-              <div v-else class="status-locked">
-                <el-icon><Lock /></el-icon>
-              </div>
-            </Transition>
-          </div>
+            </div>
 
-          <!-- 解锁光效 -->
-          <div v-if="achievement.unlocked" class="card-shine"></div>
+            <!-- 状态标识 -->
+            <div class="achievement-status">
+              <Transition name="trophy-pop">
+                <div v-if="achievement.unlocked" class="status-unlocked">
+                  <span class="sparkle">✨</span>
+                </div>
+                <div v-else class="status-locked">
+                  <el-icon><Lock /></el-icon>
+                </div>
+              </Transition>
+            </div>
+
+            <!-- 解锁光效 -->
+            <div
+              v-if="achievement.unlocked"
+              class="card-shine metallic-shine"
+            ></div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- 成就详情弹窗 -->
+    <el-dialog
+      v-model="showAchievementDetailModal"
+      :title="currentAchievementDetail?.title"
+      width="90%"
+      class="achievement-detail-dialog"
+      center
+    >
+      <div class="achievement-detail-content" v-if="currentAchievementDetail">
+        <div class="detail-badge">
+          <span class="detail-icon">{{ currentAchievementDetail.icon }}</span>
+          <div
+            v-if="currentAchievementDetail.unlocked"
+            class="detail-glow"
+          ></div>
+        </div>
+        <p class="detail-description">
+          {{ currentAchievementDetail.description }}
+        </p>
+        <div
+          v-if="currentAchievementDetail.unlocked"
+          class="detail-unlock-info"
+        >
+          <el-tag type="success">✨ 已解锁</el-tag>
+          <span class="detail-time">
+            {{ getUnlockTimeText(currentAchievementDetail.id) }}
+          </span>
+        </div>
+        <div v-else class="detail-lock-info">
+          <el-tag type="info">🔒 未解锁</el-tag>
+          <p class="unlock-hint">
+            {{ getUnlockHint(currentAchievementDetail) }}
+          </p>
+        </div>
+      </div>
+    </el-dialog>
 
     <!-- 里程碑打卡对话框 -->
     <el-dialog
@@ -938,7 +1065,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBabyStore } from '@/stores/babyStore'
 import {
@@ -964,16 +1091,31 @@ const showCustomDialog = ref(false)
 const showReportDialog = ref(false)
 const showFamilyDialog = ref(false)
 const showAddMemberForm = ref(false)
+const showAchievementDetailModal = ref(false)
 const editingMember = ref<FamilyMember | null>(null)
 const currentMilestone = ref<{ title: string; description: string } | null>(
   null,
 )
+const currentAchievementDetail = ref<{
+  id: string
+  icon: string
+  title: string
+  description: string
+  unlocked: boolean
+  level: number
+} | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const mediaInputRef = ref<HTMLInputElement | null>(null)
 const monthTabsRef = ref<HTMLElement | null>(null)
 const activeTabRef = ref<HTMLElement | null>(null)
 const particlesRef = ref<HTMLElement | null>(null)
 const reportRef = ref<HTMLElement | null>(null)
+const monthNavRef = ref<HTMLElement | null>(null)
+
+// 里程碑卡片交互相关
+const hoveredMilestone = ref<string | null>(null)
+const cardParticlesRefs = reactive<Record<string, HTMLElement | null>>({})
+const newlyCompletedMilestones = ref<Set<string>>(new Set())
 
 // 家庭协作相关
 interface FamilyMember {
@@ -1306,6 +1448,150 @@ const quickToggle = (title: string) => {
       duration: 2000,
     })
   }
+}
+
+// 里程碑卡片交互 - 确认打卡
+const confirmToggleMilestone = async (milestone: {
+  title: string
+  description: string
+}) => {
+  const isCompleted = babyStore.isMilestoneCompleted(milestone.title)
+
+  if (isCompleted) {
+    // 取消完成状态需要确认
+    try {
+      await ElMessageBox.confirm(
+        `确定要取消"${milestone.title}"的完成状态吗？`,
+        '取消确认',
+        {
+          confirmButtonText: '确定取消',
+          cancelButtonText: '保留',
+          type: 'warning',
+        },
+      )
+      babyStore.toggleMilestone(milestone.title)
+      // 删除记录
+      delete milestoneRecords.value[milestone.title]
+      localStorage.setItem(
+        'milestoneRecords',
+        JSON.stringify(milestoneRecords.value),
+      )
+      ElMessage.info('已取消该里程碑')
+    } catch {
+      // 用户取消操作
+    }
+  } else {
+    // 完成里程碑 - 打开对话框记录详情
+    openMilestoneDialog(milestone)
+  }
+}
+
+// 获取里程碑发展意义
+const getMilestoneSignificance = (milestone: {
+  title: string
+  description: string
+}): string => {
+  const significanceMap: Record<string, string> = {
+    // 大动作发展
+    抬头: '颈部肌肉发育的重要标志，为后续翻身、坐立打下基础',
+    翻身: '全身协调能力发展的里程碑，标志着宝宝开始主动探索',
+    独坐: '核心肌肉群发育成熟的标志，视野扩展促进认知发展',
+    爬行: '促进大脑左右半球协调，增强空间感知能力',
+    扶站: '下肢力量发育的重要阶段，为独立行走做准备',
+    独站: '平衡能力发展的关键点，自信心建立的重要时刻',
+    独走: '运动能力的重大飞跃，开启独立探索世界的新阶段',
+
+    // 精细动作
+    抓握: '手眼协调能力的开始，精细动作发展的基础',
+    双手互握: '双侧协调能力发展，为复杂操作技能做准备',
+    捏取小物: '拇指对指能力发展，精细动作成熟的标志',
+    涂鸦: '手部精细控制与创造力表达的开始',
+
+    // 语言发展
+    发出咿呀声: '语言发展的萌芽，社交沟通的开始',
+    '叫妈妈/爸爸': '有意义语言的开始，亲子关系深化的标志',
+    说简单词汇: '词汇量开始积累，语言表达能力发展',
+    理解简单指令: '听觉理解能力发展，认知能力提升的标志',
+
+    // 社交情感
+    社交性微笑: '社交能力萌芽，情感连接的重要标志',
+    认生: '认知发展的进步，对亲人依恋关系的建立',
+    模仿动作: '学习能力发展，社交互动能力提升',
+    表达需求: '自主意识萌芽，沟通能力发展的标志',
+  }
+
+  // 模糊匹配
+  for (const [key, value] of Object.entries(significanceMap)) {
+    if (milestone.title.includes(key) || key.includes(milestone.title)) {
+      return value
+    }
+  }
+
+  return milestone.description || '宝宝成长的重要一步'
+}
+
+// 创建粒子效果
+const createCardParticles = (container: HTMLElement | null) => {
+  if (!container) return
+
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div')
+    particle.className = 'card-particle'
+    particle.style.left = `${Math.random() * 100}%`
+    particle.style.animationDelay = `${Math.random() * 0.5}s`
+    particle.style.animationDuration = `${0.6 + Math.random() * 0.4}s`
+    container.appendChild(particle)
+
+    // 动画结束后移除
+    setTimeout(() => {
+      particle.remove()
+    }, 1500)
+  }
+}
+
+// 月龄切换
+const switchToMonth = (month: number) => {
+  activeMonth.value = month
+  scrollToActiveTab()
+}
+
+// 键盘导航
+const handleKeyNavigation = (event: KeyboardEvent) => {
+  if (event.key === 'ArrowLeft') {
+    prevMonth()
+    event.preventDefault()
+  } else if (event.key === 'ArrowRight') {
+    nextMonth()
+    event.preventDefault()
+  } else if (event.key === 'Home') {
+    activeMonth.value = 0
+    scrollToActiveTab()
+    event.preventDefault()
+  } else if (event.key === 'End') {
+    activeMonth.value = 12
+    scrollToActiveTab()
+    event.preventDefault()
+  }
+}
+
+// 成就详情弹窗
+const showAchievementModal = (achievement: typeof achievements.value[0]) => {
+  currentAchievementDetail.value = achievement
+  showAchievementDetailModal.value = true
+}
+
+// 获取解锁提示
+const getUnlockHint = (achievement: { id: string; title: string }): string => {
+  const hintMap: Record<string, string> = {
+    first_step: '完成第一个里程碑即可解锁',
+    active_parent: '连续7天记录里程碑',
+    explorer: '完成10个不同里程碑',
+    super_parent: '完成25个里程碑',
+    milestone_master: '完成50个里程碑',
+    first_year: '记录满12个月',
+    memory_keeper: '每个里程碑都添加照片记录',
+  }
+  return hintMap[achievement.id] || '继续记录宝宝的成长吧！'
 }
 
 // 打开里程碑对话框
@@ -1946,15 +2232,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 新色彩系统: 渐变紫→粉 (#9D50FF→#FF6BCC) */
 .checklist-view {
   min-height: 100vh;
   background: linear-gradient(180deg, #faf5ff 0%, #ffffff 50%, #fdf2f8 100%);
   padding-bottom: 40px;
 }
 
-/* 页面头部 */
+/* 页面头部 - 新渐变色 */
 .page-header {
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+  background: linear-gradient(135deg, #9d50ff 0%, #c77dff 50%, #ff6bcc 100%);
   padding: 20px;
   padding-bottom: 24px;
   color: white;
@@ -2525,12 +2812,12 @@ onMounted(() => {
 }
 
 .month-tab.active {
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #9d50ff 0%, #ff6bcc 100%);
   color: white;
 }
 
 .month-tab.current:not(.active) {
-  border: 2px solid #a855f7;
+  border: 2px solid #9d50ff;
 }
 
 .month-tab.completed .tab-month {
@@ -2722,6 +3009,109 @@ onMounted(() => {
   margin: 0 0 12px 0;
 }
 
+/* 里程碑状态文字样式 */
+.card-body h3.completed-title {
+  color: #059669;
+}
+
+.card-body p.completed-desc {
+  color: #6ee7b7;
+}
+
+/* 空心圆状态 */
+.empty-circle {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.milestone-card:hover .empty-circle {
+  border-color: #9d50ff;
+  box-shadow: 0 0 8px rgba(157, 80, 255, 0.3);
+}
+
+/* 里程碑卡片悬停提示 */
+.milestone-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  min-width: 200px;
+  max-width: 280px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+.milestone-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #374151;
+}
+
+.milestone-tooltip .tooltip-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #fbbf24;
+}
+
+.milestone-tooltip .tooltip-significance {
+  color: #e5e7eb;
+}
+
+.milestone-card:hover .milestone-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-12px);
+}
+
+/* 卡片粒子效果容器 */
+.card-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.card-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9d50ff 0%, #ff6bcc 100%);
+  animation: particle-burst 0.8s ease-out forwards;
+}
+
+@keyframes particle-burst {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-60px) scale(0);
+    opacity: 0;
+  }
+}
+
 .card-footer {
   display: flex;
   align-items: center;
@@ -2839,6 +3229,37 @@ onMounted(() => {
   font-size: 12px;
 }
 
+/* 横向滚动容器 */
+.achievements-scroll-container {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 10px 0 20px 0;
+  margin: 0 -20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(157, 80, 255, 0.3) transparent;
+}
+
+.achievements-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.achievements-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.achievements-scroll-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #9d50ff 0%, #ff6bcc 100%);
+  border-radius: 3px;
+}
+
+.achievements-scroll {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 10px;
+}
+
 .achievements-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -2848,17 +3269,126 @@ onMounted(() => {
 .achievement-card {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 18px;
+  gap: 12px;
+  padding: 20px 16px;
+  min-width: 160px;
+  max-width: 180px;
   background: #f9fafb;
-  border-radius: 16px;
+  border-radius: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   cursor: pointer;
   transition: all 0.3s ease;
   animation: card-appear 0.5s ease forwards;
   opacity: 0;
   overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* 金属质感徽章 */
+.achievement-card.metal-badge {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.achievement-card.metal-badge.gold {
+  background: linear-gradient(145deg, #fef3c7 0%, #fffbeb 50%, #fef3c7 100%);
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.achievement-card.metal-badge.silver {
+  background: linear-gradient(145deg, #f3f4f6 0%, #ffffff 50%, #f3f4f6 100%);
+  border-color: rgba(156, 163, 175, 0.3);
+  box-shadow: 0 4px 12px rgba(156, 163, 175, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.achievement-card.metal-badge.bronze {
+  background: linear-gradient(145deg, #fef2e2 0%, #fff8f0 50%, #fef2e2 100%);
+  border-color: rgba(217, 119, 6, 0.2);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* 金属质感徽章图标 */
+.achievement-badge.metallic {
+  background: linear-gradient(145deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.achievement-card.unlocked .achievement-badge.metallic {
+  background: linear-gradient(
+    145deg,
+    #fcd34d 0%,
+    #fbbf24 30%,
+    #f59e0b 70%,
+    #d97706 100%
+  );
+  border-color: rgba(217, 119, 6, 0.4);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.achievement-card.metal-badge.silver .achievement-badge.metallic {
+  background: linear-gradient(
+    145deg,
+    #e5e7eb 0%,
+    #f9fafb 30%,
+    #d1d5db 70%,
+    #9ca3af 100%
+  );
+}
+
+.badge-ring {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.5), transparent)
+    border-box;
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+}
+
+.metallic-glow {
+  background: radial-gradient(
+    circle,
+    rgba(251, 191, 36, 0.4) 0%,
+    rgba(245, 158, 11, 0.2) 40%,
+    transparent 70%
+  );
+}
+
+.metallic-shine {
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.6) 45%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.6) 55%,
+    transparent 60%,
+    transparent 100%
+  );
+  animation: metallic-shine-sweep 3s ease-in-out infinite;
+}
+
+@keyframes metallic-shine-sweep {
+  0% {
+    left: -150%;
+  }
+  50%,
+  100% {
+    left: 200%;
+  }
 }
 
 @keyframes card-appear {
@@ -2873,12 +3403,11 @@ onMounted(() => {
 }
 
 .achievement-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .achievement-card.unlocked {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
   animation: card-unlock 0.5s ease forwards;
 }
 
@@ -2910,8 +3439,8 @@ onMounted(() => {
 /* 徽章图标 */
 .achievement-badge {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: #e5e7eb;
   display: flex;
@@ -3401,6 +3930,102 @@ onMounted(() => {
   gap: 12px;
 }
 
+/* 成就详情弹窗样式 */
+.achievement-detail-dialog :deep(.el-dialog) {
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.achievement-detail-dialog :deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #9d50ff 0%, #ff6bcc 100%);
+  color: white;
+  padding: 20px;
+  margin: 0;
+}
+
+.achievement-detail-dialog :deep(.el-dialog__title) {
+  color: white;
+  font-weight: 700;
+}
+
+.achievement-detail-dialog :deep(.el-dialog__headerbtn .el-dialog__close) {
+  color: white;
+}
+
+.achievement-detail-content {
+  padding: 24px;
+  text-align: center;
+}
+
+.detail-badge {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fcd34d 0%, #fbbf24 30%, #f59e0b 70%, #d97706 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 4px 8px rgba(255, 255, 255, 0.5),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(245, 158, 11, 0.3);
+}
+
+.detail-icon {
+  font-size: 48px;
+}
+
+.detail-glow {
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.4) 0%, transparent 70%);
+  animation: detail-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes detail-glow-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.3;
+  }
+}
+
+.detail-description {
+  font-size: 15px;
+  color: #4b5563;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.detail-unlock-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.detail-time {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.detail-lock-info {
+  text-align: center;
+}
+
+.unlock-hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
 /* 家庭协作对话框样式 */
 .family-dialog :deep(.el-dialog__body) {
   padding: 0;
@@ -3781,6 +4406,45 @@ onMounted(() => {
   .achievements-grid {
     grid-template-columns: 1fr;
   }
+
+  /* 成就横向滚动 - 移动端两行自适应 */
+  .achievements-scroll {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .achievement-card {
+    min-width: 140px;
+    max-width: calc(50% - 6px);
+    flex: 1 1 calc(50% - 6px);
+    padding: 14px 12px;
+  }
+
+  .achievement-badge {
+    width: 52px;
+    height: 52px;
+  }
+
+  .badge-icon {
+    font-size: 24px;
+  }
+
+  .achievement-info h4 {
+    font-size: 12px;
+  }
+
+  .achievement-info p {
+    font-size: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* 里程碑提示隐藏长按显示 */
+  .milestone-tooltip {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
@@ -3812,6 +4476,30 @@ onMounted(() => {
 
   .card-body h3 {
     font-size: 14px;
+  }
+
+  /* 成就卡片单列 */
+  .achievement-card {
+    min-width: 100%;
+    max-width: 100%;
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    padding: 12px;
+  }
+
+  .achievement-badge {
+    width: 48px;
+    height: 48px;
+  }
+
+  .achievement-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .achievement-status {
+    margin-left: auto;
   }
 }
 </style>
