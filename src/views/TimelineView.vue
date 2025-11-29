@@ -19,16 +19,41 @@
 
         <!-- 总体进度统计 -->
         <div class="overall-stats">
-          <div
-            class="stat-card"
-            v-for="(stat, index) in stats"
-            :key="index"
-            :style="{ animationDelay: `${index * 0.1}s` }"
-          >
-            <div class="stat-icon">{{ stat.icon }}</div>
+          <div class="stat-card stat-current" :style="{ animationDelay: '0s' }">
+            <div class="stat-icon">📍</div>
             <div class="stat-info">
-              <div class="stat-value">{{ stat.value }}</div>
-              <div class="stat-label">{{ stat.label }}</div>
+              <div class="stat-value">
+                当前：{{ babyStore.currentMonth }}月龄
+              </div>
+              <div class="stat-label">
+                第 {{ babyStore.currentMonth + 1 }}/13 阶段
+              </div>
+            </div>
+            <div class="stat-glow"></div>
+          </div>
+          <div class="stat-card" :style="{ animationDelay: '0.1s' }">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-info">
+              <div class="stat-value">
+                {{ babyStore.completedMilestonesCount }}
+              </div>
+              <div class="stat-label">已完成里程碑</div>
+            </div>
+            <div class="stat-glow"></div>
+          </div>
+          <div class="stat-card" :style="{ animationDelay: '0.2s' }">
+            <div class="stat-icon">📈</div>
+            <div class="stat-info">
+              <div class="stat-value">
+                {{
+                  Math.round(
+                    (babyStore.completedMilestonesCount /
+                      babyStore.totalMilestonesCount) *
+                      100,
+                  )
+                }}%
+              </div>
+              <div class="stat-label">总体进度</div>
             </div>
             <div class="stat-glow"></div>
           </div>
@@ -50,34 +75,47 @@
 
         <div class="timeline-nav-track" ref="timelineNavRef">
           <div class="timeline-nav-items">
-            <div
+            <el-tooltip
               v-for="month in monthsData"
               :key="month.month"
-              :class="[
-                'timeline-nav-item',
-                {
-                  'is-current': month.month === currentMonth,
-                  'is-completed': getMonthStatus(month.month) === 'completed',
-                  'is-locked': getMonthStatus(month.month) === 'locked',
-                },
-              ]"
-              @click="jumpToMonth(month.month)"
+              :content="getMonthTooltip(month.month)"
+              placement="bottom"
+              :disabled="getMonthStatus(month.month) !== 'locked'"
             >
-              <div class="nav-item-marker">
-                <span v-if="getMonthStatus(month.month) === 'completed'">
-                  ✓
-                </span>
-                <span v-else-if="getMonthStatus(month.month) === 'locked'">
-                  🔒
-                </span>
-                <span v-else>{{ month.month }}</span>
-              </div>
-              <div class="nav-item-label">{{ month.month }}月</div>
               <div
-                class="nav-item-progress"
-                :style="{ width: getMilestoneProgress(month) + '%' }"
-              ></div>
-            </div>
+                :class="[
+                  'timeline-nav-item',
+                  {
+                    'is-current': month.month === currentMonth,
+                    'is-completed': getMonthStatus(month.month) === 'completed',
+                    'is-locked': getMonthStatus(month.month) === 'locked',
+                  },
+                ]"
+                @click="handleMonthClick(month.month)"
+              >
+                <div class="nav-item-marker">
+                  <span v-if="getMonthStatus(month.month) === 'completed'">
+                    ✓
+                  </span>
+                  <span v-else-if="getMonthStatus(month.month) === 'locked'">
+                    🔒
+                  </span>
+                  <span v-else>{{ month.month }}</span>
+                </div>
+                <div class="nav-item-label">{{ month.month }}月</div>
+                <!-- 未解锁提示 -->
+                <div
+                  v-if="getMonthStatus(month.month) === 'locked'"
+                  class="unlock-hint"
+                >
+                  {{ month.month }}月龄解锁
+                </div>
+                <div
+                  class="nav-item-progress"
+                  :style="{ width: getMilestoneProgress(month) + '%' }"
+                ></div>
+              </div>
+            </el-tooltip>
           </div>
         </div>
 
@@ -91,12 +129,28 @@
         </el-button>
       </div>
 
-      <!-- 进度提示 -->
+      <!-- 进度提示 + 快捷导航 -->
       <div class="timeline-progress-hint">
-        <span class="hint-icon">🎯</span>
-        <span class="hint-text">
-          已浏览 {{ visitedMonths.length }}/13 个阶段
-        </span>
+        <div class="hint-left">
+          <span class="hint-icon">🔓</span>
+          <span class="hint-text">
+            已解锁 {{ unlockedMonthsCount }}/13 个阶段
+          </span>
+        </div>
+        <div class="hint-actions">
+          <el-button
+            size="small"
+            round
+            @click="goToChecklist"
+            class="checklist-btn"
+          >
+            <span class="btn-icon">✅</span>
+            <span>成长清单</span>
+            <span v-if="pendingMilestones > 0" class="badge-dot">
+              {{ pendingMilestones }}
+            </span>
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -329,6 +383,12 @@
             <div class="section-title">
               <span class="title-icon">🏆</span>
               <span>里程碑打卡</span>
+              <el-tooltip
+                content="里程碑：宝宝发育过程中的关键能力节点，每个宝宝发育进度不同，仅供参考"
+                placement="top"
+              >
+                <span class="info-tip">ℹ️</span>
+              </el-tooltip>
               <span class="milestone-count">
                 {{ getCompletedCount(month) }}/{{
                   month.milestones?.length || 0
@@ -357,6 +417,24 @@
                   </el-icon>
                 </div>
                 <span class="milestone-text">{{ milestone.title }}</span>
+                <!-- 知识卡片提示 -->
+                <el-tooltip placement="top">
+                  <template #content>
+                    <div class="knowledge-card-tip">
+                      <div class="tip-title">💡 {{ milestone.title }}</div>
+                      <div class="tip-content">
+                        {{ getMilestoneKnowledge(milestone.title) }}
+                      </div>
+                      <div class="tip-footer">点击查看详细指导</div>
+                    </div>
+                  </template>
+                  <span
+                    class="knowledge-btn"
+                    @click.stop="showKnowledgeCard(milestone.title)"
+                  >
+                    ❓
+                  </span>
+                </el-tooltip>
               </div>
               <div v-if="month.milestones.length > 4" class="more-milestones">
                 +{{ month.milestones.length - 4 }} 更多里程碑
@@ -414,26 +492,75 @@
             </div>
           </div>
 
-          <!-- 快速信息 -->
-          <div class="quick-info">
-            <div class="info-item">
-              <span class="info-icon">📏</span>
-              <span class="info-text">
-                {{ month.physicalDevelopment.height }}
-              </span>
+          <!-- 身高体重参考 - 刻度条显示 -->
+          <div class="physical-reference">
+            <div class="section-title">
+              <span class="title-icon">📊</span>
+              <span>身体发育参考</span>
             </div>
-            <div class="info-item">
-              <span class="info-icon">⚖️</span>
-              <span class="info-text">
-                {{ month.physicalDevelopment.weight }}
-              </span>
+            <div class="physical-scales">
+              <!-- 身高刻度 -->
+              <div class="scale-item">
+                <div class="scale-header">
+                  <span class="scale-icon">📏</span>
+                  <span class="scale-label">身高</span>
+                  <el-tooltip content="WHO儿童生长标准参考范围" placement="top">
+                    <span class="info-tip">ℹ️</span>
+                  </el-tooltip>
+                </div>
+                <div class="scale-bar">
+                  <div class="scale-track">
+                    <div
+                      class="scale-range"
+                      :style="getHeightRangeStyle(month)"
+                    ></div>
+                    <div class="scale-markers">
+                      <span class="marker-min">
+                        {{ getHeightRange(month).min }}cm
+                      </span>
+                      <span class="marker-max">
+                        {{ getHeightRange(month).max }}cm
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 体重刻度 -->
+              <div class="scale-item">
+                <div class="scale-header">
+                  <span class="scale-icon">⚖️</span>
+                  <span class="scale-label">体重</span>
+                  <el-tooltip content="WHO儿童生长标准参考范围" placement="top">
+                    <span class="info-tip">ℹ️</span>
+                  </el-tooltip>
+                </div>
+                <div class="scale-bar">
+                  <div class="scale-track">
+                    <div
+                      class="scale-range"
+                      :style="getWeightRangeStyle(month)"
+                    ></div>
+                    <div class="scale-markers">
+                      <span class="marker-min">
+                        {{ getWeightRange(month).min }}kg
+                      </span>
+                      <span class="marker-max">
+                        {{ getWeightRange(month).max }}kg
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- 查看详情按钮 -->
           <div class="card-footer">
+            <div class="footer-hint">
+              📚 包含发育解读、养育重点、游戏推荐、常见Q&A
+            </div>
             <el-button type="primary" class="view-detail-btn" round>
-              查看详情
+              查看 {{ month.month }}月龄专属指南
               <el-icon class="btn-icon"><ArrowRight /></el-icon>
             </el-button>
           </div>
@@ -491,6 +618,20 @@ const currentMonth = ref(babyStore.currentMonth)
 const visitedMonths = ref<number[]>([0]) // 已浏览的月龄
 const expandedMonths = ref<number[]>([]) // 已展开的月龄
 const activeDimension = ref('gross') // 当前选中的发育维度
+
+// 已解锁的月龄数量
+const unlockedMonthsCount = computed(() => {
+  return babyStore.currentMonth + 1
+})
+
+// 待记录里程碑数量（用于红点提示）
+const pendingMilestones = computed(() => {
+  const currentMonthData = babyStore.currentMonthData
+  if (!currentMonthData?.milestones) return 0
+  return currentMonthData.milestones.filter(
+    (m) => !babyStore.isMilestoneCompleted(m.title),
+  ).length
+})
 
 // 发育维度配置
 const developmentDimensions = [
@@ -555,23 +696,96 @@ const jumpToMonth = (monthId: number) => {
   }
 }
 
-const stats = computed(() => [
-  { icon: '📅', value: '13', label: '月龄阶段' },
-  {
-    icon: '🏆',
-    value: babyStore.completedMilestonesCount,
-    label: '已完成里程碑',
-  },
-  {
-    icon: '📈',
-    value:
-      Math.round(
-        (babyStore.completedMilestonesCount / babyStore.totalMilestonesCount) *
-          100,
-      ) + '%',
-    label: '总体进度',
-  },
-])
+// 处理月份点击（区分已解锁和未解锁）
+const handleMonthClick = (monthId: number) => {
+  const status = getMonthStatus(monthId)
+  if (status === 'locked') {
+    // 未解锁时显示提示
+    return
+  }
+  jumpToMonth(monthId)
+}
+
+// 获取月份tooltip内容
+const getMonthTooltip = (monthId: number) => {
+  return `宝宝达到${monthId}月龄即可解锁该阶段内容`
+}
+
+// 跳转到成长清单
+const goToChecklist = () => {
+  router.push('/checklist')
+}
+
+// 获取身高范围
+const getHeightRange = (month: BabyMonthData) => {
+  const heightStr = month.physicalDevelopment?.height || ''
+  const match = heightStr.match(/(\d+\.?\d*)\s*[-~]\s*(\d+\.?\d*)/)
+  if (match && match[1] && match[2]) {
+    return { min: parseFloat(match[1]), max: parseFloat(match[2]) }
+  }
+  return { min: 45, max: 55 }
+}
+
+// 获取体重范围
+const getWeightRange = (month: BabyMonthData) => {
+  const weightStr = month.physicalDevelopment?.weight || ''
+  const match = weightStr.match(/(\d+\.?\d*)\s*[-~]\s*(\d+\.?\d*)/)
+  if (match && match[1] && match[2]) {
+    return { min: parseFloat(match[1]), max: parseFloat(match[2]) }
+  }
+  return { min: 2.5, max: 4.5 }
+}
+
+// 获取身高刻度条样式
+const getHeightRangeStyle = (month: BabyMonthData) => {
+  const range = getHeightRange(month)
+  // 映射到0-100%的位置
+  const minPos = ((range.min - 40) / 40) * 100 // 假设范围40-80cm
+  const maxPos = ((range.max - 40) / 40) * 100
+  return {
+    left: `${Math.max(0, minPos)}%`,
+    width: `${Math.min(100, maxPos) - Math.max(0, minPos)}%`,
+  }
+}
+
+// 获取体重刻度条样式
+const getWeightRangeStyle = (month: BabyMonthData) => {
+  const range = getWeightRange(month)
+  // 映射到0-100%的位置
+  const minPos = ((range.min - 2) / 10) * 100 // 假设范围2-12kg
+  const maxPos = ((range.max - 2) / 10) * 100
+  return {
+    left: `${Math.max(0, minPos)}%`,
+    width: `${Math.min(100, maxPos) - Math.max(0, minPos)}%`,
+  }
+}
+
+// 里程碑知识库
+const milestoneKnowledge: Record<string, string> = {
+  抬头:
+    '3-4个月开始练习抬头，可以让宝宝趴着，用玩具引导。如果4个月后仍完全无法抬头，建议咨询儿科医生。',
+  翻身: '4-6个月开始尝试翻身，注意安全防护。可以用玩具引导宝宝向一侧转动身体。',
+  坐: '6-8个月可以开始练习独坐，先从靠坐开始，逐步过渡到独坐。',
+  爬: '7-10个月开始爬行，注意地面清洁和安全。爬行对大脑发育非常重要。',
+  站: '9-12个月开始扶站，可以让宝宝扶着沙发或茶几练习。',
+  走: '12个月左右开始学走，不要过早使用学步车。',
+  社交性微笑: '6周-3个月出现社交性微笑，是宝宝情感发展的重要里程碑。',
+  视觉追踪: '1-2个月开始能追视移动物体，可以用黑白卡片或摇铃引导。',
+}
+
+// 获取里程碑知识
+const getMilestoneKnowledge = (title: string) => {
+  for (const [key, value] of Object.entries(milestoneKnowledge)) {
+    if (title.includes(key)) return value
+  }
+  return '点击查看详细发育指导和练习方法'
+}
+
+// 显示知识卡片
+const showKnowledgeCard = (title: string) => {
+  // 可以跳转到详情页或打开弹窗
+  console.log('显示知识卡片:', title)
+}
 
 // 获取里程碑进度
 const getMilestoneProgress = (month: BabyMonthData) => {
@@ -760,6 +974,22 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
 }
 
+.unlock-hint {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: #9ca3af;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.timeline-nav-item.is-locked:hover .unlock-hint {
+  opacity: 1;
+}
+
 .nav-item-label {
   margin-top: 6px;
   font-size: 11px;
@@ -792,10 +1022,9 @@ onBeforeUnmount(() => {
 .timeline-progress-hint {
   display: flex;
   align-items: center;
-  gap: 6px;
-  justify-content: center;
+  justify-content: space-between;
   margin-top: 12px;
-  padding: 8px 16px;
+  padding: 10px 16px;
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   border-radius: 20px;
   font-size: 13px;
@@ -803,8 +1032,166 @@ onBeforeUnmount(() => {
   color: #92400e;
 }
 
+.hint-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .hint-icon {
   font-size: 16px;
+}
+
+.hint-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checklist-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: white;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.checklist-btn .btn-icon {
+  font-size: 14px;
+}
+
+.badge-dot {
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+/* 当前阶段卡片高亮 */
+.stat-card.stat-current {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.stat-card.stat-current .stat-value,
+.stat-card.stat-current .stat-label {
+  color: white;
+}
+
+/* 身高体重刻度条 */
+.physical-reference {
+  padding: 16px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 12px;
+  margin: 12px 0;
+}
+
+.physical-scales {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.scale-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scale-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.scale-icon {
+  font-size: 16px;
+}
+
+.info-tip {
+  font-size: 12px;
+  cursor: help;
+  opacity: 0.7;
+}
+
+.scale-bar {
+  position: relative;
+}
+
+.scale-track {
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.scale-range {
+  position: absolute;
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e 0%, #86efac 100%);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.scale-markers {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* 里程碑知识卡片提示 */
+.knowledge-btn {
+  font-size: 14px;
+  cursor: help;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  margin-left: auto;
+}
+
+.knowledge-btn:hover {
+  opacity: 1;
+}
+
+.knowledge-card-tip {
+  max-width: 280px;
+}
+
+.knowledge-card-tip .tip-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #fbbf24;
+}
+
+.knowledge-card-tip .tip-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.knowledge-card-tip .tip-footer {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #93c5fd;
+  cursor: pointer;
+}
+
+/* 卡片底部提示 */
+.footer-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 12px;
+  text-align: center;
 }
 
 /* 底部简单装饰 */
