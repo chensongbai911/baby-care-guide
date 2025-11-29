@@ -1,80 +1,183 @@
 <template>
   <div class="month-detail-view" v-if="monthData">
     <!-- SVG 动画背景 -->
-    <svg class="hero-svg-bg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+    <svg
+      class="hero-svg-bg"
+      viewBox="0 0 800 400"
+      preserveAspectRatio="xMidYMid slice"
+    >
       <defs>
         <!-- 渐变定义 -->
         <linearGradient id="heroGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:0.6" />
-          <stop offset="100%" style="stop-color:#818cf8;stop-opacity:0.3" />
+          <stop offset="0%" style="stop-color: #a78bfa; stop-opacity: 0.6;" />
+          <stop offset="100%" style="stop-color: #818cf8; stop-opacity: 0.3;" />
         </linearGradient>
         <linearGradient id="heroGradient2" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" style="stop-color:#f472b6;stop-opacity:0.4" />
-          <stop offset="100%" style="stop-color:#c084fc;stop-opacity:0.2" />
+          <stop offset="0%" style="stop-color: #f472b6; stop-opacity: 0.4;" />
+          <stop offset="100%" style="stop-color: #c084fc; stop-opacity: 0.2;" />
         </linearGradient>
 
         <!-- 发光滤镜 -->
         <filter id="heroGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feGaussianBlur stdDeviation="3" result="coloredBlur" />
           <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
+            <feMergeNode in="coloredBlur" />
+            <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
       </defs>
 
       <!-- 动态波浪 -->
-      <path class="wave wave-1" d="M0,300 Q200,250 400,300 T800,280 V400 H0 Z" fill="url(#heroGradient1)"/>
-      <path class="wave wave-2" d="M0,320 Q200,280 400,320 T800,300 V400 H0 Z" fill="url(#heroGradient2)"/>
+      <path
+        class="wave wave-1"
+        d="M0,300 Q200,250 400,300 T800,280 V400 H0 Z"
+        fill="url(#heroGradient1)"
+      />
+      <path
+        class="wave wave-2"
+        d="M0,320 Q200,280 400,320 T800,300 V400 H0 Z"
+        fill="url(#heroGradient2)"
+      />
 
       <!-- 漂浮圆圈 -->
-      <circle class="float-circle fc-1" cx="100" cy="80" r="30" fill="rgba(255,255,255,0.15)" filter="url(#heroGlow)"/>
-      <circle class="float-circle fc-2" cx="700" cy="120" r="45" fill="rgba(255,255,255,0.1)" filter="url(#heroGlow)"/>
-      <circle class="float-circle fc-3" cx="400" cy="60" r="20" fill="rgba(255,255,255,0.2)" filter="url(#heroGlow)"/>
-      <circle class="float-circle fc-4" cx="600" cy="200" r="25" fill="rgba(255,255,255,0.12)" filter="url(#heroGlow)"/>
+      <circle
+        class="float-circle fc-1"
+        cx="100"
+        cy="80"
+        r="30"
+        fill="rgba(255,255,255,0.15)"
+        filter="url(#heroGlow)"
+      />
+      <circle
+        class="float-circle fc-2"
+        cx="700"
+        cy="120"
+        r="45"
+        fill="rgba(255,255,255,0.1)"
+        filter="url(#heroGlow)"
+      />
+      <circle
+        class="float-circle fc-3"
+        cx="400"
+        cy="60"
+        r="20"
+        fill="rgba(255,255,255,0.2)"
+        filter="url(#heroGlow)"
+      />
+      <circle
+        class="float-circle fc-4"
+        cx="600"
+        cy="200"
+        r="25"
+        fill="rgba(255,255,255,0.12)"
+        filter="url(#heroGlow)"
+      />
 
       <!-- 星星装饰 -->
       <g class="star-group">
-        <polygon class="twinkle-star ts-1" points="150,150 153,158 162,158 155,163 158,172 150,167 142,172 145,163 138,158 147,158" fill="rgba(255,255,255,0.8)"/>
-        <polygon class="twinkle-star ts-2" points="650,80 652,86 658,86 653,90 655,96 650,92 645,96 647,90 642,86 648,86" fill="rgba(255,255,255,0.7)"/>
-        <polygon class="twinkle-star ts-3" points="300,100 302,106 308,106 303,110 305,116 300,112 295,116 297,110 292,106 298,106" fill="rgba(255,255,255,0.6)"/>
+        <polygon
+          class="twinkle-star ts-1"
+          points="150,150 153,158 162,158 155,163 158,172 150,167 142,172 145,163 138,158 147,158"
+          fill="rgba(255,255,255,0.8)"
+        />
+        <polygon
+          class="twinkle-star ts-2"
+          points="650,80 652,86 658,86 653,90 655,96 650,92 645,96 647,90 642,86 648,86"
+          fill="rgba(255,255,255,0.7)"
+        />
+        <polygon
+          class="twinkle-star ts-3"
+          points="300,100 302,106 308,106 303,110 305,116 300,112 295,116 297,110 292,106 298,106"
+          fill="rgba(255,255,255,0.6)"
+        />
       </g>
 
       <!-- 爱心装饰 -->
       <g class="heart-float hf-1" transform="translate(500, 150)">
-        <path d="M0,-8 C-4,-12 -10,-8 -10,-4 C-10,2 0,10 0,10 C0,10 10,2 10,-4 C10,-8 4,-12 0,-8" fill="rgba(244,114,182,0.6)" filter="url(#heroGlow)"/>
+        <path
+          d="M0,-8 C-4,-12 -10,-8 -10,-4 C-10,2 0,10 0,10 C0,10 10,2 10,-4 C10,-8 4,-12 0,-8"
+          fill="rgba(244,114,182,0.6)"
+          filter="url(#heroGlow)"
+        />
       </g>
       <g class="heart-float hf-2" transform="translate(200, 200)">
-        <path d="M0,-6 C-3,-9 -7.5,-6 -7.5,-3 C-7.5,1.5 0,7.5 0,7.5 C0,7.5 7.5,1.5 7.5,-3 C7.5,-6 3,-9 0,-6" fill="rgba(251,191,36,0.5)" filter="url(#heroGlow)"/>
+        <path
+          d="M0,-6 C-3,-9 -7.5,-6 -7.5,-3 C-7.5,1.5 0,7.5 0,7.5 C0,7.5 7.5,1.5 7.5,-3 C7.5,-6 3,-9 0,-6"
+          fill="rgba(251,191,36,0.5)"
+          filter="url(#heroGlow)"
+        />
       </g>
     </svg>
 
-    <!-- 顶部导航 -->
+    <!-- 顶部导航 - 增强版 -->
     <div class="top-nav">
       <el-button class="back-btn" @click="router.back()" round>
         <el-icon><ArrowLeft /></el-icon>
         返回
       </el-button>
+
+      <!-- 中间标题区 -->
+      <div class="nav-title-area">
+        <h2 class="nav-current-month">第{{ monthData.month }}个月</h2>
+        <el-tag type="primary" effect="plain" class="stage-tag">
+          {{ getStageLabel(monthData.month) }}
+        </el-tag>
+      </div>
+
+      <!-- 右侧月龄切换 -->
       <div class="nav-controls">
-        <el-button
-          :disabled="monthData.month === 0"
-          @click="navigateMonth(-1)"
-          circle
-        >
-          <el-icon><ArrowLeft /></el-icon>
-        </el-button>
-        <span class="nav-month">{{ monthData.month }}月</span>
-        <el-button
-          :disabled="monthData.month === 12"
-          @click="navigateMonth(1)"
-          circle
-        >
-          <el-icon><ArrowRight /></el-icon>
-        </el-button>
+        <el-tooltip content="上一个月龄" placement="bottom">
+          <el-button
+            :disabled="monthData.month === 0"
+            @click="navigateMonth(-1)"
+            circle
+            class="nav-arrow-btn"
+          >
+            <el-icon><ArrowLeft /></el-icon>
+          </el-button>
+        </el-tooltip>
+
+        <!-- 月龄下拉选择 -->
+        <el-dropdown trigger="click" @command="handleMonthChange">
+          <span class="nav-month-dropdown">
+            {{ monthData.month }}月
+            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item
+                v-for="m in 13"
+                :key="m - 1"
+                :command="m - 1"
+                :class="{ 'is-active': monthData.month === m - 1 }"
+              >
+                <span class="dropdown-month-num">{{ m - 1 }}</span>
+                <span class="dropdown-month-label">月龄</span>
+                <el-icon
+                  v-if="monthData.month === m - 1"
+                  class="dropdown-check"
+                >
+                  <Check />
+                </el-icon>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+
+        <el-tooltip content="下一个月龄" placement="bottom">
+          <el-button
+            :disabled="monthData.month === 12"
+            @click="navigateMonth(1)"
+            circle
+            class="nav-arrow-btn"
+          >
+            <el-icon><ArrowRight /></el-icon>
+          </el-button>
+        </el-tooltip>
       </div>
     </div>
 
-    <!-- 页面头部 -->
+    <!-- 页面头部 - 优化版 -->
     <div class="page-hero">
       <div class="hero-decoration">
         <div class="deco-circle deco-1"></div>
@@ -87,6 +190,11 @@
           <span class="month-unit">月龄</span>
         </div>
         <h1>{{ monthData.title }}</h1>
+        <div class="hero-stage-tags">
+          <el-tag effect="dark" round class="hero-stage-tag">
+            {{ getStageLabel(monthData.month) }}
+          </el-tag>
+        </div>
         <p class="hero-summary">{{ monthData.summary }}</p>
 
         <!-- 快速统计 -->
@@ -95,23 +203,50 @@
             <el-icon><ScaleToOriginal /></el-icon>
             <div class="stat-content">
               <span class="stat-label">体重</span>
-              <span class="stat-value">{{ monthData.physicalDevelopment.weight }}</span>
+              <span class="stat-value">
+                {{ monthData.physicalDevelopment.weight }}
+              </span>
             </div>
           </div>
           <div class="stat-item">
             <el-icon><Histogram /></el-icon>
             <div class="stat-content">
               <span class="stat-label">身高</span>
-              <span class="stat-value">{{ monthData.physicalDevelopment.height }}</span>
+              <span class="stat-value">
+                {{ monthData.physicalDevelopment.height }}
+              </span>
             </div>
           </div>
           <div class="stat-item">
             <el-icon><DataAnalysis /></el-icon>
             <div class="stat-content">
               <span class="stat-label">头围</span>
-              <span class="stat-value">{{ monthData.physicalDevelopment.headCircumference }}</span>
+              <span class="stat-value">
+                {{ monthData.physicalDevelopment.headCircumference }}
+              </span>
             </div>
           </div>
+        </div>
+
+        <!-- 快捷操作按钮 -->
+        <div class="hero-actions">
+          <el-button
+            round
+            class="hero-action-btn"
+            @click="activeTab = 'milestones'"
+          >
+            <span class="btn-icon">🏆</span>
+            <span>里程碑打卡</span>
+            <el-badge
+              :value="pendingMilestonesCount"
+              :hidden="pendingMilestonesCount === 0"
+              class="milestone-badge"
+            />
+          </el-button>
+          <el-button round class="hero-action-btn" @click="goToDiary">
+            <span class="btn-icon">📝</span>
+            <span>记录成长</span>
+          </el-button>
         </div>
       </div>
     </div>
@@ -129,115 +264,289 @@
           </template>
 
           <div class="tab-content">
-            <!-- 身体发育详情 -->
+            <!-- 身体发育详情 - 优化版 -->
             <el-card class="info-card physical-card">
               <template #header>
                 <div class="card-header-custom">
                   <span class="header-icon">🎯</span>
-                  <h3>身体发育</h3>
+                  <div class="header-text">
+                    <h3>身体发育</h3>
+                    <span class="header-subtitle">
+                      {{ monthData.month }}月龄宝宝的体格参考标准
+                    </span>
+                  </div>
                 </div>
               </template>
-              <p class="description-text">{{ monthData.physicalDevelopment.description }}</p>
+              <p class="description-text">
+                {{ monthData.physicalDevelopment.description }}
+              </p>
+
+              <!-- 发育数据可视化 -->
               <div class="physical-grid">
-                <div class="physical-item">
-                  <div class="physical-icon weight-icon">⚖️</div>
+                <div class="physical-item weight-item">
+                  <div class="physical-icon-wrapper">
+                    <span class="physical-icon">⚖️</span>
+                  </div>
                   <div class="physical-info">
                     <span class="physical-label">体重范围</span>
-                    <span class="physical-value">{{ monthData.physicalDevelopment.weight }}</span>
+                    <span class="physical-value">
+                      {{ monthData.physicalDevelopment.weight }}
+                    </span>
+                    <div class="physical-hint">
+                      <el-tooltip
+                        content="数据来源：WHO儿童生长标准，仅供参考"
+                        placement="top"
+                      >
+                        <span class="hint-text">📊 WHO参考标准</span>
+                      </el-tooltip>
+                    </div>
                   </div>
                 </div>
-                <div class="physical-item">
-                  <div class="physical-icon height-icon">📏</div>
+                <div class="physical-item height-item">
+                  <div class="physical-icon-wrapper">
+                    <span class="physical-icon">📏</span>
+                  </div>
                   <div class="physical-info">
                     <span class="physical-label">身高范围</span>
-                    <span class="physical-value">{{ monthData.physicalDevelopment.height }}</span>
+                    <span class="physical-value">
+                      {{ monthData.physicalDevelopment.height }}
+                    </span>
+                    <div class="physical-hint">
+                      <el-tooltip
+                        content="身高受遗传影响较大，定期测量更重要"
+                        placement="top"
+                      >
+                        <span class="hint-text">📈 关注增长趋势</span>
+                      </el-tooltip>
+                    </div>
                   </div>
                 </div>
-                <div class="physical-item">
-                  <div class="physical-icon head-icon">👶</div>
+                <div class="physical-item head-item">
+                  <div class="physical-icon-wrapper">
+                    <span class="physical-icon">👶</span>
+                  </div>
                   <div class="physical-info">
                     <span class="physical-label">头围范围</span>
-                    <span class="physical-value">{{ monthData.physicalDevelopment.headCircumference }}</span>
+                    <span class="physical-value">
+                      {{ monthData.physicalDevelopment.headCircumference }}
+                    </span>
+                    <div class="physical-hint">
+                      <el-tooltip
+                        content="头围反映脑部发育，过大或过小需就医"
+                        placement="top"
+                      >
+                        <span class="hint-text">🧠 脑部发育指标</span>
+                      </el-tooltip>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <!-- 发育提醒 -->
+              <el-alert
+                title="温馨提示"
+                type="info"
+                :closable="false"
+                show-icon
+                class="development-alert"
+              >
+                <template #default>
+                  每个宝宝发育进度不同，以上数据仅供参考。如有疑虑，建议定期体检并咨询医生。
+                </template>
+              </el-alert>
             </el-card>
 
-            <el-row :gutter="20">
-              <!-- 认知能力 -->
-              <el-col :xs="24" :md="12">
-                <el-card class="info-card skill-card cognitive-card">
-                  <template #header>
-                    <div class="card-header-custom">
-                      <span class="header-icon">🧠</span>
-                      <h3>认知能力</h3>
-                    </div>
-                  </template>
-                  <ul class="skill-list">
-                    <li v-for="(skill, index) in monthData.cognitiveSkills" :key="index">
-                      <span class="skill-bullet cognitive"></span>
-                      <span>{{ skill }}</span>
-                    </li>
-                  </ul>
-                </el-card>
-              </el-col>
+            <!-- 能力发展区域 - 增加折叠功能 -->
+            <div class="skills-section">
+              <div class="skills-header">
+                <h3>
+                  <span class="section-icon">🌟</span>
+                  能力发展
+                </h3>
+                <span class="skills-subtitle">
+                  {{ monthData.month }}月龄宝宝的关键能力表现
+                </span>
+              </div>
 
-              <!-- 社交情感 -->
-              <el-col :xs="24" :md="12">
-                <el-card class="info-card skill-card social-card">
-                  <template #header>
-                    <div class="card-header-custom">
-                      <span class="header-icon">❤️</span>
-                      <h3>社交情感</h3>
-                    </div>
-                  </template>
-                  <ul class="skill-list">
-                    <li v-for="(skill, index) in monthData.socialEmotional" :key="index">
-                      <span class="skill-bullet social"></span>
-                      <span>{{ skill }}</span>
-                    </li>
-                  </ul>
-                </el-card>
-              </el-col>
-            </el-row>
+              <el-row :gutter="20">
+                <!-- 认知能力 -->
+                <el-col :xs="24" :md="12">
+                  <el-card
+                    class="info-card skill-card cognitive-card"
+                    :class="{ 'is-collapsed': collapsedCards.cognitive }"
+                  >
+                    <template #header>
+                      <div
+                        class="card-header-custom card-header-collapsible"
+                        @click="toggleCardCollapse('cognitive')"
+                      >
+                        <div class="header-left">
+                          <span class="header-icon">🧠</span>
+                          <div class="header-text">
+                            <h3>认知能力</h3>
+                            <span class="header-count">
+                              {{ monthData.cognitiveSkills?.length || 0 }}项能力
+                            </span>
+                          </div>
+                        </div>
+                        <el-icon
+                          class="collapse-icon"
+                          :class="{ 'is-rotated': !collapsedCards.cognitive }"
+                        >
+                          <ArrowDown />
+                        </el-icon>
+                      </div>
+                    </template>
+                    <el-collapse-transition>
+                      <ul class="skill-list" v-show="!collapsedCards.cognitive">
+                        <li
+                          v-for="(skill, index) in monthData.cognitiveSkills"
+                          :key="index"
+                        >
+                          <span class="skill-bullet cognitive"></span>
+                          <span>{{ skill }}</span>
+                        </li>
+                      </ul>
+                    </el-collapse-transition>
+                  </el-card>
+                </el-col>
 
-            <el-row :gutter="20">
-              <!-- 大运动 -->
-              <el-col :xs="24" :md="12">
-                <el-card class="info-card skill-card motor-gross-card">
-                  <template #header>
-                    <div class="card-header-custom">
-                      <span class="header-icon">🏃</span>
-                      <h3>大运动能力</h3>
-                    </div>
-                  </template>
-                  <ul class="skill-list">
-                    <li v-for="(skill, index) in monthData.motorSkills.gross" :key="index">
-                      <span class="skill-bullet motor-gross"></span>
-                      <span>{{ skill }}</span>
-                    </li>
-                  </ul>
-                </el-card>
-              </el-col>
+                <!-- 社交情感 -->
+                <el-col :xs="24" :md="12">
+                  <el-card
+                    class="info-card skill-card social-card"
+                    :class="{ 'is-collapsed': collapsedCards.social }"
+                  >
+                    <template #header>
+                      <div
+                        class="card-header-custom card-header-collapsible"
+                        @click="toggleCardCollapse('social')"
+                      >
+                        <div class="header-left">
+                          <span class="header-icon">❤️</span>
+                          <div class="header-text">
+                            <h3>社交情感</h3>
+                            <span class="header-count">
+                              {{ monthData.socialEmotional?.length || 0 }}项能力
+                            </span>
+                          </div>
+                        </div>
+                        <el-icon
+                          class="collapse-icon"
+                          :class="{ 'is-rotated': !collapsedCards.social }"
+                        >
+                          <ArrowDown />
+                        </el-icon>
+                      </div>
+                    </template>
+                    <el-collapse-transition>
+                      <ul class="skill-list" v-show="!collapsedCards.social">
+                        <li
+                          v-for="(skill, index) in monthData.socialEmotional"
+                          :key="index"
+                        >
+                          <span class="skill-bullet social"></span>
+                          <span>{{ skill }}</span>
+                        </li>
+                      </ul>
+                    </el-collapse-transition>
+                  </el-card>
+                </el-col>
+              </el-row>
 
-              <!-- 精细动作 -->
-              <el-col :xs="24" :md="12">
-                <el-card class="info-card skill-card motor-fine-card">
-                  <template #header>
-                    <div class="card-header-custom">
-                      <span class="header-icon">✋</span>
-                      <h3>精细动作</h3>
-                    </div>
-                  </template>
-                  <ul class="skill-list">
-                    <li v-for="(skill, index) in monthData.motorSkills.fine" :key="index">
-                      <span class="skill-bullet motor-fine"></span>
-                      <span>{{ skill }}</span>
-                    </li>
-                  </ul>
-                </el-card>
-              </el-col>
-            </el-row>
+              <el-row :gutter="20">
+                <!-- 大运动 -->
+                <el-col :xs="24" :md="12">
+                  <el-card
+                    class="info-card skill-card motor-gross-card"
+                    :class="{ 'is-collapsed': collapsedCards.motorGross }"
+                  >
+                    <template #header>
+                      <div
+                        class="card-header-custom card-header-collapsible"
+                        @click="toggleCardCollapse('motorGross')"
+                      >
+                        <div class="header-left">
+                          <span class="header-icon">🏃</span>
+                          <div class="header-text">
+                            <h3>大运动能力</h3>
+                            <span class="header-count">
+                              {{
+                                monthData.motorSkills?.gross?.length || 0
+                              }}项能力
+                            </span>
+                          </div>
+                        </div>
+                        <el-icon
+                          class="collapse-icon"
+                          :class="{ 'is-rotated': !collapsedCards.motorGross }"
+                        >
+                          <ArrowDown />
+                        </el-icon>
+                      </div>
+                    </template>
+                    <el-collapse-transition>
+                      <ul
+                        class="skill-list"
+                        v-show="!collapsedCards.motorGross"
+                      >
+                        <li
+                          v-for="(skill, index) in monthData.motorSkills.gross"
+                          :key="index"
+                        >
+                          <span class="skill-bullet motor-gross"></span>
+                          <span>{{ skill }}</span>
+                        </li>
+                      </ul>
+                    </el-collapse-transition>
+                  </el-card>
+                </el-col>
+
+                <!-- 精细动作 -->
+                <el-col :xs="24" :md="12">
+                  <el-card
+                    class="info-card skill-card motor-fine-card"
+                    :class="{ 'is-collapsed': collapsedCards.motorFine }"
+                  >
+                    <template #header>
+                      <div
+                        class="card-header-custom card-header-collapsible"
+                        @click="toggleCardCollapse('motorFine')"
+                      >
+                        <div class="header-left">
+                          <span class="header-icon">✋</span>
+                          <div class="header-text">
+                            <h3>精细动作</h3>
+                            <span class="header-count">
+                              {{
+                                monthData.motorSkills?.fine?.length || 0
+                              }}项能力
+                            </span>
+                          </div>
+                        </div>
+                        <el-icon
+                          class="collapse-icon"
+                          :class="{ 'is-rotated': !collapsedCards.motorFine }"
+                        >
+                          <ArrowDown />
+                        </el-icon>
+                      </div>
+                    </template>
+                    <el-collapse-transition>
+                      <ul class="skill-list" v-show="!collapsedCards.motorFine">
+                        <li
+                          v-for="(skill, index) in monthData.motorSkills.fine"
+                          :key="index"
+                        >
+                          <span class="skill-bullet motor-fine"></span>
+                          <span>{{ skill }}</span>
+                        </li>
+                      </ul>
+                    </el-collapse-transition>
+                  </el-card>
+                </el-col>
+              </el-row>
+            </div>
           </div>
         </el-tab-pane>
 
@@ -258,7 +567,10 @@
                 :guideline="guideline"
               />
             </div>
-            <el-empty v-if="!monthData.careGuidelines.length" description="暂无护理指南" />
+            <el-empty
+              v-if="!monthData.careGuidelines.length"
+              description="暂无护理指南"
+            />
           </div>
         </el-tab-pane>
 
@@ -280,7 +592,11 @@
               >
                 <div class="nutrition-header">
                   <div class="nutrition-icon">
-                    {{ tip.type.includes('母乳') || tip.type.includes('奶') ? '🍼' : '🥣' }}
+                    {{
+                      tip.type.includes('母乳') || tip.type.includes('奶')
+                        ? '🍼'
+                        : '🥣'
+                    }}
                   </div>
                   <h3>{{ tip.type }}</h3>
                 </div>
@@ -303,7 +619,9 @@
                 <div class="nutrition-notes">
                   <h4>📝 注意事项</h4>
                   <ul>
-                    <li v-for="(note, idx) in tip.notes" :key="idx">{{ note }}</li>
+                    <li v-for="(note, idx) in tip.notes" :key="idx">
+                      {{ note }}
+                    </li>
                   </ul>
                 </div>
               </el-card>
@@ -331,8 +649,12 @@
                 >
                   <template #default>
                     <div class="progress-inner">
-                      <span class="progress-value">{{ completedMilestonesCount }}</span>
-                      <span class="progress-label">/ {{ monthData.milestones.length }}</span>
+                      <span class="progress-value">
+                        {{ completedMilestonesCount }}
+                      </span>
+                      <span class="progress-label">
+                        / {{ monthData.milestones.length }}
+                      </span>
                     </div>
                   </template>
                 </el-progress>
@@ -347,12 +669,17 @@
               <div
                 v-for="(milestone, index) in monthData.milestones"
                 :key="index"
-                :class="['milestone-card', { 'completed': isMilestoneCompleted(milestone.title) }]"
+                :class="[
+                  'milestone-card',
+                  { completed: isMilestoneCompleted(milestone.title) },
+                ]"
                 @click="toggleMilestone(milestone.title)"
               >
                 <div class="milestone-check">
                   <div class="check-circle">
-                    <el-icon v-if="isMilestoneCompleted(milestone.title)"><Check /></el-icon>
+                    <el-icon v-if="isMilestoneCompleted(milestone.title)">
+                      <Check />
+                    </el-icon>
                   </div>
                 </div>
                 <div class="milestone-content">
@@ -361,10 +688,16 @@
                 </div>
                 <div class="milestone-status">
                   <el-tag
-                    :type="isMilestoneCompleted(milestone.title) ? 'success' : 'info'"
+                    :type="
+                      isMilestoneCompleted(milestone.title) ? 'success' : 'info'
+                    "
                     effect="plain"
                   >
-                    {{ isMilestoneCompleted(milestone.title) ? '已完成 🎉' : '待完成' }}
+                    {{
+                      isMilestoneCompleted(milestone.title)
+                        ? '已完成 🎉'
+                        : '待完成'
+                    }}
                   </el-tag>
                 </div>
               </div>
@@ -394,7 +727,10 @@
                 </div>
 
                 <div class="issue-section">
-                  <h4><span class="section-icon">🔍</span> 症状表现</h4>
+                  <h4>
+                    <span class="section-icon">🔍</span>
+                    症状表现
+                  </h4>
                   <div class="symptom-tags">
                     <el-tag
                       v-for="(symptom, idx) in issue.symptoms"
@@ -408,7 +744,10 @@
                 </div>
 
                 <div class="issue-section">
-                  <h4><span class="section-icon">💡</span> 解决方案</h4>
+                  <h4>
+                    <span class="section-icon">💡</span>
+                    解决方案
+                  </h4>
                   <ul class="solution-list">
                     <li v-for="(solution, idx) in issue.solutions" :key="idx">
                       <el-icon class="solution-icon"><CircleCheck /></el-icon>
@@ -426,7 +765,10 @@
                 />
               </el-card>
             </div>
-            <el-empty v-if="!monthData.commonIssues.length" description="暂无常见问题" />
+            <el-empty
+              v-if="!monthData.commonIssues.length"
+              description="暂无常见问题"
+            />
           </div>
         </el-tab-pane>
 
@@ -480,27 +822,98 @@
       </el-tabs>
     </div>
 
+    <!-- 成长记录入口区域 -->
+    <div class="growth-record-section">
+      <el-card class="record-entry-card">
+        <div class="record-entry-content">
+          <div class="record-icon">📝</div>
+          <div class="record-text">
+            <h3>记录今日成长</h3>
+            <p>每一个第一次都值得铭记，让宝宝的成长足迹永不遗忘</p>
+          </div>
+          <el-button type="primary" round size="large" @click="goToDiary">
+            <el-icon><Edit /></el-icon>
+            开始记录
+          </el-button>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- 下月龄预告 -->
+    <div
+      class="next-month-preview"
+      v-if="nextMonthData && monthData.month < 12"
+    >
+      <el-card class="preview-card">
+        <div class="preview-header">
+          <span class="preview-icon">🔮</span>
+          <h3>下月龄预告：{{ nextMonthData.month }}个月</h3>
+        </div>
+        <p class="preview-summary">{{ nextMonthData.summary }}</p>
+        <div class="preview-milestones">
+          <span class="preview-label">即将解锁的能力：</span>
+          <div class="preview-tags">
+            <el-tag
+              v-for="(m, idx) in nextMonthData.milestones?.slice(0, 3)"
+              :key="idx"
+              type="info"
+              effect="plain"
+            >
+              {{ m.title }}
+            </el-tag>
+            <el-tag
+              v-if="nextMonthData.milestones?.length > 3"
+              type="info"
+              effect="plain"
+            >
+              +{{ nextMonthData.milestones.length - 3 }}更多
+            </el-tag>
+          </div>
+        </div>
+        <el-button text type="primary" @click="navigateMonth(1)">
+          查看{{ nextMonthData.month }}月龄详情
+          <el-icon><ArrowRight /></el-icon>
+        </el-button>
+      </el-card>
+    </div>
+
     <!-- 底部导航 -->
     <div class="bottom-nav">
       <el-button
         v-if="monthData.month > 0"
         size="large"
+        round
         @click="navigateMonth(-1)"
+        class="nav-prev-btn"
       >
         <el-icon><ArrowLeft /></el-icon>
         {{ monthData.month - 1 }}月龄
       </el-button>
-      <div v-else></div>
+      <div v-else class="nav-placeholder"></div>
+
+      <el-button
+        type="primary"
+        size="large"
+        round
+        @click="router.push('/')"
+        class="nav-home-btn"
+      >
+        <el-icon><HomeFilled /></el-icon>
+        返回首页
+      </el-button>
 
       <el-button
         v-if="monthData.month < 12"
         type="primary"
         size="large"
+        round
         @click="navigateMonth(1)"
+        class="nav-next-btn"
       >
         {{ monthData.month + 1 }}月龄
         <el-icon><ArrowRight /></el-icon>
       </el-button>
+      <div v-else class="nav-placeholder"></div>
     </div>
   </div>
 
@@ -518,11 +931,14 @@ import MediaGallery from '@/components/baby/MediaGallery.vue'
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowDown,
   ScaleToOriginal,
   Histogram,
   DataAnalysis,
   Check,
-  CircleCheck
+  CircleCheck,
+  Edit,
+  HomeFilled,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { BabyMonthData, Milestone } from '@/types/baby'
@@ -533,19 +949,50 @@ const babyStore = useBabyStore()
 
 const activeTab = ref('development')
 
+// 卡片折叠状态
+const collapsedCards = ref({
+  cognitive: false,
+  social: false,
+  motorGross: false,
+  motorFine: false,
+})
+
+// 切换卡片折叠状态
+const toggleCardCollapse = (cardType: keyof typeof collapsedCards.value) => {
+  collapsedCards.value[cardType] = !collapsedCards.value[cardType]
+}
+
 const monthData = computed(() => {
   const monthId = parseInt(route.params.id as string)
   return babyStore.allMonthsData.find((m: BabyMonthData) => m.month === monthId)
 })
 
+// 下个月龄数据
+const nextMonthData = computed(() => {
+  if (!monthData.value || monthData.value.month >= 12) return null
+  return babyStore.allMonthsData.find(
+    (m: BabyMonthData) => m.month === monthData.value!.month + 1,
+  )
+})
+
 const completedMilestonesCount = computed(() => {
   if (!monthData.value) return 0
-  return monthData.value.milestones.filter((m: Milestone) => babyStore.isMilestoneCompleted(m.title)).length
+  return monthData.value.milestones.filter((m: Milestone) =>
+    babyStore.isMilestoneCompleted(m.title),
+  ).length
+})
+
+// 待完成里程碑数量
+const pendingMilestonesCount = computed(() => {
+  if (!monthData.value) return 0
+  return monthData.value.milestones.length - completedMilestonesCount.value
 })
 
 const milestoneProgress = computed(() => {
   if (!monthData.value || !monthData.value.milestones.length) return 0
-  return Math.round((completedMilestonesCount.value / monthData.value.milestones.length) * 100)
+  return Math.round(
+    (completedMilestonesCount.value / monthData.value.milestones.length) * 100,
+  )
 })
 
 const isMilestoneCompleted = (title: string) => {
@@ -557,7 +1004,7 @@ const toggleMilestone = (title: string) => {
   if (babyStore.isMilestoneCompleted(title)) {
     ElMessage({
       message: `🎉 太棒了！"${title}"已完成！`,
-      type: 'success'
+      type: 'success',
     })
   }
 }
@@ -570,18 +1017,51 @@ const navigateMonth = (delta: number) => {
   }
 }
 
+// 处理月龄下拉选择
+const handleMonthChange = (month: number) => {
+  router.push(`/month/${month}`)
+}
+
+// 获取阶段标签
+const getStageLabel = (month: number): string => {
+  const stageLabels: Record<number, string> = {
+    0: '新生儿期',
+    1: '视觉发展期',
+    2: '社交萌芽期',
+    3: '作息稳定期',
+    4: '社交能力提升期',
+    5: '探索欲旺盛期',
+    6: '辅食添加期',
+    7: '独坐期',
+    8: '爬行探索期',
+    9: '扶站期',
+    10: '学步准备期',
+    11: '迈步期',
+    12: '周岁成长期',
+  }
+  return stageLabels[month] || '成长期'
+}
+
+// 跳转到日记页面
+const goToDiary = () => {
+  router.push('/diary')
+}
+
 onMounted(() => {
   const monthId = parseInt(route.params.id as string)
   babyStore.setCurrentMonth(monthId)
 })
 
-watch(() => route.params.id, (newId) => {
-  if (newId) {
-    babyStore.setCurrentMonth(parseInt(newId as string))
-    activeTab.value = 'development'
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-})
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) {
+      babyStore.setCurrentMonth(parseInt(newId as string))
+      activeTab.value = 'development'
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  },
+)
 </script>
 
 <style scoped>
@@ -589,19 +1069,21 @@ watch(() => route.params.id, (newId) => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0;
+  padding-bottom: 100px;
 }
 
-/* 顶部导航 */
+/* 顶部导航 - 增强版 */
 .top-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px; /* 从 20px 减小 */
+  padding: 12px 20px;
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .back-btn {
@@ -1012,10 +1494,18 @@ watch(() => route.params.id, (newId) => {
   flex-shrink: 0;
 }
 
-.skill-bullet.cognitive { background: #409eff; }
-.skill-bullet.social { background: #f56c6c; }
-.skill-bullet.motor-gross { background: #67c23a; }
-.skill-bullet.motor-fine { background: #e6a23c; }
+.skill-bullet.cognitive {
+  background: #409eff;
+}
+.skill-bullet.social {
+  background: #f56c6c;
+}
+.skill-bullet.motor-gross {
+  background: #67c23a;
+}
+.skill-bullet.motor-fine {
+  background: #e6a23c;
+}
 
 /* 护理指南网格 */
 .care-grid {
@@ -1362,9 +1852,245 @@ watch(() => route.params.id, (newId) => {
 /* 底部导航 */
 .bottom-nav {
   display: flex;
-  justify-content: space-between;
-  padding: 30px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 20px;
   margin-top: 20px;
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.nav-placeholder {
+  width: 120px;
+}
+
+.nav-prev-btn,
+.nav-next-btn {
+  min-width: 120px;
+}
+
+.nav-home-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+/* 顶部导航增强样式 */
+.nav-title-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-current-month {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.stage-tag {
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-arrow-btn {
+  width: 36px;
+  height: 36px;
+}
+
+.nav-month-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-month-dropdown:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.dropdown-month-num {
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+}
+
+.dropdown-month-label {
+  color: #909399;
+  font-size: 12px;
+}
+
+.dropdown-check {
+  color: #67c23a;
+  margin-left: auto;
+}
+
+:deep(.el-dropdown-menu__item.is-active) {
+  background: linear-gradient(135deg, #f0f0ff 0%, #fff5f8 100%);
+  color: #667eea;
+}
+
+/* Hero 阶段标签 */
+.hero-stage-tags {
+  margin-bottom: 12px;
+}
+
+.hero-stage-tag {
+  background: rgba(255, 255, 255, 0.25);
+  border: none;
+  font-size: 13px;
+  padding: 6px 16px;
+}
+
+/* Hero 快捷操作 */
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.hero-action-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  transition: all 0.3s ease;
+}
+
+.hero-action-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.hero-action-btn .btn-icon {
+  font-size: 18px;
+}
+
+.milestone-badge :deep(.el-badge__content) {
+  background: #f56c6c;
+  border: none;
+}
+
+/* 成长记录入口区域 */
+.growth-record-section {
+  padding: 0 20px;
+  margin-top: 30px;
+}
+
+.record-entry-card {
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #fdf4ff 0%, #f3e8ff 100%);
+  border: 2px solid #e9d5ff;
+}
+
+.record-entry-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px;
+}
+
+.record-icon {
+  font-size: 48px;
+}
+
+.record-text {
+  flex: 1;
+}
+
+.record-text h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+.record-text p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* 下月预告区域 */
+.next-month-preview {
+  padding: 0 20px;
+  margin-top: 24px;
+}
+
+.preview-card {
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid #bae6fd;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.preview-icon {
+  font-size: 28px;
+}
+
+.preview-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #0369a1;
+  font-weight: 700;
+}
+
+.preview-summary {
+  font-size: 14px;
+  color: #0c4a6e;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+}
+
+.preview-milestones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.preview-label {
+  font-size: 13px;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.preview-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* 响应式 */
@@ -1410,6 +2136,300 @@ watch(() => route.params.id, (newId) => {
 
   .physical-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* 移动端顶部导航 */
+  .top-nav {
+    padding: 10px 12px;
+  }
+
+  .nav-title-area {
+    display: none;
+  }
+
+  .nav-month-dropdown {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+
+  /* 移动端Hero操作 */
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-action-btn {
+    width: 100%;
+    max-width: 200px;
+    justify-content: center;
+  }
+
+  /* 移动端成长记录入口 */
+  .record-entry-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .record-text {
+    text-align: center;
+  }
+
+  /* 移动端底部导航 */
+  .bottom-nav {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .nav-prev-btn,
+  .nav-next-btn,
+  .nav-home-btn {
+    width: 100%;
+  }
+
+  .nav-placeholder {
+    display: none;
+  }
+}
+
+/* 标签栏优化 */
+.detail-tabs :deep(.el-tabs__nav-wrap) {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.detail-tabs :deep(.el-tabs__nav-scroll) {
+  overflow: visible;
+}
+
+.detail-tabs :deep(.el-tabs__item) {
+  padding: 0 16px;
+  height: 48px;
+  font-weight: 600;
+}
+
+.detail-tabs :deep(.el-tabs__item.is-active) {
+  color: #667eea;
+}
+
+.detail-tabs :deep(.el-tabs__active-bar) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  height: 3px;
+  border-radius: 2px;
+}
+
+@media (max-width: 768px) {
+  .detail-tabs :deep(.el-tabs__item) {
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .tab-icon {
+    font-size: 16px;
+  }
+
+  .tab-text {
+    font-size: 12px;
+  }
+}
+
+/* 卡片头部优化 */
+.card-header-custom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-header-custom .header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header-custom .header-text h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #303133;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 2px;
+}
+
+.header-count {
+  font-size: 11px;
+  color: #909399;
+  margin-top: 2px;
+}
+
+/* 可折叠卡片头部 */
+.card-header-collapsible {
+  cursor: pointer;
+  width: 100%;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+}
+
+.card-header-collapsible:hover {
+  opacity: 0.8;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.collapse-icon {
+  transition: transform 0.3s ease;
+  color: #909399;
+}
+
+.collapse-icon.is-rotated {
+  transform: rotate(-180deg);
+}
+
+/* 物理发育卡片优化 */
+.physical-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.physical-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+  border-radius: 16px;
+  border: 1px solid #ebeef5;
+  transition: all 0.3s ease;
+}
+
+.physical-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.physical-item.weight-item {
+  border-left: 4px solid #67c23a;
+}
+
+.physical-item.height-item {
+  border-left: 4px solid #409eff;
+}
+
+.physical-item.head-item {
+  border-left: 4px solid #e6a23c;
+}
+
+.physical-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.physical-icon-wrapper .physical-icon {
+  font-size: 28px;
+}
+
+.physical-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.physical-label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 4px;
+}
+
+.physical-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.physical-hint {
+  margin-top: 6px;
+}
+
+.hint-text {
+  font-size: 11px;
+  color: #a8abb2;
+  cursor: help;
+}
+
+.hint-text:hover {
+  color: #667eea;
+}
+
+/* 发育提醒 */
+.development-alert {
+  border-radius: 12px;
+}
+
+/* 能力发展区域 */
+.skills-section {
+  margin-top: 24px;
+}
+
+.skills-header {
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+
+.skills-header h3 {
+  margin: 0 0 6px 0;
+  font-size: 20px;
+  color: #303133;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-icon {
+  font-size: 24px;
+}
+
+.skills-subtitle {
+  font-size: 13px;
+  color: #909399;
+}
+
+/* 技能卡片折叠状态 */
+.skill-card.is-collapsed {
+  opacity: 0.85;
+}
+
+.skill-card.is-collapsed :deep(.el-card__body) {
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .physical-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .physical-item {
+    padding: 16px;
+  }
+
+  .physical-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .physical-icon-wrapper .physical-icon {
+    font-size: 22px;
   }
 }
 </style>
