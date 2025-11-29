@@ -1,113 +1,27 @@
 <template>
   <div class="month-detail-view" v-if="monthData">
-    <!-- SVG 动画背景 -->
-    <svg
-      class="hero-svg-bg"
-      viewBox="0 0 800 400"
-      preserveAspectRatio="xMidYMid slice"
-    >
-      <defs>
-        <!-- 渐变定义 -->
-        <linearGradient id="heroGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color: #a78bfa; stop-opacity: 0.6;" />
-          <stop offset="100%" style="stop-color: #818cf8; stop-opacity: 0.3;" />
-        </linearGradient>
-        <linearGradient id="heroGradient2" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" style="stop-color: #f472b6; stop-opacity: 0.4;" />
-          <stop offset="100%" style="stop-color: #c084fc; stop-opacity: 0.2;" />
-        </linearGradient>
-
-        <!-- 发光滤镜 -->
-        <filter id="heroGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      <!-- 动态波浪 -->
-      <path
-        class="wave wave-1"
-        d="M0,300 Q200,250 400,300 T800,280 V400 H0 Z"
-        fill="url(#heroGradient1)"
-      />
-      <path
-        class="wave wave-2"
-        d="M0,320 Q200,280 400,320 T800,300 V400 H0 Z"
-        fill="url(#heroGradient2)"
-      />
-
-      <!-- 漂浮圆圈 -->
-      <circle
-        class="float-circle fc-1"
-        cx="100"
-        cy="80"
-        r="30"
-        fill="rgba(255,255,255,0.15)"
-        filter="url(#heroGlow)"
-      />
-      <circle
-        class="float-circle fc-2"
-        cx="700"
-        cy="120"
-        r="45"
-        fill="rgba(255,255,255,0.1)"
-        filter="url(#heroGlow)"
-      />
-      <circle
-        class="float-circle fc-3"
-        cx="400"
-        cy="60"
-        r="20"
-        fill="rgba(255,255,255,0.2)"
-        filter="url(#heroGlow)"
-      />
-      <circle
-        class="float-circle fc-4"
-        cx="600"
-        cy="200"
-        r="25"
-        fill="rgba(255,255,255,0.12)"
-        filter="url(#heroGlow)"
-      />
-
-      <!-- 星星装饰 -->
-      <g class="star-group">
-        <polygon
-          class="twinkle-star ts-1"
-          points="150,150 153,158 162,158 155,163 158,172 150,167 142,172 145,163 138,158 147,158"
-          fill="rgba(255,255,255,0.8)"
-        />
-        <polygon
-          class="twinkle-star ts-2"
-          points="650,80 652,86 658,86 653,90 655,96 650,92 645,96 647,90 642,86 648,86"
-          fill="rgba(255,255,255,0.7)"
-        />
-        <polygon
-          class="twinkle-star ts-3"
-          points="300,100 302,106 308,106 303,110 305,116 300,112 295,116 297,110 292,106 298,106"
-          fill="rgba(255,255,255,0.6)"
-        />
-      </g>
-
-      <!-- 爱心装饰 -->
-      <g class="heart-float hf-1" transform="translate(500, 150)">
-        <path
-          d="M0,-8 C-4,-12 -10,-8 -10,-4 C-10,2 0,10 0,10 C0,10 10,2 10,-4 C10,-8 4,-12 0,-8"
-          fill="rgba(244,114,182,0.6)"
-          filter="url(#heroGlow)"
-        />
-      </g>
-      <g class="heart-float hf-2" transform="translate(200, 200)">
-        <path
-          d="M0,-6 C-3,-9 -7.5,-6 -7.5,-3 C-7.5,1.5 0,7.5 0,7.5 C0,7.5 7.5,1.5 7.5,-3 C7.5,-6 3,-9 0,-6"
-          fill="rgba(251,191,36,0.5)"
-          filter="url(#heroGlow)"
-        />
-      </g>
-    </svg>
+    <!-- 🎯 本月成长关键词卡片（替换原SVG装饰区） -->
+    <div class="growth-keywords-section">
+      <div class="keywords-card">
+        <div class="keywords-header">
+          <span class="keywords-title">🌟 本月成长关键词</span>
+          <span class="keywords-subtitle">点击了解详细能力指南</span>
+        </div>
+        <div class="keywords-content">
+          <div
+            v-for="(keyword, idx) in monthKeywords"
+            :key="idx"
+            class="keyword-item"
+            @click="handleKeywordClick(keyword)"
+          >
+            <div class="keyword-icon-circle">
+              <span class="keyword-icon">{{ keyword.icon }}</span>
+            </div>
+            <span class="keyword-label">{{ keyword.text }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 顶部导航 - 增强版 -->
     <div class="top-nav">
@@ -1273,6 +1187,125 @@ watch(
   margin: 0 auto;
   padding: 0;
   padding-bottom: 100px;
+}
+
+/* 🎯 本月成长关键词卡片 */
+.growth-keywords-section {
+  padding: 16px 20px 0;
+}
+
+.keywords-card {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #fdf2f8 100%);
+  border-radius: 20px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 20px rgba(103, 126, 234, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.15);
+}
+
+.keywords-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.keywords-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #5b21b6;
+}
+
+.keywords-subtitle {
+  font-size: 12px;
+  color: #8b5cf6;
+  opacity: 0.8;
+}
+
+.keywords-content {
+  display: flex;
+  justify-content: space-around;
+  gap: 12px;
+}
+
+.keyword-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  flex: 1;
+  padding: 8px;
+  border-radius: 16px;
+}
+
+.keyword-item:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.keyword-item:active {
+  transform: scale(0.95);
+}
+
+.keyword-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ffffff 0%, #f3f0ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(103, 126, 234, 0.15),
+    inset 0 -2px 4px rgba(103, 126, 234, 0.05);
+  border: 2px solid rgba(167, 139, 250, 0.2);
+  transition: all 0.3s ease;
+}
+
+.keyword-item:hover .keyword-icon-circle {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(103, 126, 234, 0.25),
+    inset 0 -2px 4px rgba(103, 126, 234, 0.1);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.keyword-icon {
+  font-size: 26px;
+}
+
+.keyword-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6d28d9;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 响应式：移动端 */
+@media (max-width: 480px) {
+  .keywords-card {
+    padding: 16px 16px;
+  }
+
+  .keywords-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+
+  .keyword-icon-circle {
+    width: 50px;
+    height: 50px;
+  }
+
+  .keyword-icon {
+    font-size: 22px;
+  }
+
+  .keyword-label {
+    font-size: 12px;
+  }
 }
 
 /* 顶部导航 - 增强版 */
