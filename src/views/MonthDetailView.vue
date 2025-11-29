@@ -1,23 +1,34 @@
 <template>
   <div class="month-detail-view" v-if="monthData">
-    <!-- 🎯 本月成长关键词卡片（替换原SVG装饰区） -->
+    <!-- 🎯 本月成长关键词卡片（优化版） -->
     <div class="growth-keywords-section">
       <div class="keywords-card">
         <div class="keywords-header">
           <span class="keywords-title">🌟 本月成长关键词</span>
-          <span class="keywords-subtitle">点击了解详细能力指南</span>
+          <span class="keywords-subtitle">点击查看训练方法</span>
         </div>
         <div class="keywords-content">
           <div
             v-for="(keyword, idx) in monthKeywords"
             :key="idx"
             class="keyword-item"
-            @click="handleKeywordClick(keyword)"
+            @click="showTrainingGuide(keyword)"
           >
-            <div class="keyword-icon-circle">
-              <span class="keyword-icon">{{ keyword.icon }}</span>
+            <div
+              class="keyword-icon-circle"
+              :style="{ background: keywordColors[idx % keywordColors.length] }"
+            >
+              <span class="keyword-icon">
+                {{ keyword.lineIcon || keyword.icon }}
+              </span>
             </div>
-            <span class="keyword-label">{{ keyword.text }}</span>
+            <div class="keyword-text-area">
+              <span class="keyword-label">{{ keyword.text }}</span>
+              <span class="keyword-desc">{{ keyword.desc }}</span>
+            </div>
+            <div class="keyword-arrow">
+              <el-icon><ArrowRight /></el-icon>
+            </div>
           </div>
         </div>
       </div>
@@ -646,35 +657,315 @@
                   'milestone-card',
                   { completed: isMilestoneCompleted(milestone.title) },
                 ]"
-                @click="toggleMilestone(milestone.title)"
+                @click="handleMilestoneClick(milestone)"
               >
-                <div class="milestone-check">
-                  <div class="check-circle">
-                    <el-icon v-if="isMilestoneCompleted(milestone.title)">
-                      <Check />
-                    </el-icon>
+                <div class="milestone-header-row">
+                  <div class="milestone-check">
+                    <div class="check-circle">
+                      <el-icon v-if="isMilestoneCompleted(milestone.title)">
+                        <Check />
+                      </el-icon>
+                    </div>
+                  </div>
+                  <div class="milestone-status">
+                    <el-tag
+                      :type="
+                        isMilestoneCompleted(milestone.title)
+                          ? 'success'
+                          : 'info'
+                      "
+                      :effect="
+                        isMilestoneCompleted(milestone.title) ? 'dark' : 'plain'
+                      "
+                      round
+                    >
+                      <el-icon
+                        v-if="isMilestoneCompleted(milestone.title)"
+                        style="margin-right: 4px;"
+                      >
+                        <Check />
+                      </el-icon>
+                      {{
+                        isMilestoneCompleted(milestone.title)
+                          ? '已完成'
+                          : '待完成'
+                      }}
+                    </el-tag>
                   </div>
                 </div>
                 <div class="milestone-content">
                   <h4>{{ milestone.title }}</h4>
                   <p>{{ milestone.description }}</p>
                 </div>
-                <div class="milestone-status">
-                  <el-tag
-                    :type="
-                      isMilestoneCompleted(milestone.title) ? 'success' : 'info'
-                    "
-                    effect="plain"
+                <div class="milestone-actions">
+                  <el-button
+                    v-if="!isMilestoneCompleted(milestone.title)"
+                    type="primary"
+                    size="small"
+                    round
+                    @click.stop="confirmMilestone(milestone)"
                   >
-                    {{
-                      isMilestoneCompleted(milestone.title)
-                        ? '已完成 🎉'
-                        : '待完成'
-                    }}
-                  </el-tag>
+                    <el-icon><Check /></el-icon>
+                    标记完成
+                  </el-button>
+                  <el-button
+                    v-else
+                    size="small"
+                    round
+                    @click.stop="uploadMilestonePhoto(milestone)"
+                  >
+                    <el-icon><Camera /></el-icon>
+                    上传照片
+                  </el-button>
+                  <el-button
+                    v-if="isMilestoneCompleted(milestone.title)"
+                    size="small"
+                    round
+                    text
+                    @click.stop="undoMilestone(milestone)"
+                  >
+                    撤销
+                  </el-button>
                 </div>
               </div>
             </div>
+
+            <!-- 确认完成对话框 -->
+            <el-dialog
+              v-model="milestoneDialogVisible"
+              title="🎉 确认完成里程碑"
+              width="90%"
+              :style="{ maxWidth: '400px' }"
+              center
+            >
+              <div class="milestone-confirm-content" v-if="currentMilestone">
+                <div class="confirm-icon">🏆</div>
+                <h3>{{ currentMilestone.title }}</h3>
+                <p>{{ currentMilestone.description }}</p>
+                <el-divider />
+                <div class="confirm-upload-area">
+                  <p class="upload-hint">记录这个珍贵瞬间（可选）</p>
+                  <el-upload
+                    class="milestone-upload"
+                    action="#"
+                    :auto-upload="false"
+                    :show-file-list="false"
+                    accept="image/*,video/*"
+                    @change="handleMilestoneMediaChange"
+                  >
+                    <el-button type="primary" plain round>
+                      <el-icon><Camera /></el-icon>
+                      上传照片/视频
+                    </el-button>
+                  </el-upload>
+                  <div v-if="milestoneMediaPreview" class="media-preview">
+                    <img :src="milestoneMediaPreview" alt="预览" />
+                    <el-button
+                      circle
+                      size="small"
+                      class="remove-media-btn"
+                      @click="removeMilestoneMedia"
+                    >
+                      <el-icon><Close /></el-icon>
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+              <template #footer>
+                <el-button @click="milestoneDialogVisible = false" round>
+                  取消
+                </el-button>
+                <el-button
+                  type="success"
+                  @click="confirmMilestoneComplete"
+                  round
+                >
+                  <el-icon><Check /></el-icon>
+                  确认完成
+                </el-button>
+              </template>
+            </el-dialog>
+
+            <!-- 训练方法指南对话框 -->
+            <el-dialog
+              v-model="trainingGuideVisible"
+              :title="
+                currentKeyword
+                  ? `📖 ${currentKeyword.text} - 训练指南`
+                  : '训练指南'
+              "
+              width="90%"
+              :style="{ maxWidth: '500px' }"
+            >
+              <div class="training-guide-content" v-if="currentKeyword">
+                <div class="guide-header">
+                  <span class="guide-icon">{{ currentKeyword.icon }}</span>
+                  <div class="guide-title-area">
+                    <h3>{{ currentKeyword.text }}</h3>
+                    <p class="guide-subtitle">{{ currentKeyword.desc }}</p>
+                  </div>
+                </div>
+                <el-divider />
+                <div class="guide-section">
+                  <h4>
+                    <span class="section-emoji">🎯</span>
+                    训练目标
+                  </h4>
+                  <p>{{ currentKeyword.goal }}</p>
+                </div>
+                <div class="guide-section">
+                  <h4>
+                    <span class="section-emoji">📋</span>
+                    训练方法
+                  </h4>
+                  <ul class="method-list">
+                    <li
+                      v-for="(method, idx) in currentKeyword.methods"
+                      :key="idx"
+                    >
+                      <el-icon><CircleCheck /></el-icon>
+                      {{ method }}
+                    </li>
+                  </ul>
+                </div>
+                <div class="guide-section">
+                  <h4>
+                    <span class="section-emoji">⏰</span>
+                    建议频率
+                  </h4>
+                  <el-tag type="success" effect="plain" round>
+                    {{ currentKeyword.frequency }}
+                  </el-tag>
+                </div>
+                <div class="guide-section tips-section">
+                  <h4>
+                    <span class="section-emoji">💡</span>
+                    温馨提示
+                  </h4>
+                  <el-alert
+                    :title="currentKeyword.tips"
+                    type="info"
+                    :closable="false"
+                    show-icon
+                  />
+                </div>
+              </div>
+              <template #footer>
+                <el-button @click="trainingGuideVisible = false" round>
+                  关闭
+                </el-button>
+                <el-button type="primary" @click="goToRelatedContent" round>
+                  查看相关内容
+                  <el-icon class="el-icon--right"><ArrowRight /></el-icon>
+                </el-button>
+              </template>
+            </el-dialog>
+
+            <!-- 🎯 记录今日成长 - 快捷入口（移至里程碑下方） -->
+            <div class="quick-record-section">
+              <div class="quick-record-card">
+                <div class="quick-record-header">
+                  <span class="record-emoji">📝</span>
+                  <div class="record-title-area">
+                    <h4>记录今日成长</h4>
+                    <p>完成里程碑后，快来记录这个珍贵时刻吧！</p>
+                  </div>
+                </div>
+                <div class="quick-record-templates">
+                  <span class="templates-label">快速记录：</span>
+                  <div class="template-tags">
+                    <el-tag
+                      v-for="(tpl, idx) in quickRecordTemplates"
+                      :key="idx"
+                      effect="plain"
+                      round
+                      class="template-tag"
+                      @click="openQuickRecord(tpl)"
+                    >
+                      {{ tpl.icon }} {{ tpl.text }}
+                    </el-tag>
+                  </div>
+                </div>
+                <div class="quick-record-actions">
+                  <el-button type="primary" round @click="goToDiary">
+                    <el-icon><Edit /></el-icon>
+                    打开日记本
+                  </el-button>
+                  <el-button round @click="openQuickRecordDialog">
+                    <el-icon><Plus /></el-icon>
+                    快速记录
+                  </el-button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 快速记录对话框 -->
+            <el-dialog
+              v-model="quickRecordDialogVisible"
+              title="📝 快速记录成长瞬间"
+              width="90%"
+              :style="{ maxWidth: '420px' }"
+            >
+              <div class="quick-record-form">
+                <div class="form-item">
+                  <label>记录类型</label>
+                  <div class="type-selector">
+                    <el-radio-group v-model="quickRecordForm.type">
+                      <el-radio-button label="milestone">
+                        🏆 里程碑
+                      </el-radio-button>
+                      <el-radio-button label="daily">📅 日常</el-radio-button>
+                      <el-radio-button label="first">⭐ 第一次</el-radio-button>
+                    </el-radio-group>
+                  </div>
+                </div>
+                <div class="form-item">
+                  <label>记录内容</label>
+                  <el-input
+                    v-model="quickRecordForm.content"
+                    type="textarea"
+                    :rows="3"
+                    placeholder="记录宝宝今天的成长瞬间..."
+                  />
+                </div>
+                <div class="form-item">
+                  <label>添加照片（可选）</label>
+                  <el-upload
+                    class="quick-record-upload"
+                    action="#"
+                    :auto-upload="false"
+                    :show-file-list="false"
+                    accept="image/*"
+                    @change="handleQuickRecordPhoto"
+                  >
+                    <div v-if="quickRecordForm.photo" class="photo-preview">
+                      <img :src="quickRecordForm.photo" alt="预览" />
+                      <el-button
+                        circle
+                        size="small"
+                        class="remove-photo-btn"
+                        @click.stop="quickRecordForm.photo = null"
+                      >
+                        <el-icon><Close /></el-icon>
+                      </el-button>
+                    </div>
+                    <div v-else class="upload-placeholder">
+                      <el-icon><Camera /></el-icon>
+                      <span>点击上传照片</span>
+                    </div>
+                  </el-upload>
+                </div>
+              </div>
+              <template #footer>
+                <el-button @click="quickRecordDialogVisible = false" round>
+                  取消
+                </el-button>
+                <el-button type="primary" @click="submitQuickRecord" round>
+                  <el-icon><Check /></el-icon>
+                  保存记录
+                </el-button>
+              </template>
+            </el-dialog>
           </div>
         </el-tab-pane>
 
@@ -795,23 +1086,6 @@
       </el-tabs>
     </div>
 
-    <!-- 成长记录入口区域 -->
-    <div class="growth-record-section">
-      <el-card class="record-entry-card">
-        <div class="record-entry-content">
-          <div class="record-icon">📝</div>
-          <div class="record-text">
-            <h3>记录今日成长</h3>
-            <p>每一个第一次都值得铭记，让宝宝的成长足迹永不遗忘</p>
-          </div>
-          <el-button type="primary" round size="large" @click="goToDiary">
-            <el-icon><Edit /></el-icon>
-            开始记录
-          </el-button>
-        </div>
-      </el-card>
-    </div>
-
     <!-- 下月龄预告 -->
     <div
       class="next-month-preview"
@@ -820,32 +1094,89 @@
       <el-card class="preview-card">
         <div class="preview-header">
           <span class="preview-icon">🔮</span>
-          <h3>下月龄预告：{{ nextMonthData.month }}个月</h3>
+          <div class="preview-title-area">
+            <h3>下月龄预告：{{ nextMonthData.month }}个月</h3>
+            <span class="preview-stage">
+              {{ getStageLabel(nextMonthData.month) }}
+            </span>
+          </div>
         </div>
         <p class="preview-summary">{{ nextMonthData.summary }}</p>
-        <div class="preview-milestones">
-          <span class="preview-label">即将解锁的能力：</span>
+
+        <!-- 即将解锁的能力 -->
+        <div class="preview-section">
+          <div class="section-header">
+            <span class="section-icon">🏆</span>
+            <span class="section-title">即将解锁的能力</span>
+          </div>
           <div class="preview-tags">
             <el-tag
               v-for="(m, idx) in nextMonthData.milestones?.slice(0, 3)"
               :key="idx"
-              type="info"
+              type="success"
               effect="plain"
+              round
             >
               {{ m.title }}
             </el-tag>
             <el-tag
-              v-if="nextMonthData.milestones?.length > 3"
+              v-if="(nextMonthData.milestones?.length ?? 0) > 3"
               type="info"
               effect="plain"
+              round
             >
-              +{{ nextMonthData.milestones.length - 3 }}更多
+              +{{ (nextMonthData.milestones?.length ?? 0) - 3 }}更多
             </el-tag>
           </div>
         </div>
-        <el-button text type="primary" @click="navigateMonth(1)">
+
+        <!-- 提前准备建议 -->
+        <div class="preview-section">
+          <div class="section-header">
+            <span class="section-icon">📋</span>
+            <span class="section-title">提前准备建议</span>
+          </div>
+          <div class="preparation-list">
+            <div
+              v-for="(prep, idx) in nextMonthPreparations"
+              :key="idx"
+              class="preparation-item"
+            >
+              <span class="prep-icon">{{ prep.icon }}</span>
+              <span class="prep-text">{{ prep.text }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 训练小游戏推荐 -->
+        <div class="preview-section">
+          <div class="section-header">
+            <span class="section-icon">🎮</span>
+            <span class="section-title">推荐小游戏</span>
+          </div>
+          <div class="games-list">
+            <div
+              v-for="(game, idx) in nextMonthGames"
+              :key="idx"
+              class="game-item"
+            >
+              <span class="game-icon">{{ game.icon }}</span>
+              <div class="game-info">
+                <span class="game-name">{{ game.name }}</span>
+                <span class="game-benefit">{{ game.benefit }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <el-button
+          type="primary"
+          round
+          class="preview-action-btn"
+          @click="navigateMonth(1)"
+        >
           查看{{ nextMonthData.month }}月龄详情
-          <el-icon><ArrowRight /></el-icon>
+          <el-icon class="el-icon--right"><ArrowRight /></el-icon>
         </el-button>
       </el-card>
     </div>
@@ -912,8 +1243,11 @@ import {
   CircleCheck,
   Edit,
   HomeFilled,
+  Camera,
+  Close,
+  Plus,
 } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { BabyMonthData, Milestone } from '@/types/baby'
 
 const route = useRoute()
@@ -986,79 +1320,663 @@ const milestoneProgressOffset = computed(() => {
   return circumference * (1 - milestoneProgress.value / 100)
 })
 
-// 🎯 新增：本月成长关键词
-const monthKeywords = computed(() => {
-  const keywordsMap: Record<
-    number,
-    Array<{ icon: string; text: string; tab: string }>
-  > = {
+// 🎯 关键词卡片柔和渐变色
+const keywordColors = [
+  'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)', // 柔蓝
+  'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', // 柔粉
+  'linear-gradient(135deg, #ecfccb 0%, #d9f99d 100%)', // 柔绿
+]
+
+// 🎯 里程碑确认对话框状态
+const milestoneDialogVisible = ref(false)
+const currentMilestone = ref<{ title: string; description: string } | null>(
+  null,
+)
+const milestoneMediaPreview = ref<string | null>(null)
+const milestoneMediaFile = ref<File | null>(null)
+
+// 🎯 训练指南对话框状态
+const trainingGuideVisible = ref(false)
+const currentKeyword = ref<{
+  icon: string
+  lineIcon: string
+  text: string
+  desc: string
+  tab: string
+  goal: string
+  methods: string[]
+  frequency: string
+  tips: string
+} | null>(null)
+
+// 🎯 增强版：本月成长关键词（含描述和训练方法）
+interface KeywordData {
+  icon: string
+  lineIcon: string
+  text: string
+  desc: string
+  tab: string
+  goal: string
+  methods: string[]
+  frequency: string
+  tips: string
+}
+
+const monthKeywords = computed((): KeywordData[] => {
+  const keywordsMap: Record<number, KeywordData[]> = {
     0: [
-      { icon: '👀', text: '视觉追踪', tab: 'development' },
-      { icon: '🤱', text: '亲密依恋', tab: 'care' },
-      { icon: '😴', text: '睡眠规律', tab: 'care' },
+      {
+        icon: '👀',
+        lineIcon: '◎',
+        text: '视觉追踪',
+        desc: '促进视觉神经发育',
+        tab: 'development',
+        goal: '帮助宝宝学会用眼睛跟踪移动物体',
+        methods: [
+          '距离宝宝20-30cm展示黑白卡片',
+          '缓慢移动玩具让宝宝目光跟随',
+          '用表情变化吸引宝宝注意',
+        ],
+        frequency: '每天3-5次，每次2-3分钟',
+        tips: '新生儿只能看清20-30cm内的物体，不要距离太远',
+      },
+      {
+        icon: '🤱',
+        lineIcon: '♡',
+        text: '亲密依恋',
+        desc: '建立安全感基础',
+        tab: 'care',
+        goal: '通过肌肤接触建立亲子依恋关系',
+        methods: [
+          '多进行肌肤接触（袋鼠式护理）',
+          '喂奶时保持眼神交流',
+          '轻声和宝宝说话唱歌',
+        ],
+        frequency: '全天候，抓住每次互动机会',
+        tips: '安全的依恋关系是宝宝心理健康发展的基石',
+      },
+      {
+        icon: '😴',
+        lineIcon: '☽',
+        text: '睡眠规律',
+        desc: '帮助建立昼夜节律',
+        tab: 'care',
+        goal: '逐步建立白天黑夜的睡眠规律',
+        methods: [
+          '白天保持适度光线和声音',
+          '夜间降低光线和噪音',
+          '建立简单的睡前仪式',
+        ],
+        frequency: '每天坚持规律作息',
+        tips: '新生儿每天需要16-18小时睡眠，不用急于建立固定时间表',
+      },
     ],
     1: [
-      { icon: '😊', text: '社交微笑', tab: 'development' },
-      { icon: '👂', text: '声音定位', tab: 'development' },
-      { icon: '💪', text: '抬头训练', tab: 'milestones' },
+      {
+        icon: '😊',
+        lineIcon: '☺',
+        text: '社交微笑',
+        desc: '情感交流萌芽',
+        tab: 'development',
+        goal: '鼓励宝宝对人脸产生微笑反应',
+        methods: [
+          '经常对宝宝微笑',
+          '用夸张的表情逗宝宝',
+          '模仿宝宝的表情和声音',
+        ],
+        frequency: '每次互动都可以练习',
+        tips: '社交微笑是宝宝情感发展的重要里程碑',
+      },
+      {
+        icon: '👂',
+        lineIcon: '♪',
+        text: '声音定位',
+        desc: '听觉发展训练',
+        tab: 'development',
+        goal: '帮助宝宝学会转头寻找声源',
+        methods: [
+          '在不同方向呼唤宝宝名字',
+          '用摇铃在宝宝两侧轻轻摇动',
+          '播放轻柔音乐观察反应',
+        ],
+        frequency: '每天3-4次，每次1-2分钟',
+        tips: '声音不要太大，温柔的声音更能吸引宝宝',
+      },
+      {
+        icon: '💪',
+        lineIcon: '↑',
+        text: '抬头训练',
+        desc: '促进大运动发展',
+        tab: 'milestones',
+        goal: '锻炼颈部和背部肌肉力量',
+        methods: [
+          '趴着时在前方放有趣玩具',
+          '用声音吸引宝宝抬头看',
+          '每天进行俯卧时间（Tummy Time）',
+        ],
+        frequency: '每天3-5次，每次3-5分钟',
+        tips: '俯卧时大人要全程看护，宝宝累了就休息',
+      },
     ],
     2: [
-      { icon: '🗣️', text: '咿呀学语', tab: 'development' },
-      { icon: '👐', text: '手眼协调', tab: 'milestones' },
-      { icon: '😄', text: '情绪表达', tab: 'development' },
+      {
+        icon: '🗣️',
+        lineIcon: '◯',
+        text: '咿呀学语',
+        desc: '语言发展启蒙',
+        tab: 'development',
+        goal: '鼓励宝宝发出更多声音',
+        methods: [
+          '模仿宝宝的声音并回应',
+          '用缓慢清晰的语言和宝宝说话',
+          '多唱儿歌和念童谣',
+        ],
+        frequency: '全天候语言互动',
+        tips: '宝宝的每一个声音都值得回应，这是语言发展的基础',
+      },
+      {
+        icon: '👐',
+        lineIcon: '✋',
+        text: '手眼协调',
+        desc: '精细动作启蒙',
+        tab: 'milestones',
+        goal: '帮助宝宝学会看着物体伸手触碰',
+        methods: [
+          '悬挂彩色玩具让宝宝触碰',
+          '把玩具放在宝宝手能够到的地方',
+          '轻握宝宝的手引导触摸',
+        ],
+        frequency: '每天多次，随机练习',
+        tips: '这个阶段宝宝的抓握是无意识的反射动作',
+      },
+      {
+        icon: '😄',
+        lineIcon: '♡',
+        text: '情绪表达',
+        desc: '情感认知发展',
+        tab: 'development',
+        goal: '帮助宝宝学会表达不同情绪',
+        methods: [
+          '观察并回应宝宝的情绪表达',
+          '用语言描述宝宝的感受',
+          '通过游戏引发宝宝笑声',
+        ],
+        frequency: '日常互动中持续进行',
+        tips: '及时回应宝宝的情绪，能帮助建立安全感',
+      },
     ],
     3: [
-      { icon: '🎯', text: '抓握能力', tab: 'milestones' },
-      { icon: '🔄', text: '翻身练习', tab: 'milestones' },
-      { icon: '📅', text: '作息规律', tab: 'care' },
+      {
+        icon: '🎯',
+        lineIcon: '◎',
+        text: '抓握能力',
+        desc: '精细动作发展',
+        tab: 'milestones',
+        goal: '帮助宝宝学会有意识地抓握物品',
+        methods: [
+          '把摇铃放入宝宝手中',
+          '用不同质地的物品让宝宝触摸',
+          '玩拉扯布书的游戏',
+        ],
+        frequency: '每天5-6次，每次几分钟',
+        tips: '选择适合宝宝手掌大小的玩具，方便抓握',
+      },
+      {
+        icon: '🔄',
+        lineIcon: '⟳',
+        text: '翻身练习',
+        desc: '促进大运动发展',
+        tab: 'milestones',
+        goal: '帮助宝宝学会从仰卧翻到俯卧',
+        methods: [
+          '侧卧时用玩具引导翻身方向',
+          '轻轻帮助宝宝转动髋部',
+          '趴着时用玩具吸引抬头转向',
+        ],
+        frequency: '每天3-4次，每次5分钟',
+        tips: '翻身时注意安全，床上不要有软枕头或毯子',
+      },
+      {
+        icon: '📅',
+        lineIcon: '☀',
+        text: '作息规律',
+        desc: '建立稳定生物钟',
+        tab: 'care',
+        goal: '建立相对固定的吃-玩-睡作息',
+        methods: [
+          '每天在固定时间进行活动',
+          '建立睡前仪式（洗澡、抚触、喂奶）',
+          '区分白天和夜间的环境',
+        ],
+        frequency: '每天坚持',
+        tips: '规律作息能帮助宝宝更好地入睡和减少哭闹',
+      },
     ],
     4: [
-      { icon: '🎭', text: '情绪识别', tab: 'development' },
-      { icon: '🤝', text: '社交互动', tab: 'development' },
-      { icon: '🎮', text: '游戏探索', tab: 'care' },
+      {
+        icon: '🎭',
+        lineIcon: '☺',
+        text: '情绪识别',
+        desc: '社会认知启蒙',
+        tab: 'development',
+        goal: '帮助宝宝识别不同的面部表情',
+        methods: [
+          '做夸张的表情让宝宝观察',
+          '看绘本时指出人物的表情',
+          '用语言描述你的情绪',
+        ],
+        frequency: '日常互动中自然进行',
+        tips: '宝宝通过观察你的表情来学习情绪认知',
+      },
+      {
+        icon: '🤝',
+        lineIcon: '♡',
+        text: '社交互动',
+        desc: '增强社交意识',
+        tab: 'development',
+        goal: '鼓励宝宝与家人和陌生人互动',
+        methods: [
+          '经常带宝宝参与家庭活动',
+          '让宝宝和其他小朋友接触',
+          '玩躲猫猫等互动游戏',
+        ],
+        frequency: '每天都有社交互动时间',
+        tips: '4个月的宝宝开始能区分熟悉和陌生的面孔',
+      },
+      {
+        icon: '🎮',
+        lineIcon: '★',
+        text: '游戏探索',
+        desc: '认知能力提升',
+        tab: 'care',
+        goal: '通过游戏促进多方面发展',
+        methods: [
+          '玩不同材质的玩具',
+          '躲猫猫游戏培养物体恒存概念',
+          '唱歌配合简单的肢体动作',
+        ],
+        frequency: '每天30分钟以上的游戏时间',
+        tips: '游戏是宝宝学习的最佳方式',
+      },
     ],
     5: [
-      { icon: '🦷', text: '出牙准备', tab: 'care' },
-      { icon: '🍎', text: '辅食预备', tab: 'nutrition' },
-      { icon: '🧸', text: '物品探索', tab: 'milestones' },
+      {
+        icon: '🦷',
+        lineIcon: '◇',
+        text: '出牙准备',
+        desc: '口腔护理与舒缓',
+        tab: 'care',
+        goal: '帮助宝宝度过出牙不适期',
+        methods: [
+          '提供安全的磨牙玩具',
+          '用干净纱布轻轻按摩牙龈',
+          '冷藏（非冷冻）的牙胶可缓解不适',
+        ],
+        frequency: '根据宝宝需要随时进行',
+        tips: '出牙期宝宝可能会烦躁、流口水增多，是正常现象',
+      },
+      {
+        icon: '🍎',
+        lineIcon: '○',
+        text: '辅食预备',
+        desc: '观察添加信号',
+        tab: 'nutrition',
+        goal: '判断宝宝是否准备好添加辅食',
+        methods: [
+          '观察宝宝对大人吃饭的兴趣',
+          '检查宝宝头部控制能力',
+          '观察挺舌反射是否消失',
+        ],
+        frequency: '日常观察',
+        tips: '建议满6个月后开始添加辅食，不要过早',
+      },
+      {
+        icon: '🧸',
+        lineIcon: '☆',
+        text: '物品探索',
+        desc: '感官认知发展',
+        tab: 'milestones',
+        goal: '鼓励宝宝用多种感官探索物品',
+        methods: [
+          '提供不同质地的安全玩具',
+          '让宝宝用嘴巴探索（保证清洁）',
+          '引导宝宝用双手倒换物品',
+        ],
+        frequency: '每天有自由探索时间',
+        tips: '用嘴巴探索是这个阶段宝宝认识世界的重要方式',
+      },
     ],
     6: [
-      { icon: '🥣', text: '辅食添加', tab: 'nutrition' },
-      { icon: '🪑', text: '独坐练习', tab: 'milestones' },
-      { icon: '👋', text: '再见挥手', tab: 'development' },
+      {
+        icon: '🥣',
+        lineIcon: '○',
+        text: '辅食添加',
+        desc: '科学喂养指导',
+        tab: 'nutrition',
+        goal: '安全科学地开始辅食添加',
+        methods: [
+          '从含铁米粉开始',
+          '每次只添加一种新食物',
+          '观察3-5天确认无过敏反应',
+        ],
+        frequency: '每天1-2次辅食',
+        tips: '辅食添加遵循由少到多、由稀到稠、由单一到多样的原则',
+      },
+      {
+        icon: '🪑',
+        lineIcon: '△',
+        text: '独坐练习',
+        desc: '大运动发展',
+        tab: 'milestones',
+        goal: '帮助宝宝学会独立坐稳',
+        methods: [
+          '用枕头在宝宝两侧支撑',
+          '在宝宝前方放玩具吸引注意',
+          '玩拉坐起的游戏锻炼核心',
+        ],
+        frequency: '每天多次，每次几分钟',
+        tips: '不要让宝宝坐太久，核心力量需要逐步发展',
+      },
+      {
+        icon: '👋',
+        lineIcon: '♡',
+        text: '再见挥手',
+        desc: '社交模仿能力',
+        tab: 'development',
+        goal: '教宝宝学会挥手再见',
+        methods: [
+          '每次说再见时示范挥手',
+          '帮宝宝拿起手做挥手动作',
+          '用鼓励的语气表扬宝宝的模仿',
+        ],
+        frequency: '每次分别时都练习',
+        tips: '宝宝可能需要几周才能学会，耐心是关键',
+      },
     ],
     7: [
-      { icon: '🧗', text: '爬行萌芽', tab: 'milestones' },
-      { icon: '📦', text: '物体恒存', tab: 'development' },
-      { icon: '🗣️', text: '叫名反应', tab: 'development' },
+      {
+        icon: '🧗',
+        lineIcon: '⟶',
+        text: '爬行萌芽',
+        desc: '大运动关键期',
+        tab: 'milestones',
+        goal: '帮助宝宝学会爬行',
+        methods: [
+          '提供足够的地面活动空间',
+          '用玩具在前方引诱宝宝向前',
+          '轻轻推宝宝的脚底给支撑点',
+        ],
+        frequency: '每天30分钟以上地面时间',
+        tips: '爬行对大脑发育非常重要，不要急于让宝宝学走',
+      },
+      {
+        icon: '📦',
+        lineIcon: '□',
+        text: '物体恒存',
+        desc: '认知能力飞跃',
+        tab: 'development',
+        goal: '帮助宝宝理解物体不会消失',
+        methods: [
+          '玩躲猫猫游戏',
+          '把玩具藏在布下让宝宝找',
+          '玩"不见了-找到了"的游戏',
+        ],
+        frequency: '每天玩几次躲猫猫',
+        tips: '物体恒存概念的建立是认知发展的重要里程碑',
+      },
+      {
+        icon: '🗣️',
+        lineIcon: '♪',
+        text: '叫名反应',
+        desc: '语言理解能力',
+        tab: 'development',
+        goal: '让宝宝学会对自己名字有反应',
+        methods: [
+          '经常叫宝宝的名字',
+          '叫名字时配合眼神和微笑',
+          '宝宝有反应时立即表扬',
+        ],
+        frequency: '日常互动中频繁使用',
+        tips: '如果宝宝对名字没有反应，可以咨询医生',
+      },
     ],
     8: [
-      { icon: '🐛', text: '爬行探索', tab: 'milestones' },
-      { icon: '👆', text: '精细动作', tab: 'development' },
-      { icon: '😰', text: '分离焦虑', tab: 'development' },
+      {
+        icon: '🐛',
+        lineIcon: '⟶',
+        text: '爬行探索',
+        desc: '空间认知发展',
+        tab: 'milestones',
+        goal: '鼓励宝宝自由爬行探索环境',
+        methods: [
+          '创建安全的爬行区域',
+          '设置小障碍物增加挑战',
+          '和宝宝一起在地上玩',
+        ],
+        frequency: '每天大量地面活动时间',
+        tips: '做好家居安全防护，让宝宝安全探索',
+      },
+      {
+        icon: '👆',
+        lineIcon: '✋',
+        text: '精细动作',
+        desc: '手指灵活性',
+        tab: 'development',
+        goal: '锻炼宝宝的精细动作能力',
+        methods: [
+          '玩捏取小物品的游戏（注意安全）',
+          '撕纸游戏锻炼手指力量',
+          '用勺子舀东西的游戏',
+        ],
+        frequency: '每天在安全监护下练习',
+        tips: '注意小物品的安全，防止误吞',
+      },
+      {
+        icon: '😰',
+        lineIcon: '♡',
+        text: '分离焦虑',
+        desc: '情感依恋正常表现',
+        tab: 'development',
+        goal: '帮助宝宝度过分离焦虑期',
+        methods: [
+          '离开前告诉宝宝并保持短暂',
+          '建立固定的告别仪式',
+          '不要偷偷离开',
+        ],
+        frequency: '每次分离时坚持',
+        tips: '分离焦虑是依恋发展的正常表现，通常1岁后逐渐减轻',
+      },
     ],
     9: [
-      { icon: '🧍', text: '扶站练习', tab: 'milestones' },
-      { icon: '👏', text: '拍手游戏', tab: 'development' },
-      { icon: '🔤', text: '语言理解', tab: 'development' },
+      {
+        icon: '🧍',
+        lineIcon: '↑',
+        text: '扶站练习',
+        desc: '为行走做准备',
+        tab: 'milestones',
+        goal: '帮助宝宝学会扶物站立',
+        methods: [
+          '提供稳固的扶站支撑物',
+          '在宝宝旁边放喜欢的玩具',
+          '扶着宝宝练习腿部力量',
+        ],
+        frequency: '每天多次，每次几分钟',
+        tips: '确保扶站的家具稳固，防止倾倒',
+      },
+      {
+        icon: '👏',
+        lineIcon: '★',
+        text: '拍手游戏',
+        desc: '模仿能力发展',
+        tab: 'development',
+        goal: '教宝宝学会拍手等简单动作',
+        methods: [
+          '唱"拍拍手"儿歌配合动作',
+          '抓着宝宝的手一起拍',
+          '用鼓励的方式表扬模仿行为',
+        ],
+        frequency: '每天玩几次',
+        tips: '拍手是重要的模仿能力里程碑',
+      },
+      {
+        icon: '🔤',
+        lineIcon: '◯',
+        text: '语言理解',
+        desc: '理解简单指令',
+        tab: 'development',
+        goal: '帮助宝宝理解简单的语言指令',
+        methods: [
+          '说"给妈妈"配合手势',
+          '问"XXX在哪里"让宝宝指',
+          '说"不可以"时配合表情',
+        ],
+        frequency: '日常对话中持续进行',
+        tips: '宝宝理解的比能说的多很多',
+      },
     ],
     10: [
-      { icon: '🚶', text: '学步准备', tab: 'milestones' },
-      { icon: '🎯', text: '精准抓取', tab: 'development' },
-      { icon: '📚', text: '绘本互动', tab: 'care' },
+      {
+        icon: '🚶',
+        lineIcon: '⟶',
+        text: '学步准备',
+        desc: '向独立行走过渡',
+        tab: 'milestones',
+        goal: '帮助宝宝为独立行走做准备',
+        methods: [
+          '扶着宝宝练习迈步',
+          '提供稳固的学步推车',
+          '鼓励宝宝沿家具移动',
+        ],
+        frequency: '每天练习，不强求',
+        tips: '不建议使用传统学步车，可能影响腿部发育',
+      },
+      {
+        icon: '🎯',
+        lineIcon: '✋',
+        text: '精准抓取',
+        desc: '精细动作精进',
+        tab: 'development',
+        goal: '锻炼拇指和食指的捏取能力',
+        methods: [
+          '练习捏取泡芙等小食物',
+          '玩套圈和简单的配对游戏',
+          '翻书页的精细动作练习',
+        ],
+        frequency: '每天在进食时自然练习',
+        tips: '钳形抓握是精细动作发展的重要标志',
+      },
+      {
+        icon: '📚',
+        lineIcon: '□',
+        text: '绘本互动',
+        desc: '早期阅读启蒙',
+        tab: 'care',
+        goal: '培养宝宝对书籍的兴趣',
+        methods: [
+          '每天固定时间亲子阅读',
+          '让宝宝自己翻书页',
+          '用夸张的语气讲故事',
+        ],
+        frequency: '每天15-20分钟',
+        tips: '选择布书或硬纸板书，耐撕耐咬',
+      },
     ],
     11: [
-      { icon: '👣', text: '独立迈步', tab: 'milestones' },
-      { icon: '🗣️', text: '叠词表达', tab: 'development' },
-      { icon: '🧩', text: '因果认知', tab: 'development' },
+      {
+        icon: '👣',
+        lineIcon: '⟶',
+        text: '独立迈步',
+        desc: '行走能力发展',
+        tab: 'milestones',
+        goal: '鼓励宝宝尝试独立迈出第一步',
+        methods: [
+          '在近距离张开双臂鼓励宝宝走来',
+          '让宝宝在两个大人之间走',
+          '提供安全的练习环境',
+        ],
+        frequency: '每天多次鼓励尝试',
+        tips: '每个宝宝学走路的时间不同，不要和别人比较',
+      },
+      {
+        icon: '🗣️',
+        lineIcon: '♪',
+        text: '叠词表达',
+        desc: '语言产出萌芽',
+        tab: 'development',
+        goal: '鼓励宝宝说出"爸爸""妈妈"等叠词',
+        methods: [
+          '反复重复简单的叠词',
+          '宝宝发出类似音时积极回应',
+          '指物命名，多次重复',
+        ],
+        frequency: '全天候语言互动',
+        tips: '语言发展个体差异很大，不必过于焦虑',
+      },
+      {
+        icon: '🧩',
+        lineIcon: '○',
+        text: '因果认知',
+        desc: '逻辑思维启蒙',
+        tab: 'development',
+        goal: '帮助宝宝理解因果关系',
+        methods: [
+          '玩按键发声的玩具',
+          '示范开关灯的因果关系',
+          '玩投球入桶的游戏',
+        ],
+        frequency: '在游戏中自然进行',
+        tips: '因果认知是逻辑思维发展的基础',
+      },
     ],
     12: [
-      { icon: '🎂', text: '周岁里程', tab: 'milestones' },
-      { icon: '🚶', text: '独立行走', tab: 'milestones' },
-      { icon: '💬', text: '简单词汇', tab: 'development' },
+      {
+        icon: '🎂',
+        lineIcon: '★',
+        text: '周岁里程',
+        desc: '成长阶段总结',
+        tab: 'milestones',
+        goal: '回顾宝宝一岁的成长历程',
+        methods: [
+          '拍摄周岁纪念照',
+          '记录宝宝会的所有技能',
+          '制作成长相册或视频',
+        ],
+        frequency: '周岁前后进行',
+        tips: '这是一个重要的成长节点，记得好好庆祝',
+      },
+      {
+        icon: '🚶',
+        lineIcon: '⟶',
+        text: '独立行走',
+        desc: '大运动里程碑',
+        tab: 'milestones',
+        goal: '巩固宝宝的独立行走能力',
+        methods: [
+          '提供安全的行走环境',
+          '牵着宝宝去户外探索',
+          '鼓励宝宝走到想去的地方',
+        ],
+        frequency: '每天大量行走练习',
+        tips: '刚学会走路时摔跤是正常的，做好防护',
+      },
+      {
+        icon: '💬',
+        lineIcon: '◯',
+        text: '简单词汇',
+        desc: '语言表达发展',
+        tab: 'development',
+        goal: '鼓励宝宝说出更多有意义的词汇',
+        methods: [
+          '坚持指物命名',
+          '回应宝宝的任何语言尝试',
+          '读绘本时让宝宝指认',
+        ],
+        frequency: '全天候语言刺激',
+        tips: '1岁宝宝通常能说1-3个有意义的词',
+      },
     ],
   }
-  return keywordsMap[monthData.value?.month || 0] || keywordsMap[0]
+  return keywordsMap[monthData.value?.month ?? 0] ?? keywordsMap[0] ?? []
 })
 
 // 🎯 新增：个性化成长小贴士
@@ -1089,7 +2007,134 @@ const currentGrowthTip = computed(() => {
   return tips[Math.floor(Math.random() * tips.length)] ?? '宝宝每天都在成长'
 })
 
-// 处理关键词点击
+// 🎯 显示训练方法指南对话框
+const showTrainingGuide = (keyword: KeywordData) => {
+  currentKeyword.value = keyword
+  trainingGuideVisible.value = true
+}
+
+// 🎯 跳转到相关内容
+const goToRelatedContent = () => {
+  if (currentKeyword.value) {
+    activeTab.value = currentKeyword.value.tab
+    trainingGuideVisible.value = false
+    ElMessage({
+      message: `已跳转到"${currentKeyword.value.text}"相关内容`,
+      type: 'success',
+      duration: 1500,
+    })
+  }
+}
+
+// 🎯 里程碑卡片点击处理
+const handleMilestoneClick = (milestone: {
+  title: string
+  description: string
+}) => {
+  if (!isMilestoneCompleted(milestone.title)) {
+    confirmMilestone(milestone)
+  }
+}
+
+// 🎯 打开里程碑确认对话框
+const confirmMilestone = (milestone: {
+  title: string
+  description: string
+}) => {
+  currentMilestone.value = milestone
+  milestoneMediaPreview.value = null
+  milestoneMediaFile.value = null
+  milestoneDialogVisible.value = true
+}
+
+// 🎯 处理里程碑媒体上传
+const handleMilestoneMediaChange = (uploadFile: { raw: File }) => {
+  const file = uploadFile.raw
+  if (file) {
+    milestoneMediaFile.value = file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      milestoneMediaPreview.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// 🎯 移除已选媒体
+const removeMilestoneMedia = () => {
+  milestoneMediaPreview.value = null
+  milestoneMediaFile.value = null
+}
+
+// 🎯 确认完成里程碑
+const confirmMilestoneComplete = () => {
+  if (currentMilestone.value) {
+    babyStore.toggleMilestone(currentMilestone.value.title)
+    milestoneDialogVisible.value = false
+
+    // 显示庆祝效果
+    ElMessage({
+      message: `🎉 太棒了！"${currentMilestone.value.title}"已完成！`,
+      type: 'success',
+      duration: 3000,
+    })
+
+    // 如果有媒体文件，可以在这里处理上传逻辑
+    if (milestoneMediaFile.value) {
+      ElMessage({
+        message: '📷 珍贵瞬间已保存！',
+        type: 'info',
+        duration: 2000,
+      })
+    }
+  }
+}
+
+// 🎯 撤销里程碑完成状态
+const undoMilestone = (milestone: { title: string; description: string }) => {
+  ElMessageBox.confirm(
+    `确定要撤销"${milestone.title}"的完成状态吗？`,
+    '撤销确认',
+    {
+      confirmButtonText: '确定撤销',
+      cancelButtonText: '取消',
+      type: 'warning',
+    },
+  )
+    .then(() => {
+      babyStore.toggleMilestone(milestone.title)
+      ElMessage({
+        message: '已撤销完成状态',
+        type: 'info',
+      })
+    })
+    .catch(() => {})
+}
+
+// 🎯 上传里程碑照片
+const uploadMilestonePhoto = (milestone: {
+  title: string
+  description: string
+}) => {
+  currentMilestone.value = milestone
+  // 触发文件选择
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*,video/*'
+  input.onchange = (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (file) {
+      // 这里可以处理文件上传逻辑
+      ElMessage({
+        message: `📷 已为"${milestone.title}"添加照片记录！`,
+        type: 'success',
+      })
+    }
+  }
+  input.click()
+}
+
+// 处理关键词点击（保留兼容）
 const handleKeywordClick = (keyword: {
   icon: string
   text: string
@@ -1164,6 +2209,245 @@ const goToDiary = () => {
   router.push('/diary')
 }
 
+// 🎯 快速记录相关状态和数据
+const quickRecordDialogVisible = ref(false)
+const quickRecordForm = ref({
+  type: 'milestone' as 'milestone' | 'daily' | 'first',
+  content: '',
+  photo: null as string | null,
+})
+
+// 快速记录模板（根据当前月龄动态生成）
+const quickRecordTemplates = computed(() => {
+  const templatesMap: Record<number, Array<{ icon: string; text: string }>> = {
+    0: [
+      { icon: '👀', text: '会追视物体' },
+      { icon: '😴', text: '睡整觉了' },
+      { icon: '🍼', text: '喝完一顿奶' },
+    ],
+    1: [
+      { icon: '😊', text: '社交微笑' },
+      { icon: '💪', text: '能抬头了' },
+      { icon: '👂', text: '对声音有反应' },
+    ],
+    2: [
+      { icon: '🗣️', text: '咿呀发声' },
+      { icon: '✋', text: '能握住东西' },
+      { icon: '😄', text: '笑出声了' },
+    ],
+    3: [
+      { icon: '🔄', text: '第一次翻身' },
+      { icon: '🎯', text: '能抓玩具' },
+      { icon: '📅', text: '作息规律了' },
+    ],
+    4: [
+      { icon: '🤝', text: '认出家人' },
+      { icon: '🎮', text: '喜欢玩游戏' },
+      { icon: '😆', text: '咯咯笑' },
+    ],
+    5: [
+      { icon: '🦷', text: '长第一颗牙' },
+      { icon: '🧸', text: '喜欢啃玩具' },
+      { icon: '🎵', text: '对音乐有反应' },
+    ],
+    6: [
+      { icon: '🥣', text: '第一口辅食' },
+      { icon: '🪑', text: '能独坐了' },
+      { icon: '👋', text: '会挥手再见' },
+    ],
+    7: [
+      { icon: '🧗', text: '开始爬行' },
+      { icon: '📦', text: '会找藏起的玩具' },
+      { icon: '🗣️', text: '对名字有反应' },
+    ],
+    8: [
+      { icon: '🐛', text: '爬得很快' },
+      { icon: '👆', text: '会用手指捏' },
+      { icon: '🤗', text: '黏人了' },
+    ],
+    9: [
+      { icon: '🧍', text: '能扶站' },
+      { icon: '👏', text: '会拍手' },
+      { icon: '🔤', text: '听懂简单指令' },
+    ],
+    10: [
+      { icon: '🚶', text: '扶走几步' },
+      { icon: '🎯', text: '能精确抓取' },
+      { icon: '📚', text: '喜欢翻书' },
+    ],
+    11: [
+      { icon: '👣', text: '独立迈步' },
+      { icon: '🗣️', text: '会叫爸爸妈妈' },
+      { icon: '🧩', text: '会简单配对' },
+    ],
+    12: [
+      { icon: '🚶', text: '独立行走' },
+      { icon: '💬', text: '说出有意义的词' },
+      { icon: '🎂', text: '周岁快乐' },
+    ],
+  }
+  return templatesMap[monthData.value?.month ?? 0] ?? templatesMap[0] ?? []
+})
+
+// 下月龄准备建议
+const nextMonthPreparations = computed(() => {
+  const prepMap: Record<number, Array<{ icon: string; text: string }>> = {
+    1: [
+      { icon: '🎨', text: '准备黑白卡片刺激视觉发育' },
+      { icon: '🔔', text: '准备摇铃等声音玩具' },
+    ],
+    2: [
+      { icon: '🪞', text: '准备安全镜子让宝宝认识自己' },
+      { icon: '📖', text: '准备高对比度布书' },
+    ],
+    3: [
+      { icon: '🧸', text: '准备易抓握的软玩具' },
+      { icon: '🎵', text: '准备音乐盒或儿歌播放器' },
+    ],
+    4: [
+      { icon: '🎮', text: '准备互动游戏道具' },
+      { icon: '🪑', text: '准备婴儿躺椅支持半坐' },
+    ],
+    5: [
+      { icon: '🦷', text: '准备安全的磨牙玩具' },
+      { icon: '🥣', text: '了解辅食添加知识' },
+    ],
+    6: [
+      { icon: '🥄', text: '准备婴儿餐具和辅食工具' },
+      { icon: '🪑', text: '准备婴儿餐椅' },
+    ],
+    7: [
+      { icon: '🛡️', text: '做好家居爬行安全防护' },
+      { icon: '🧩', text: '准备简单的认知玩具' },
+    ],
+    8: [
+      { icon: '🚧', text: '安装安全门栏' },
+      { icon: '👆', text: '准备精细动作训练玩具' },
+    ],
+    9: [
+      { icon: '🧍', text: '准备稳固的扶站家具' },
+      { icon: '📚', text: '准备互动绘本' },
+    ],
+    10: [
+      { icon: '👟', text: '准备学步鞋（室内软底）' },
+      { icon: '🎯', text: '准备套圈等配对玩具' },
+    ],
+    11: [
+      { icon: '🚶', text: '创建安全的学步空间' },
+      { icon: '🗣️', text: '多进行语言互动' },
+    ],
+    12: [
+      { icon: '🎂', text: '准备周岁生日庆祝' },
+      { icon: '📸', text: '预约周岁纪念照' },
+    ],
+  }
+  const nextMonth = (monthData.value?.month ?? 0) + 1
+  return prepMap[nextMonth] ?? []
+})
+
+// 下月龄推荐小游戏
+const nextMonthGames = computed(() => {
+  const gamesMap: Record<
+    number,
+    Array<{ icon: string; name: string; benefit: string }>
+  > = {
+    1: [
+      { icon: '👀', name: '追视游戏', benefit: '促进视觉发育' },
+      { icon: '🤱', name: '肌肤接触', benefit: '建立安全依恋' },
+    ],
+    2: [
+      { icon: '😊', name: '表情模仿', benefit: '发展社交能力' },
+      { icon: '🎵', name: '音乐互动', benefit: '刺激听觉发展' },
+    ],
+    3: [
+      { icon: '🔄', name: '翻身辅助', benefit: '锻炼核心力量' },
+      { icon: '✋', name: '抓握练习', benefit: '发展精细动作' },
+    ],
+    4: [
+      { icon: '🙈', name: '躲猫猫', benefit: '建立物体恒存概念' },
+      { icon: '🎤', name: '模仿发声', benefit: '促进语言发展' },
+    ],
+    5: [
+      { icon: '🧸', name: '物品探索', benefit: '感官认知发展' },
+      { icon: '🪞', name: '镜子游戏', benefit: '自我认知萌芽' },
+    ],
+    6: [
+      { icon: '🥄', name: '辅食探索', benefit: '培养自主进食' },
+      { icon: '👋', name: '再见挥手', benefit: '社交模仿能力' },
+    ],
+    7: [
+      { icon: '🧗', name: '爬行追逐', benefit: '大运动发展' },
+      { icon: '📦', name: '找玩具', benefit: '认知能力提升' },
+    ],
+    8: [
+      { icon: '🎯', name: '投球入桶', benefit: '手眼协调训练' },
+      { icon: '📚', name: '翻页游戏', benefit: '精细动作练习' },
+    ],
+    9: [
+      { icon: '👏', name: '拍手歌', benefit: '模仿能力发展' },
+      { icon: '🧱', name: '叠叠乐', benefit: '空间认知启蒙' },
+    ],
+    10: [
+      { icon: '🚶', name: '扶走练习', benefit: '为独立行走准备' },
+      { icon: '🎨', name: '涂鸦游戏', benefit: '创造力启蒙' },
+    ],
+    11: [
+      { icon: '👣', name: '迈步鼓励', benefit: '行走能力发展' },
+      { icon: '🗣️', name: '词汇指认', benefit: '语言理解提升' },
+    ],
+    12: [
+      { icon: '🎂', name: '周岁派对', benefit: '社交体验' },
+      { icon: '🧩', name: '简单拼图', benefit: '逻辑思维启蒙' },
+    ],
+  }
+  const nextMonth = (monthData.value?.month ?? 0) + 1
+  return gamesMap[nextMonth] ?? []
+})
+
+// 打开快速记录模板
+const openQuickRecord = (template: { icon: string; text: string }) => {
+  quickRecordForm.value.content = `${template.icon} ${template.text}`
+  quickRecordForm.value.type = 'milestone'
+  quickRecordDialogVisible.value = true
+}
+
+// 打开快速记录对话框
+const openQuickRecordDialog = () => {
+  quickRecordForm.value = {
+    type: 'milestone',
+    content: '',
+    photo: null,
+  }
+  quickRecordDialogVisible.value = true
+}
+
+// 处理快速记录照片
+const handleQuickRecordPhoto = (uploadFile: { raw: File }) => {
+  const file = uploadFile.raw
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      quickRecordForm.value.photo = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// 提交快速记录
+const submitQuickRecord = () => {
+  if (!quickRecordForm.value.content.trim()) {
+    ElMessage.warning('请输入记录内容')
+    return
+  }
+
+  // TODO: 保存到store或后端
+  ElMessage.success('🎉 成长记录已保存！')
+  quickRecordDialogVisible.value = false
+
+  // 可选：跳转到日记页面查看
+  // router.push('/diary')
+}
+
 onMounted(() => {
   const monthId = parseInt(route.params.id as string)
   babyStore.setCurrentMonth(monthId)
@@ -1223,68 +2507,89 @@ watch(
 
 .keywords-content {
   display: flex;
-  justify-content: space-around;
+  flex-direction: column;
   gap: 12px;
 }
 
 .keyword-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   cursor: pointer;
-  transition: transform 0.3s ease;
-  flex: 1;
-  padding: 8px;
+  transition: all 0.3s ease;
+  padding: 14px 16px;
   border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(167, 139, 250, 0.1);
 }
 
 .keyword-item:hover {
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.6);
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 16px rgba(103, 126, 234, 0.12);
+  border-color: rgba(139, 92, 246, 0.2);
 }
 
 .keyword-item:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 .keyword-icon-circle {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #ffffff 0%, #f3f0ff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(103, 126, 234, 0.15),
-    inset 0 -2px 4px rgba(103, 126, 234, 0.05);
-  border: 2px solid rgba(167, 139, 250, 0.2);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
 }
 
 .keyword-item:hover .keyword-icon-circle {
-  transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(103, 126, 234, 0.25),
-    inset 0 -2px 4px rgba(103, 126, 234, 0.1);
-  border-color: rgba(139, 92, 246, 0.4);
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
 .keyword-icon {
-  font-size: 26px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #5b21b6;
+}
+
+.keyword-text-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .keyword-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #6d28d9;
-  text-align: center;
-  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.keyword-desc {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.keyword-arrow {
+  color: #9ca3af;
+  transition: all 0.3s ease;
+}
+
+.keyword-item:hover .keyword-arrow {
+  color: #667eea;
+  transform: translateX(4px);
 }
 
 /* 响应式：移动端 */
 @media (max-width: 480px) {
   .keywords-card {
-    padding: 16px 16px;
+    padding: 16px 14px;
   }
 
   .keywords-header {
@@ -1295,16 +2600,26 @@ watch(
   }
 
   .keyword-icon-circle {
-    width: 50px;
-    height: 50px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
   }
 
   .keyword-icon {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .keyword-label {
-    font-size: 12px;
+    font-size: 14px;
+  }
+
+  .keyword-desc {
+    font-size: 11px;
+  }
+
+  .keyword-item {
+    padding: 12px 14px;
+    gap: 12px;
   }
 }
 
@@ -2056,13 +3371,13 @@ watch(
 .milestone-card {
   background: white;
   border-radius: 16px;
-  padding: 24px;
+  padding: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
   border: 2px solid #ebeef5;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .milestone-card:hover {
@@ -2072,43 +3387,208 @@ watch(
 }
 
 .milestone-card.completed {
-  background: linear-gradient(135deg, #f0fff4 0%, #e6ffed 100%);
-  border-color: #38ef7d;
+  background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
+  border-color: #22c55e;
+}
+
+.milestone-card.completed:hover {
+  border-color: #16a34a;
+  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.2);
+}
+
+.milestone-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .milestone-check {
   display: flex;
-  justify-content: flex-end;
 }
 
 .check-circle {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: 3px solid #dcdfe6;
+  border: 2px solid #dcdfe6;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  font-size: 14px;
 }
 
 .milestone-card.completed .check-circle {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   border-color: transparent;
   color: white;
 }
 
 .milestone-content h4 {
   margin: 0 0 8px 0;
-  font-size: 18px;
-  color: #303133;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .milestone-content p {
   margin: 0;
-  font-size: 14px;
-  color: #606266;
+  font-size: 13px;
+  color: #6b7280;
   line-height: 1.6;
+}
+
+.milestone-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.milestone-status .el-tag {
+  font-size: 12px;
+}
+
+/* 里程碑确认对话框 */
+.milestone-confirm-content {
+  text-align: center;
+  padding: 10px 0;
+}
+
+.milestone-confirm-content .confirm-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.milestone-confirm-content h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.milestone-confirm-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.confirm-upload-area {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.confirm-upload-area .upload-hint {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}
+
+.media-preview {
+  position: relative;
+  display: inline-block;
+  margin-top: 12px;
+}
+
+.media-preview img {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.remove-media-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: white !important;
+}
+
+/* 训练指南对话框 */
+.training-guide-content {
+  padding: 10px 0;
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.guide-icon {
+  font-size: 40px;
+}
+
+.guide-title-area h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.guide-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.guide-section {
+  margin-bottom: 20px;
+}
+
+.guide-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.guide-section p {
+  margin: 0;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.section-emoji {
+  font-size: 16px;
+}
+
+.method-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.method-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.method-list li .el-icon {
+  color: #22c55e;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.tips-section {
+  margin-top: 16px;
+}
+
+.tips-section .el-alert {
+  border-radius: 12px;
 }
 
 /* 问题卡片 */
@@ -2441,7 +3921,149 @@ watch(
   color: #6b7280;
 }
 
-/* 下月预告区域 */
+/* 🎯 快速记录入口区域 */
+.quick-record-section {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+.quick-record-card {
+  background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid #fde047;
+}
+
+.quick-record-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.record-emoji {
+  font-size: 32px;
+}
+
+.record-title-area h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #854d0e;
+}
+
+.record-title-area p {
+  margin: 0;
+  font-size: 13px;
+  color: #a16207;
+}
+
+.quick-record-templates {
+  margin-bottom: 16px;
+}
+
+.templates-label {
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.template-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.template-tag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: #fbbf24 !important;
+  color: #92400e !important;
+}
+
+.template-tag:hover {
+  background: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.quick-record-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* 快速记录对话框 */
+.quick-record-form .form-item {
+  margin-bottom: 20px;
+}
+
+.quick-record-form .form-item label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.type-selector {
+  margin-top: 8px;
+}
+
+.quick-record-upload {
+  width: 100%;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 30px;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-placeholder:hover {
+  border-color: #667eea;
+  color: #667eea;
+  background: #f5f3ff;
+}
+
+.upload-placeholder .el-icon {
+  font-size: 32px;
+}
+
+.photo-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.photo-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.remove-photo-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: white !important;
+}
+
+/* 下月预告区域 - 增强版 */
 .next-month-preview {
   padding: 0 20px;
   margin-top: 24px;
@@ -2456,46 +4078,131 @@ watch(
 .preview-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 12px;
 }
 
 .preview-icon {
-  font-size: 28px;
+  font-size: 32px;
 }
 
-.preview-header h3 {
+.preview-title-area {
+  flex: 1;
+}
+
+.preview-title-area h3 {
   margin: 0;
   font-size: 18px;
   color: #0369a1;
   font-weight: 700;
 }
 
+.preview-stage {
+  font-size: 12px;
+  color: #0284c7;
+  background: rgba(14, 165, 233, 0.15);
+  padding: 2px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
 .preview-summary {
   font-size: 14px;
   color: #0c4a6e;
   line-height: 1.6;
-  margin: 0 0 16px 0;
+  margin: 0 0 20px 0;
 }
 
-.preview-milestones {
+.preview-section {
+  margin-bottom: 18px;
+}
+
+.preview-section .section-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
-.preview-label {
-  font-size: 13px;
-  color: #0369a1;
+.preview-section .section-icon {
+  font-size: 16px;
+}
+
+.preview-section .section-title {
+  font-size: 14px;
   font-weight: 600;
+  color: #0369a1;
 }
 
 .preview-tags {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* 准备建议列表 */
+.preparation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preparation-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  font-size: 13px;
+  color: #0c4a6e;
+}
+
+.preparation-item .prep-icon {
+  font-size: 16px;
+}
+
+/* 游戏推荐列表 */
+.games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.game-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+}
+
+.game-item .game-icon {
+  font-size: 24px;
+}
+
+.game-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.game-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0c4a6e;
+}
+
+.game-benefit {
+  font-size: 12px;
+  color: #0369a1;
+}
+
+.preview-action-btn {
+  margin-top: 16px;
+  width: 100%;
 }
 
 /* 响应式 */
