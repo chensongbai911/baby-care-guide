@@ -93,7 +93,9 @@
       <div class="hero-content">
         <div class="hero-emoji animate-float">👶</div>
         <h1 class="hero-title">新手爸爸育儿指南</h1>
-        <p class="subtitle">陪伴宝宝0-12个月的成长之旅</p>
+        <p class="subtitle">
+          专属于你的育儿助手，宝宝成长每一步，我们陪你记录~
+        </p>
         <div class="hero-stats">
           <!-- 月龄阶段突出显示 -->
           <div
@@ -178,6 +180,20 @@
           </p>
         </div>
 
+        <!-- 下个月龄预告 -->
+        <div class="next-month-preview" v-if="nextMonthData">
+          <div class="preview-header">
+            <span class="preview-icon">🔮</span>
+            <span class="preview-title">下个月预告</span>
+          </div>
+          <div class="preview-content">
+            <span class="preview-month">{{ nextMonthData.month }}月龄</span>
+            <span class="preview-abilities">
+              即将解锁：{{ getNextMonthAbilities() }}
+            </span>
+          </div>
+        </div>
+
         <!-- 发育数据卡片 - 统一视觉风格 -->
         <div class="development-data">
           <div class="data-card weight-card">
@@ -210,7 +226,15 @@
         <div class="key-milestones">
           <div class="milestone-header">
             <div class="header-left">
-              <h3>🏆 关键里程碑</h3>
+              <el-tooltip
+                content="里程碑：宝宝发育过程中的关键能力节点，每个宝宝发育进度不同，仅供参考"
+                placement="top"
+              >
+                <h3 class="milestone-title-with-tip">
+                  🏆 关键里程碑
+                  <span class="tip-icon">ℹ️</span>
+                </h3>
+              </el-tooltip>
               <span class="milestone-subtitle">
                 {{ babyStore.currentMonth }}个月宝宝的重要能力发展
               </span>
@@ -338,51 +362,86 @@
           </div>
 
           <div class="month-card-inner">
-            <!-- 月龄标识 -->
-            <div class="month-number">{{ monthData.month }}</div>
-            <div class="month-label">月龄</div>
+            <!-- 首层：月龄标识 + 核心信息 -->
+            <div class="month-card-primary">
+              <div class="month-number">{{ monthData.month }}</div>
+              <div class="month-label">月龄</div>
 
-            <!-- 阶段名称 -->
-            <div class="month-stage-name">
-              {{ monthData.title.replace(/[（(].*?[)）]/g, '') }}
+              <!-- 阶段名称 -->
+              <div class="month-stage-name">
+                {{ monthData.title.replace(/[（(].*?[)）]/g, '') }}
+              </div>
+
+              <!-- 行为简述 -->
+              <div class="month-description" v-if="monthData.summary">
+                {{ getBriefDescription(monthData) }}
+              </div>
+
+              <!-- 里程碑进度条（始终显示） -->
+              <div class="month-milestone-progress" v-if="monthData.milestones">
+                <div class="progress-info">
+                  <span class="progress-label">已完成</span>
+                  <span class="progress-fraction">
+                    {{ getCompletedMilestones(monthData) }}/{{
+                      monthData.milestones.length
+                    }}
+                  </span>
+                </div>
+                <div class="progress-bar-wrapper">
+                  <div
+                    class="progress-bar-fill"
+                    :style="{ width: getMilestoneProgress(monthData) + '%' }"
+                  ></div>
+                </div>
+              </div>
             </div>
 
-            <!-- 行为简述 -->
-            <div class="month-description" v-if="monthData.summary">
-              {{ getBriefDescription(monthData) }}
-            </div>
-
-            <!-- 发育数据 -->
-            <div class="month-physical-data">
-              <div class="data-item">
-                <span class="data-icon">⚖️</span>
-                <span class="data-text">
-                  {{ monthData.physicalDevelopment.weight }}
-                </span>
+            <!-- 展开层：体格数据 + 里程碑列表（hover显示） -->
+            <div class="month-card-expand">
+              <div class="expand-section physical-section">
+                <div class="expand-title">体格参考</div>
+                <div class="month-physical-data">
+                  <div class="data-item">
+                    <span class="data-icon">⚖️</span>
+                    <span class="data-text">
+                      {{ monthData.physicalDevelopment.weight }}
+                    </span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-icon">📏</span>
+                    <span class="data-text">
+                      {{ monthData.physicalDevelopment.height }}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div class="data-item">
-                <span class="data-icon">📏</span>
-                <span class="data-text">
-                  {{ monthData.physicalDevelopment.height }}
-                </span>
+              <div
+                class="expand-section milestone-section"
+                v-if="monthData.milestones?.length"
+              >
+                <div class="expand-title">关键能力</div>
+                <div class="milestone-tags">
+                  <span
+                    v-for="(m, idx) in monthData.milestones.slice(0, 4)"
+                    :key="idx"
+                    class="milestone-tag"
+                    :class="{
+                      completed: babyStore.isMilestoneCompleted(m.title),
+                    }"
+                  >
+                    {{ m.title }}
+                  </span>
+                  <span
+                    v-if="monthData.milestones.length > 4"
+                    class="milestone-more"
+                  >
+                    +{{ monthData.milestones.length - 4 }}
+                  </span>
+                </div>
               </div>
-            </div>
-
-            <!-- 里程碑进度 -->
-            <div class="month-milestone-progress" v-if="monthData.milestones">
-              <div class="progress-info">
-                <span class="progress-label">里程碑</span>
-                <span class="progress-fraction">
-                  {{ getCompletedMilestones(monthData) }}/{{
-                    monthData.milestones.length
-                  }}
-                </span>
-              </div>
-              <div class="progress-bar-wrapper">
-                <div
-                  class="progress-bar-fill"
-                  :style="{ width: getMilestoneProgress(monthData) + '%' }"
-                ></div>
+              <div class="expand-action">
+                <span>点击查看详情</span>
+                <el-icon><ArrowRight /></el-icon>
               </div>
             </div>
           </div>
@@ -425,7 +484,10 @@
             </div>
             <div class="action-content">
               <h3>成长时间轴</h3>
-              <p>查看宝宝0-12个月完整发育时间轴</p>
+              <p class="action-desc">可视化查看0-12个月发育关键节点</p>
+              <p class="action-value">
+                ✨ 已收录 {{ totalMilestones }} 个发育里程碑
+              </p>
             </div>
             <div class="action-arrow">→</div>
           </div>
@@ -440,7 +502,10 @@
             </div>
             <div class="action-content">
               <h3>成长清单</h3>
-              <p>记录宝宝的成长里程碑</p>
+              <p class="action-desc">追踪记录宝宝能力发展进度</p>
+              <p class="action-value">
+                📝 已完成 {{ babyStore.completedMilestonesCount }} 项
+              </p>
             </div>
             <div class="action-arrow">→</div>
           </div>
@@ -450,48 +515,52 @@
             class="action-card vaccine-card"
             @click="router.push('/vaccine')"
           >
-            <div class="action-icon">
-              <el-icon :size="48"><FirstAidKit /></el-icon>
+            <div class="action-icon vaccine-icon">
+              <span>💉</span>
             </div>
             <div class="action-content">
               <h3>疫苗接种</h3>
-              <p>疫苗接种提醒与记录</p>
+              <p class="action-desc">智能提醒，不错过接种时间</p>
+              <p class="action-value">🛡️ 守护宝宝健康第一步</p>
             </div>
             <div class="action-arrow">→</div>
           </div>
         </el-col>
         <el-col :xs="24" :sm="12" :md="8" :lg="4">
           <div class="action-card growth-card" @click="router.push('/growth')">
-            <div class="action-icon">
-              <el-icon :size="48"><TrendCharts /></el-icon>
+            <div class="action-icon growth-icon">
+              <span>📈</span>
             </div>
             <div class="action-content">
               <h3>成长曲线</h3>
-              <p>身高体重变化图表</p>
+              <p class="action-desc">对比WHO标准，科学评估发育</p>
+              <p class="action-value">📊 一目了然的成长轨迹</p>
             </div>
             <div class="action-arrow">→</div>
           </div>
         </el-col>
         <el-col :xs="24" :sm="12" :md="8" :lg="4">
           <div class="action-card diary-card" @click="router.push('/diary')">
-            <div class="action-icon">
-              <el-icon :size="48"><Notebook /></el-icon>
+            <div class="action-icon diary-icon">
+              <span>📔</span>
             </div>
             <div class="action-content">
               <h3>育儿日记</h3>
-              <p>记录宝宝的点点滴滴</p>
+              <p class="action-desc">记录珍贵时刻，留住美好回忆</p>
+              <p class="action-value">💝 宝宝的专属成长册</p>
             </div>
             <div class="action-arrow">→</div>
           </div>
         </el-col>
         <el-col :xs="24" :sm="12" :md="8" :lg="4">
           <div class="action-card knowledge-card">
-            <div class="action-icon">
-              <el-icon :size="48"><Reading /></el-icon>
+            <div class="action-icon knowledge-icon">
+              <span>📚</span>
             </div>
             <div class="action-content">
               <h3>育儿知识库</h3>
-              <p>新手爸爸必备育儿技巧</p>
+              <p class="action-desc">专业育儿知识随时查阅</p>
+              <p class="action-value">🎓 新手爸爸的百科全书</p>
             </div>
             <el-tag type="warning" size="small">即将上线</el-tag>
           </div>
@@ -740,6 +809,15 @@ const tipCategories = [
 
 const currentMonthData = computed(() => babyStore.currentMonthData)
 
+// 下个月龄数据（用于预告）
+const nextMonthData = computed(() => {
+  const nextMonth = babyStore.currentMonth + 1
+  if (nextMonth > 12) return null
+  return babyStore.allMonthsData.find(
+    (m: BabyMonthData) => m.month === nextMonth,
+  )
+})
+
 const totalMilestones = computed(() => {
   return babyStore.allMonthsData.reduce(
     (sum: number, month: BabyMonthData) => sum + month.milestones.length,
@@ -847,6 +925,15 @@ const getStageDescription = () => {
   if (month <= 9) return '开始尝试独立，探索欲旺盛'
   if (month <= 12) return '即将迎来周岁，能力提升飞快'
   return '成长进入新阶段'
+}
+
+// 获取下个月龄的关键能力预告
+const getNextMonthAbilities = () => {
+  if (!nextMonthData.value?.milestones) return ''
+  const abilities = nextMonthData.value.milestones
+    .slice(0, 3)
+    .map((m) => m.title)
+  return abilities.join('、')
 }
 
 // 获取当前月龄已完成的里程碑数量
@@ -1620,6 +1707,92 @@ onMounted(() => {
   font-weight: 700;
 }
 
+/* 下个月龄预告 */
+.next-month-preview {
+  margin: 0 24px 20px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fef3c7 100%);
+  border-radius: 16px;
+  border: 2px dashed #f59e0b;
+  position: relative;
+  overflow: hidden;
+}
+
+.next-month-preview::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 70%
+  );
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    transform: translateX(-30%) translateY(30%);
+  }
+  50% {
+    transform: translateX(30%) translateY(-30%);
+  }
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.preview-icon {
+  font-size: 20px;
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.preview-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.preview-month {
+  font-size: 18px;
+  font-weight: 800;
+  color: #78350f;
+}
+
+.preview-abilities {
+  font-size: 14px;
+  color: #92400e;
+  font-weight: 500;
+}
+
 /* 发育数据卡片 - 统一设计 */
 .development-data {
   display: grid;
@@ -1739,11 +1912,26 @@ onMounted(() => {
   gap: 4px;
 }
 
-.header-left h3 {
+.header-left h3,
+.milestone-title-with-tip {
   font-size: 18px;
   font-weight: 700;
   margin: 0;
   color: #1f2937;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: help;
+}
+
+.tip-icon {
+  font-size: 14px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.milestone-title-with-tip:hover .tip-icon {
+  opacity: 1;
 }
 
 .header-right {
@@ -1982,21 +2170,105 @@ onMounted(() => {
   background: white;
   border: 2px solid #e5e7eb;
   border-radius: 20px;
-  padding: 18px 14px;
+  padding: 0;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-height: 280px;
+  min-height: 260px;
+  overflow: hidden;
 }
 
 .month-card-inner:hover {
   border-color: #a78bfa;
   transform: translateY(-6px) scale(1.02);
   box-shadow: 0 12px 28px rgba(167, 139, 250, 0.2);
+}
+
+/* hover时展开详情 */
+.month-card-inner:hover .month-card-expand {
+  max-height: 200px;
+  opacity: 1;
+  padding: 12px;
+}
+
+/* 首层内容 */
+.month-card-primary {
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+/* 展开层内容 */
+.month-card-expand {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%);
+  border-top: 1px dashed #e5e7eb;
+  padding: 0 12px;
+}
+
+.expand-section {
+  margin-bottom: 10px;
+}
+
+.expand-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7c3aed;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.milestone-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.milestone-tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.milestone-tag.completed {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-color: #86efac;
+  color: #166534;
+}
+
+.milestone-more {
+  font-size: 10px;
+  padding: 3px 8px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.expand-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #7c3aed;
+  font-weight: 600;
+  padding-top: 8px;
+  border-top: 1px solid rgba(124, 58, 237, 0.1);
 }
 
 .current-marker {
@@ -2278,11 +2550,60 @@ onMounted(() => {
   font-weight: 700;
 }
 
+.action-content .action-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+}
+
+.action-content .action-value {
+  font-size: 12px;
+  color: #7c3aed;
+  font-weight: 600;
+  margin: 0;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border-radius: 8px;
+  display: inline-block;
+}
+
 .action-content p {
   font-size: 14px;
   color: var(--text-secondary);
   margin: 0;
   line-height: 1.6;
+}
+
+/* 差异化图标样式 */
+.vaccine-icon,
+.growth-icon,
+.diary-icon,
+.knowledge-icon {
+  font-size: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+
+.vaccine-icon {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+.growth-icon {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+.diary-icon {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.knowledge-icon {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
 }
 
 .action-arrow {
