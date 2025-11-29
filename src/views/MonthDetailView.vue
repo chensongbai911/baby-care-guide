@@ -685,220 +685,278 @@
               </div>
             </div>
 
-            <!-- 📈 能力发展趋势图（增强版） -->
-            <div class="ability-trend-section">
-              <div class="trend-header">
-                <h4>📈 能力发展趋势</h4>
-                <div class="trend-controls">
-                  <el-radio-group v-model="selectedAbilityType" size="small">
-                    <el-radio-button label="gross">大运动</el-radio-button>
-                    <el-radio-button label="fine">精细动作</el-radio-button>
-                    <el-radio-button label="cognitive">认知</el-radio-button>
-                    <el-radio-button label="language">语言</el-radio-button>
-                    <el-radio-button label="social">社交情感</el-radio-button>
-                  </el-radio-group>
+            <!-- 📈 宝宝能力发展轨迹（升级版） -->
+            <div
+              class="ability-trend-section"
+              :class="{ 'is-loading': trendChartLoading }"
+            >
+              <!-- 骨架屏加载状态 -->
+              <div v-if="trendChartLoading" class="trend-skeleton">
+                <div class="skeleton-header">
+                  <div class="skeleton-title"></div>
+                  <div class="skeleton-tabs"></div>
                 </div>
+                <div class="skeleton-chart"></div>
+                <div class="skeleton-legend"></div>
               </div>
 
-              <div class="trend-chart-enhanced">
-                <svg viewBox="0 0 360 200" class="chart-svg-enhanced">
-                  <!-- 渐变定义 -->
-                  <defs>
-                    <linearGradient
-                      id="babyGradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="0%"
-                      y2="100%"
+              <!-- 实际内容 -->
+              <template v-else>
+                <div class="trend-header">
+                  <div class="trend-title-area">
+                    <h4>🌈 宝宝能力发展轨迹</h4>
+                    <p class="trend-subtitle">记录成长每一步，见证奇迹每一天</p>
+                  </div>
+                  <div class="trend-controls">
+                    <el-radio-group
+                      v-model="selectedAbilityType"
+                      size="small"
+                      @change="handleAbilityTypeChange"
                     >
-                      <stop
-                        offset="0%"
-                        style="stop-color: #667eea; stop-opacity: 0.4;"
-                      />
-                      <stop
-                        offset="100%"
-                        style="stop-color: #667eea; stop-opacity: 0.05;"
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="p50Gradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="0%"
-                      y2="100%"
-                    >
-                      <stop
-                        offset="0%"
-                        style="stop-color: #22c55e; stop-opacity: 0.15;"
-                      />
-                      <stop
-                        offset="100%"
-                        style="stop-color: #22c55e; stop-opacity: 0.02;"
-                      />
-                    </linearGradient>
-                  </defs>
+                      <el-radio-button label="gross">
+                        <span class="ability-icon">🦶</span>
+                        <span class="ability-name">大运动</span>
+                      </el-radio-button>
+                      <el-radio-button label="fine">
+                        <span class="ability-icon">🖐️</span>
+                        <span class="ability-name">精细</span>
+                      </el-radio-button>
+                      <el-radio-button label="cognitive">
+                        <span class="ability-icon">🧠</span>
+                        <span class="ability-name">认知</span>
+                      </el-radio-button>
+                      <el-radio-button label="language">
+                        <span class="ability-icon">👂</span>
+                        <span class="ability-name">语言</span>
+                      </el-radio-button>
+                      <el-radio-button label="social">
+                        <span class="ability-icon">💕</span>
+                        <span class="ability-name">社交</span>
+                      </el-radio-button>
+                    </el-radio-group>
+                  </div>
+                </div>
 
-                  <!-- Y轴标签 -->
-                  <text x="8" y="25" class="axis-label">100</text>
-                  <text x="8" y="65" class="axis-label">75</text>
-                  <text x="8" y="105" class="axis-label">50</text>
-                  <text x="8" y="145" class="axis-label">25</text>
-                  <text x="8" y="180" class="axis-label">0</text>
-
-                  <!-- 水平网格线 -->
-                  <line x1="35" y1="20" x2="345" y2="20" class="grid-line" />
-                  <line x1="35" y1="60" x2="345" y2="60" class="grid-line" />
-                  <line x1="35" y1="100" x2="345" y2="100" class="grid-line" />
-                  <line x1="35" y1="140" x2="345" y2="140" class="grid-line" />
-                  <line
-                    x1="35"
-                    y1="175"
-                    x2="345"
-                    y2="175"
-                    class="grid-line-base"
-                  />
-
-                  <!-- 发育标准曲线 - P97百分位（偏高）红色虚线 -->
-                  <path :d="p97CurvePath" class="percentile-line p97" />
-
-                  <!-- 发育标准曲线 - P50百分位（中位）绿色实线 + 填充 -->
-                  <path :d="p50AreaPath" fill="url(#p50Gradient)" />
-                  <path :d="p50CurvePath" class="percentile-line p50" />
-
-                  <!-- 发育标准曲线 - P3百分位（偏低）蓝色虚线 -->
-                  <path :d="p3CurvePath" class="percentile-line p3" />
-
-                  <!-- 宝宝数据区域填充 -->
-                  <path :d="trendAreaPath" fill="url(#babyGradient)" />
-
-                  <!-- 宝宝数据趋势线 -->
-                  <path :d="trendLinePath" class="baby-trend-line" />
-
-                  <!-- 关键里程碑标注 -->
-                  <g
-                    v-for="(milestone, idx) in keyMilestoneMarkers"
-                    :key="'m' + idx"
+                <div class="trend-chart-enhanced">
+                  <svg
+                    viewBox="0 0 360 200"
+                    class="chart-svg-enhanced"
+                    :class="{ 'chart-transitioning': isChartTransitioning }"
                   >
+                    <!-- 渐变定义 -->
+                    <defs>
+                      <linearGradient
+                        id="babyGradient"
+                        x1="0%"
+                        y1="0%"
+                        x2="0%"
+                        y2="100%"
+                      >
+                        <stop
+                          offset="0%"
+                          style="stop-color: #667eea; stop-opacity: 0.4;"
+                        />
+                        <stop
+                          offset="100%"
+                          style="stop-color: #667eea; stop-opacity: 0.05;"
+                        />
+                      </linearGradient>
+                      <linearGradient
+                        id="p50Gradient"
+                        x1="0%"
+                        y1="0%"
+                        x2="0%"
+                        y2="100%"
+                      >
+                        <stop
+                          offset="0%"
+                          style="stop-color: #22c55e; stop-opacity: 0.15;"
+                        />
+                        <stop
+                          offset="100%"
+                          style="stop-color: #22c55e; stop-opacity: 0.02;"
+                        />
+                      </linearGradient>
+                    </defs>
+
+                    <!-- Y轴标签 -->
+                    <text x="8" y="25" class="axis-label">100</text>
+                    <text x="8" y="65" class="axis-label">75</text>
+                    <text x="8" y="105" class="axis-label">50</text>
+                    <text x="8" y="145" class="axis-label">25</text>
+                    <text x="8" y="180" class="axis-label">0</text>
+
+                    <!-- 水平网格线 -->
+                    <line x1="35" y1="20" x2="345" y2="20" class="grid-line" />
+                    <line x1="35" y1="60" x2="345" y2="60" class="grid-line" />
                     <line
-                      :x1="milestone.x"
-                      :y1="milestone.y"
-                      :x2="milestone.x"
-                      :y2="175"
-                      class="milestone-marker-line"
+                      x1="35"
+                      y1="100"
+                      x2="345"
+                      y2="100"
+                      class="grid-line"
                     />
-                    <circle
-                      :cx="milestone.x"
-                      :cy="milestone.y"
-                      r="8"
-                      class="milestone-marker"
-                      @click="showMilestoneDetail(milestone)"
+                    <line
+                      x1="35"
+                      y1="140"
+                      x2="345"
+                      y2="140"
+                      class="grid-line"
                     />
-                    <text
-                      :x="milestone.x"
-                      :y="milestone.y - 12"
-                      class="milestone-marker-text"
+                    <line
+                      x1="35"
+                      y1="175"
+                      x2="345"
+                      y2="175"
+                      class="grid-line-base"
+                    />
+
+                    <!-- 发育标准曲线 - P97百分位（偏高）红色虚线 -->
+                    <path :d="p97CurvePath" class="percentile-line p97" />
+
+                    <!-- 发育标准曲线 - P50百分位（中位）绿色实线 + 填充 -->
+                    <path :d="p50AreaPath" fill="url(#p50Gradient)" />
+                    <path :d="p50CurvePath" class="percentile-line p50" />
+
+                    <!-- 发育标准曲线 - P3百分位（偏低）蓝色虚线 -->
+                    <path :d="p3CurvePath" class="percentile-line p3" />
+
+                    <!-- 宝宝数据区域填充 -->
+                    <path :d="trendAreaPath" fill="url(#babyGradient)" />
+
+                    <!-- 宝宝数据趋势线 -->
+                    <path :d="trendLinePath" class="baby-trend-line" />
+
+                    <!-- 关键里程碑标注 -->
+                    <g
+                      v-for="(milestone, idx) in keyMilestoneMarkers"
+                      :key="'m' + idx"
                     >
-                      ⭐
-                    </text>
-                  </g>
+                      <line
+                        :x1="milestone.x"
+                        :y1="milestone.y"
+                        :x2="milestone.x"
+                        :y2="175"
+                        class="milestone-marker-line"
+                      />
+                      <circle
+                        :cx="milestone.x"
+                        :cy="milestone.y"
+                        r="8"
+                        class="milestone-marker"
+                        @click="showMilestoneDetail(milestone)"
+                      />
+                      <text
+                        :x="milestone.x"
+                        :y="milestone.y - 12"
+                        class="milestone-marker-text"
+                      >
+                        ⭐
+                      </text>
+                    </g>
 
-                  <!-- 数据点 -->
-                  <g v-for="(point, idx) in trendDataPoints" :key="'p' + idx">
-                    <circle
-                      :cx="point.x"
-                      :cy="point.y"
-                      r="5"
-                      class="data-point"
-                      :class="{ current: point.isCurrent }"
-                    />
-                    <text :x="point.x" :y="192" class="x-label">
-                      {{ point.month }}月
-                    </text>
-                  </g>
-                </svg>
-              </div>
+                    <!-- 数据点 -->
+                    <g v-for="(point, idx) in trendDataPoints" :key="'p' + idx">
+                      <circle
+                        :cx="point.x"
+                        :cy="point.y"
+                        r="5"
+                        class="data-point"
+                        :class="{ current: point.isCurrent }"
+                      />
+                      <text :x="point.x" :y="192" class="x-label">
+                        {{ point.month }}月
+                      </text>
+                    </g>
+                  </svg>
+                </div>
 
-              <!-- 图例说明 -->
-              <div class="trend-legend-enhanced">
-                <div class="legend-group">
-                  <div class="legend-title">📊 图例说明</div>
-                  <div class="legend-items">
-                    <div class="legend-item">
-                      <span class="legend-line baby"></span>
-                      <span>宝宝数据</span>
-                    </div>
-                    <div class="legend-item">
-                      <span class="legend-line p97"></span>
-                      <span>P97偏高</span>
-                    </div>
-                    <div class="legend-item">
-                      <span class="legend-line p50"></span>
-                      <span>P50中位</span>
-                    </div>
-                    <div class="legend-item">
-                      <span class="legend-line p3"></span>
-                      <span>P3偏低</span>
-                    </div>
-                    <div class="legend-item">
-                      <span class="legend-marker">⭐</span>
-                      <span>关键节点</span>
+                <!-- 图例说明 -->
+                <div class="trend-legend-enhanced">
+                  <div class="legend-group">
+                    <div class="legend-title">📊 图例说明</div>
+                    <div class="legend-items">
+                      <div class="legend-item">
+                        <span class="legend-line baby"></span>
+                        <span>宝宝数据</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-line p97"></span>
+                        <span>P97偏高</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-line p50"></span>
+                        <span>P50中位</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-line p3"></span>
+                        <span>P3偏低</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-marker">⭐</span>
+                        <span>关键节点</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- 发育评估摘要 -->
-              <div class="development-assessment">
-                <div class="assessment-header">
-                  <span class="assessment-icon">
-                    {{ developmentAssessment.icon }}
-                  </span>
-                  <span class="assessment-title">
-                    {{ developmentAssessment.title }}
-                  </span>
-                  <el-tag
-                    :type="developmentAssessment.tagType"
-                    size="small"
+                <!-- 发育评估摘要 -->
+                <div class="development-assessment">
+                  <div class="assessment-header">
+                    <span class="assessment-icon">
+                      {{ developmentAssessment.icon }}
+                    </span>
+                    <span class="assessment-title">
+                      {{ developmentAssessment.title }}
+                    </span>
+                    <el-tag
+                      :type="developmentAssessment.tagType"
+                      size="small"
+                      round
+                    >
+                      {{ developmentAssessment.level }}
+                    </el-tag>
+                  </div>
+                  <p class="assessment-desc">
+                    {{ developmentAssessment.description }}
+                  </p>
+                  <div class="assessment-comparison">
+                    <div class="comparison-item">
+                      <span class="comparison-label">当前完成度</span>
+                      <span class="comparison-value">
+                        {{ developmentAssessment.currentValue }}%
+                      </span>
+                    </div>
+                    <div class="comparison-item">
+                      <span class="comparison-label">同龄P50标准</span>
+                      <span class="comparison-value standard">
+                        {{ developmentAssessment.p50Value }}%
+                      </span>
+                    </div>
+                    <div class="comparison-item">
+                      <span class="comparison-label">差异</span>
+                      <span
+                        class="comparison-value"
+                        :class="developmentAssessment.diffClass"
+                      >
+                        {{ developmentAssessment.diff }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 生成成长报告按钮 -->
+                <div class="trend-report-action">
+                  <el-button
+                    type="primary"
                     round
+                    @click="generateAbilityReport"
                   >
-                    {{ developmentAssessment.level }}
-                  </el-tag>
+                    <el-icon><Document /></el-icon>
+                    生成能力发展报告
+                  </el-button>
                 </div>
-                <p class="assessment-desc">
-                  {{ developmentAssessment.description }}
-                </p>
-                <div class="assessment-comparison">
-                  <div class="comparison-item">
-                    <span class="comparison-label">当前完成度</span>
-                    <span class="comparison-value">
-                      {{ developmentAssessment.currentValue }}%
-                    </span>
-                  </div>
-                  <div class="comparison-item">
-                    <span class="comparison-label">同龄P50标准</span>
-                    <span class="comparison-value standard">
-                      {{ developmentAssessment.p50Value }}%
-                    </span>
-                  </div>
-                  <div class="comparison-item">
-                    <span class="comparison-label">差异</span>
-                    <span
-                      class="comparison-value"
-                      :class="developmentAssessment.diffClass"
-                    >
-                      {{ developmentAssessment.diff }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 生成成长报告按钮 -->
-              <div class="trend-report-action">
-                <el-button type="primary" round @click="generateAbilityReport">
-                  <el-icon><Document /></el-icon>
-                  生成能力发展报告
-                </el-button>
-              </div>
+              </template>
             </div>
 
             <!-- 关键里程碑详情弹窗 -->
@@ -3413,10 +3471,24 @@ const shareReport = () => {
   }
 }
 
-// 📈 能力发展趋势图相关
+// 📈 能力发展趋势图相关（升级版）
 const selectedAbilityType = ref<
   'gross' | 'fine' | 'cognitive' | 'language' | 'social'
 >('gross')
+
+// 图表加载状态
+const trendChartLoading = ref(true)
+const isChartTransitioning = ref(false)
+
+// 能力类型切换动画
+const handleAbilityTypeChange = () => {
+  isChartTransitioning.value = true
+  setTimeout(() => {
+    isChartTransitioning.value = false
+  }, 300)
+  // 缓存选择到localStorage
+  localStorage.setItem('selectedAbilityType', selectedAbilityType.value)
+}
 
 // 里程碑详情弹窗
 const milestoneDetailVisible = ref(false)
@@ -5197,6 +5269,22 @@ const shareResource = (resource: {
 onMounted(() => {
   const monthId = parseInt(route.params.id as string)
   babyStore.setCurrentMonth(monthId)
+
+  // 模拟图表数据加载
+  setTimeout(() => {
+    trendChartLoading.value = false
+  }, 800)
+
+  // 从localStorage恢复用户选择的能力类型
+  const savedAbilityType = localStorage.getItem('selectedAbilityType')
+  if (
+    savedAbilityType &&
+    ['gross', 'fine', 'cognitive', 'language', 'social'].includes(
+      savedAbilityType,
+    )
+  ) {
+    selectedAbilityType.value = savedAbilityType as typeof selectedAbilityType.value
+  }
 })
 
 watch(
@@ -6895,10 +6983,76 @@ watch(
   color: white !important;
 }
 
-/* 能力发展趋势图 - 增强版 */
+/* 能力发展趋势图 - 升级版 */
 .ability-trend-section {
   margin-top: 30px;
   padding: 0 20px;
+  position: relative;
+}
+
+.ability-trend-section.is-loading {
+  min-height: 400px;
+}
+
+/* 骨架屏样式 */
+.trend-skeleton {
+  padding: 20px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(157, 80, 255, 0.08);
+}
+
+.skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.skeleton-title {
+  width: 180px;
+  height: 24px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 8px;
+}
+
+.skeleton-tabs {
+  width: 300px;
+  height: 36px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 18px;
+}
+
+.skeleton-chart {
+  width: 100%;
+  height: 220px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.skeleton-legend {
+  width: 100%;
+  height: 60px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 12px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .trend-header {
@@ -6908,11 +7062,20 @@ watch(
   margin-bottom: 20px;
 }
 
-.trend-header h4 {
+.trend-title-area h4 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: #303133;
+  background: linear-gradient(135deg, #9d50ff 0%, #ff6bcc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.trend-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: #9ca3af;
 }
 
 .trend-controls {
@@ -6922,18 +7085,50 @@ watch(
 
 .trend-controls :deep(.el-radio-group) {
   flex-wrap: nowrap;
+  gap: 8px;
 }
 
 .trend-controls :deep(.el-radio-button__inner) {
-  padding: 8px 12px;
+  padding: 10px 12px;
   font-size: 13px;
+  border-radius: 20px !important;
+  border: none !important;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+}
+
+.trend-controls :deep(.el-radio-button:first-child .el-radio-button__inner) {
+  border-radius: 20px !important;
+}
+
+.trend-controls :deep(.el-radio-button:last-child .el-radio-button__inner) {
+  border-radius: 20px !important;
+}
+
+.trend-controls
+  :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background: linear-gradient(135deg, #9d50ff 0%, #ff6bcc 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(157, 80, 255, 0.3);
+}
+
+.ability-icon {
+  font-size: 14px;
+}
+
+.ability-name {
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .trend-chart-enhanced {
-  background: white;
-  border-radius: 16px;
+  background: linear-gradient(135deg, #faf5ff 0%, #fdf2f8 100%);
+  border-radius: 20px;
   padding: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(157, 80, 255, 0.08);
   overflow: hidden;
 }
 
@@ -6941,6 +7136,12 @@ watch(
   width: 100%;
   height: auto;
   display: block;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.chart-svg-enhanced.chart-transitioning {
+  opacity: 0.5;
+  transform: scale(0.98);
 }
 
 .axis-label {
