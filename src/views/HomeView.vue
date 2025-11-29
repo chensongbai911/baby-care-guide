@@ -183,12 +183,43 @@
           </div>
 
           <div class="month-card-inner">
+            <!-- 月龄标识 -->
             <div class="month-number">{{ monthData.month }}</div>
-            <div class="month-label">月</div>
-            <div class="month-title-small">{{ monthData.title }}</div>
-            <div class="month-progress" v-if="monthData.milestones">
-              <div class="progress-text">
-                {{ getMonthProgress(monthData) }}个里程碑
+            <div class="month-label">月龄</div>
+            
+            <!-- 阶段名称 -->
+            <div class="month-stage-name">{{ monthData.title.replace(/[（(].*?[)）]/g, '') }}</div>
+            
+            <!-- 行为简述 -->
+            <div class="month-description" v-if="monthData.summary">
+              {{ getBriefDescription(monthData) }}
+            </div>
+            
+            <!-- 发育数据 -->
+            <div class="month-physical-data">
+              <div class="data-item">
+                <span class="data-icon">⚖️</span>
+                <span class="data-text">{{ monthData.physicalDevelopment.weight }}</span>
+              </div>
+              <div class="data-item">
+                <span class="data-icon">📏</span>
+                <span class="data-text">{{ monthData.physicalDevelopment.height }}</span>
+              </div>
+            </div>
+            
+            <!-- 里程碑进度 -->
+            <div class="month-milestone-progress" v-if="monthData.milestones">
+              <div class="progress-info">
+                <span class="progress-label">里程碑</span>
+                <span class="progress-fraction">
+                  {{ getCompletedMilestones(monthData) }}/{{ monthData.milestones.length }}
+                </span>
+              </div>
+              <div class="progress-bar-wrapper">
+                <div 
+                  class="progress-bar-fill"
+                  :style="{ width: getMilestoneProgress(monthData) + '%' }"
+                ></div>
               </div>
             </div>
           </div>
@@ -559,6 +590,41 @@ const getMilestoneIcon = (title: string) => {
 const getMonthProgress = (monthData: BabyMonthData) => {
   if (!monthData.milestones) return 0
   return monthData.milestones.length
+}
+
+// 获取月龄行为简述（口语化）
+const getBriefDescription = (monthData: BabyMonthData) => {
+  const summaryMap: Record<number, string> = {
+    0: '新生宝宝，适应新环境',
+    1: '开始对周围反应增多',
+    2: '互动增加，睡眠减少',
+    3: '能认出熟悉的脸',
+    4: '笑声更多，好奇心强',
+    5: '主动探索，抓握有力',
+    6: '准备添加辅食了',
+    7: '能独坐，喜欢拍打',
+    8: '爬行探索，更加独立',
+    9: '扶站，理解简单指令',
+    10: '能站立，模仿能力强',
+    11: '迈出人生第一步',
+    12: '周岁啦，成长飞速',
+  }
+  return summaryMap[monthData.month] || monthData.summary?.substring(0, 20) + '...'
+}
+
+// 获取已完成里程碑数量
+const getCompletedMilestones = (monthData: BabyMonthData) => {
+  if (!monthData.milestones) return 0
+  return monthData.milestones.filter(m => 
+    babyStore.isMilestoneCompleted(m.title)
+  ).length
+}
+
+// 获取里程碑完成百分比
+const getMilestoneProgress = (monthData: BabyMonthData) => {
+  if (!monthData.milestones || monthData.milestones.length === 0) return 0
+  const completed = getCompletedMilestones(monthData)
+  return Math.round((completed / monthData.milestones.length) * 100)
 }
 
 const saveBabyInfo = () => {
@@ -1230,11 +1296,15 @@ onMounted(() => {
   background: white;
   border: 2px solid #e5e7eb;
   border-radius: 20px;
-  padding: 20px 16px;
+  padding: 18px 14px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 280px;
 }
 
 .month-card-inner:hover {
@@ -1269,44 +1339,165 @@ onMounted(() => {
   letter-spacing: 0.5px;
 }
 
+/* 月龄标识 */
 .month-number {
-  font-size: 48px;
+  font-size: 40px;
   font-weight: 900;
   background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .month-label {
-  font-size: 14px;
+  font-size: 12px;
   color: #9ca3af;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.month-title-small {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
+/* 阶段名称 */
+.month-stage-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
   margin-bottom: 8px;
+  line-height: 1.3;
   min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.month-progress {
-  padding-top: 8px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.progress-text {
+/* 行为简述 */
+.month-description {
   font-size: 12px;
   color: #6b7280;
-  font-weight: 500;
+  line-height: 1.5;
+  padding: 8px 10px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 10px;
+  margin-bottom: 4px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 发育数据 */
+.month-physical-data {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.data-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.data-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.data-text {
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+/* 里程碑进度 */
+.month-milestone-progress {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 2px solid #f3f4f6;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.progress-label {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.progress-fraction {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+/* 进度条 */
+.progress-bar-wrapper {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 当前月龄卡片特殊样式 */
+.month-card-wrapper.is-current .month-card-inner {
+  border-width: 3px;
+}
+
+.month-card-wrapper.is-current .progress-bar-fill {
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.6);
 }
 
 @keyframes monthFadeIn {
@@ -1959,16 +2150,49 @@ onMounted(() => {
     gap: 12px;
   }
 
-  .month-card {
-    padding: 12px;
+  .month-card-inner {
+    padding: 14px 10px;
+    min-height: 240px;
   }
 
-  .month-card-num {
-    font-size: 24px;
+  .month-number {
+    font-size: 32px;
   }
 
-  .month-card-label {
+  .month-label {
+    font-size: 11px;
+  }
+
+  .month-stage-name {
     font-size: 12px;
+    min-height: 32px;
+  }
+
+  .month-description {
+    font-size: 11px;
+    padding: 6px 8px;
+    min-height: 36px;
+  }
+
+  .data-item {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .data-icon {
+    font-size: 12px;
+  }
+
+  .data-text {
+    font-size: 9px;
+  }
+
+  .progress-label {
+    font-size: 10px;
+  }
+
+  .progress-fraction {
+    font-size: 11px;
   }
 
   .actions-grid {
