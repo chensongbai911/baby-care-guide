@@ -685,23 +685,27 @@
               </div>
             </div>
 
-            <!-- 📈 能力发展趋势图 -->
+            <!-- 📈 能力发展趋势图（增强版） -->
             <div class="ability-trend-section">
               <div class="trend-header">
                 <h4>📈 能力发展趋势</h4>
-                <el-radio-group v-model="selectedAbilityType" size="small">
-                  <el-radio-button label="gross">大运动</el-radio-button>
-                  <el-radio-button label="fine">精细动作</el-radio-button>
-                  <el-radio-button label="cognitive">认知</el-radio-button>
-                  <el-radio-button label="language">语言</el-radio-button>
-                </el-radio-group>
+                <div class="trend-controls">
+                  <el-radio-group v-model="selectedAbilityType" size="small">
+                    <el-radio-button label="gross">大运动</el-radio-button>
+                    <el-radio-button label="fine">精细动作</el-radio-button>
+                    <el-radio-button label="cognitive">认知</el-radio-button>
+                    <el-radio-button label="language">语言</el-radio-button>
+                    <el-radio-button label="social">社交情感</el-radio-button>
+                  </el-radio-group>
+                </div>
               </div>
-              <div class="trend-chart">
-                <svg viewBox="0 0 320 160" class="chart-svg">
-                  <!-- 背景网格 -->
+
+              <div class="trend-chart-enhanced">
+                <svg viewBox="0 0 360 200" class="chart-svg-enhanced">
+                  <!-- 渐变定义 -->
                   <defs>
                     <linearGradient
-                      id="trendGradient"
+                      id="babyGradient"
                       x1="0%"
                       y1="0%"
                       x2="0%"
@@ -709,60 +713,348 @@
                     >
                       <stop
                         offset="0%"
-                        style="stop-color: #667eea; stop-opacity: 0.3;"
+                        style="stop-color: #667eea; stop-opacity: 0.4;"
                       />
                       <stop
                         offset="100%"
                         style="stop-color: #667eea; stop-opacity: 0.05;"
                       />
                     </linearGradient>
+                    <linearGradient
+                      id="p50Gradient"
+                      x1="0%"
+                      y1="0%"
+                      x2="0%"
+                      y2="100%"
+                    >
+                      <stop
+                        offset="0%"
+                        style="stop-color: #22c55e; stop-opacity: 0.15;"
+                      />
+                      <stop
+                        offset="100%"
+                        style="stop-color: #22c55e; stop-opacity: 0.02;"
+                      />
+                    </linearGradient>
                   </defs>
 
                   <!-- Y轴标签 -->
-                  <text x="5" y="20" class="axis-label">100%</text>
-                  <text x="5" y="80" class="axis-label">50%</text>
-                  <text x="5" y="140" class="axis-label">0%</text>
+                  <text x="8" y="25" class="axis-label">100</text>
+                  <text x="8" y="65" class="axis-label">75</text>
+                  <text x="8" y="105" class="axis-label">50</text>
+                  <text x="8" y="145" class="axis-label">25</text>
+                  <text x="8" y="180" class="axis-label">0</text>
 
-                  <!-- 网格线 -->
-                  <line x1="30" y1="15" x2="310" y2="15" class="grid-line" />
-                  <line x1="30" y1="75" x2="310" y2="75" class="grid-line" />
-                  <line x1="30" y1="135" x2="310" y2="135" class="grid-line" />
+                  <!-- 水平网格线 -->
+                  <line x1="35" y1="20" x2="345" y2="20" class="grid-line" />
+                  <line x1="35" y1="60" x2="345" y2="60" class="grid-line" />
+                  <line x1="35" y1="100" x2="345" y2="100" class="grid-line" />
+                  <line x1="35" y1="140" x2="345" y2="140" class="grid-line" />
+                  <line
+                    x1="35"
+                    y1="175"
+                    x2="345"
+                    y2="175"
+                    class="grid-line-base"
+                  />
 
-                  <!-- 趋势区域填充 -->
-                  <path :d="trendAreaPath" fill="url(#trendGradient)" />
+                  <!-- 发育标准曲线 - P97百分位（偏高）红色虚线 -->
+                  <path :d="p97CurvePath" class="percentile-line p97" />
 
-                  <!-- 趋势线 -->
-                  <path :d="trendLinePath" class="trend-line" />
+                  <!-- 发育标准曲线 - P50百分位（中位）绿色实线 + 填充 -->
+                  <path :d="p50AreaPath" fill="url(#p50Gradient)" />
+                  <path :d="p50CurvePath" class="percentile-line p50" />
+
+                  <!-- 发育标准曲线 - P3百分位（偏低）蓝色虚线 -->
+                  <path :d="p3CurvePath" class="percentile-line p3" />
+
+                  <!-- 宝宝数据区域填充 -->
+                  <path :d="trendAreaPath" fill="url(#babyGradient)" />
+
+                  <!-- 宝宝数据趋势线 -->
+                  <path :d="trendLinePath" class="baby-trend-line" />
+
+                  <!-- 关键里程碑标注 -->
+                  <g
+                    v-for="(milestone, idx) in keyMilestoneMarkers"
+                    :key="'m' + idx"
+                  >
+                    <line
+                      :x1="milestone.x"
+                      :y1="milestone.y"
+                      :x2="milestone.x"
+                      :y2="175"
+                      class="milestone-marker-line"
+                    />
+                    <circle
+                      :cx="milestone.x"
+                      :cy="milestone.y"
+                      r="8"
+                      class="milestone-marker"
+                      @click="showMilestoneDetail(milestone)"
+                    />
+                    <text
+                      :x="milestone.x"
+                      :y="milestone.y - 12"
+                      class="milestone-marker-text"
+                    >
+                      ⭐
+                    </text>
+                  </g>
 
                   <!-- 数据点 -->
-                  <g v-for="(point, idx) in trendDataPoints" :key="idx">
+                  <g v-for="(point, idx) in trendDataPoints" :key="'p' + idx">
                     <circle
                       :cx="point.x"
                       :cy="point.y"
-                      r="6"
+                      r="5"
                       class="data-point"
                       :class="{ current: point.isCurrent }"
                     />
-                    <text :x="point.x" :y="155" class="x-label">
+                    <text :x="point.x" :y="192" class="x-label">
                       {{ point.month }}月
                     </text>
                   </g>
                 </svg>
               </div>
-              <div class="trend-legend">
-                <div class="legend-item">
-                  <span class="legend-dot current"></span>
-                  <span>当前月龄</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-dot"></span>
-                  <span>历史记录</span>
-                </div>
-                <div class="legend-summary">
-                  {{ abilityTrendSummary }}
+
+              <!-- 图例说明 -->
+              <div class="trend-legend-enhanced">
+                <div class="legend-group">
+                  <div class="legend-title">📊 图例说明</div>
+                  <div class="legend-items">
+                    <div class="legend-item">
+                      <span class="legend-line baby"></span>
+                      <span>宝宝数据</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="legend-line p97"></span>
+                      <span>P97偏高</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="legend-line p50"></span>
+                      <span>P50中位</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="legend-line p3"></span>
+                      <span>P3偏低</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="legend-marker">⭐</span>
+                      <span>关键节点</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <!-- 发育评估摘要 -->
+              <div class="development-assessment">
+                <div class="assessment-header">
+                  <span class="assessment-icon">
+                    {{ developmentAssessment.icon }}
+                  </span>
+                  <span class="assessment-title">
+                    {{ developmentAssessment.title }}
+                  </span>
+                  <el-tag
+                    :type="developmentAssessment.tagType"
+                    size="small"
+                    round
+                  >
+                    {{ developmentAssessment.level }}
+                  </el-tag>
+                </div>
+                <p class="assessment-desc">
+                  {{ developmentAssessment.description }}
+                </p>
+                <div class="assessment-comparison">
+                  <div class="comparison-item">
+                    <span class="comparison-label">当前完成度</span>
+                    <span class="comparison-value">
+                      {{ developmentAssessment.currentValue }}%
+                    </span>
+                  </div>
+                  <div class="comparison-item">
+                    <span class="comparison-label">同龄P50标准</span>
+                    <span class="comparison-value standard">
+                      {{ developmentAssessment.p50Value }}%
+                    </span>
+                  </div>
+                  <div class="comparison-item">
+                    <span class="comparison-label">差异</span>
+                    <span
+                      class="comparison-value"
+                      :class="developmentAssessment.diffClass"
+                    >
+                      {{ developmentAssessment.diff }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 生成成长报告按钮 -->
+              <div class="trend-report-action">
+                <el-button type="primary" round @click="generateAbilityReport">
+                  <el-icon><Document /></el-icon>
+                  生成能力发展报告
+                </el-button>
+              </div>
             </div>
+
+            <!-- 关键里程碑详情弹窗 -->
+            <el-dialog
+              v-model="milestoneDetailVisible"
+              :title="selectedMilestoneMarker?.title || '里程碑详情'"
+              width="90%"
+              class="milestone-detail-dialog"
+            >
+              <div
+                v-if="selectedMilestoneMarker"
+                class="milestone-detail-content"
+              >
+                <div class="detail-hero">
+                  <span class="hero-emoji">
+                    {{ selectedMilestoneMarker.emoji }}
+                  </span>
+                  <h3>{{ selectedMilestoneMarker.title }}</h3>
+                  <p class="hero-month">
+                    通常在 {{ selectedMilestoneMarker.month }} 个月达成
+                  </p>
+                </div>
+                <div class="detail-section">
+                  <h4>📌 发育意义</h4>
+                  <p>{{ selectedMilestoneMarker.significance }}</p>
+                </div>
+                <div class="detail-section">
+                  <h4>💡 促进建议</h4>
+                  <ul class="suggestion-list">
+                    <li
+                      v-for="(tip, idx) in selectedMilestoneMarker.tips"
+                      :key="idx"
+                    >
+                      {{ tip }}
+                    </li>
+                  </ul>
+                </div>
+                <div class="detail-section">
+                  <h4>⚠️ 注意事项</h4>
+                  <p>{{ selectedMilestoneMarker.caution }}</p>
+                </div>
+              </div>
+            </el-dialog>
+
+            <!-- 能力发展报告弹窗 -->
+            <el-dialog
+              v-model="abilityReportVisible"
+              title="📊 能力发展报告"
+              width="95%"
+              class="ability-report-dialog"
+            >
+              <div class="ability-report-content">
+                <div class="report-header">
+                  <div class="report-baby-info">
+                    <span class="baby-avatar">👶</span>
+                    <div class="baby-details">
+                      <h3>{{ babyInfo.name || '宝宝' }}的能力发展报告</h3>
+                      <p>
+                        {{ monthData?.month || 0 }}月龄 · 生成时间：{{
+                          new Date().toLocaleDateString()
+                        }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 五维能力雷达概览 -->
+                <div class="report-section">
+                  <h4>🎯 五维能力概览</h4>
+                  <div class="ability-radar-summary">
+                    <div
+                      v-for="(ability, key) in abilityReportData"
+                      :key="key"
+                      class="ability-bar-item"
+                    >
+                      <div class="ability-bar-header">
+                        <span class="ability-name">{{ ability.name }}</span>
+                        <span class="ability-score">{{ ability.score }}分</span>
+                      </div>
+                      <div class="ability-bar-container">
+                        <div class="ability-bar-bg"></div>
+                        <div
+                          class="ability-bar-fill"
+                          :style="{
+                            width: ability.score + '%',
+                            background: ability.color,
+                          }"
+                        ></div>
+                        <div
+                          class="ability-bar-p50"
+                          :style="{ left: ability.p50 + '%' }"
+                        ></div>
+                      </div>
+                      <div class="ability-bar-footer">
+                        <span :class="['ability-status', ability.statusClass]">
+                          {{ ability.status }}
+                        </span>
+                        <span class="ability-diff">
+                          vs P50: {{ ability.diff }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 发育建议 -->
+                <div class="report-section">
+                  <h4>💡 个性化发育建议</h4>
+                  <div class="advice-cards">
+                    <div
+                      v-for="(advice, idx) in developmentAdvices"
+                      :key="idx"
+                      class="advice-card"
+                      :class="advice.type"
+                    >
+                      <span class="advice-icon">{{ advice.icon }}</span>
+                      <div class="advice-content">
+                        <h5>{{ advice.title }}</h5>
+                        <p>{{ advice.content }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 下月预期 -->
+                <div class="report-section">
+                  <h4>🚀 下月发展预期</h4>
+                  <div class="next-month-expectations">
+                    <div
+                      v-for="(exp, idx) in nextMonthExpectations"
+                      :key="idx"
+                      class="expectation-item"
+                    >
+                      <span class="exp-icon">{{ exp.icon }}</span>
+                      <span class="exp-text">{{ exp.text }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <template #footer>
+                <div class="report-actions">
+                  <el-button @click="abilityReportVisible = false">
+                    关闭
+                  </el-button>
+                  <el-button type="success" @click="shareAbilityReport">
+                    <el-icon><Share /></el-icon>
+                    分享报告
+                  </el-button>
+                  <el-button type="primary" @click="downloadAbilityReport">
+                    <el-icon><Download /></el-icon>
+                    保存报告
+                  </el-button>
+                </div>
+              </template>
+            </el-dialog>
 
             <div class="milestones-grid">
               <div
@@ -3122,9 +3414,266 @@ const shareReport = () => {
 }
 
 // 📈 能力发展趋势图相关
-const selectedAbilityType = ref<'gross' | 'fine' | 'cognitive' | 'language'>(
-  'gross',
-)
+const selectedAbilityType = ref<
+  'gross' | 'fine' | 'cognitive' | 'language' | 'social'
+>('gross')
+
+// 里程碑详情弹窗
+const milestoneDetailVisible = ref(false)
+const selectedMilestoneMarker = ref<{
+  title: string
+  emoji: string
+  month: number
+  significance: string
+  tips: string[]
+  caution: string
+} | null>(null)
+
+// 能力发展报告弹窗
+const abilityReportVisible = ref(false)
+
+// 发育标准百分位曲线数据（基于WHO标准模拟）
+const percentileData = computed(() => {
+  // P3（偏低）、P50（中位）、P97（偏高）百分位数据
+  const standards: Record<
+    string,
+    { p3: number[]; p50: number[]; p97: number[] }
+  > = {
+    gross: {
+      p3: [10, 20, 32, 45, 55, 62, 68, 73, 77, 80, 83, 86, 88],
+      p50: [20, 35, 50, 65, 75, 80, 85, 88, 90, 92, 94, 96, 100],
+      p97: [30, 48, 65, 80, 88, 92, 95, 97, 98, 99, 99, 100, 100],
+    },
+    fine: {
+      p3: [8, 15, 25, 38, 48, 55, 62, 68, 73, 77, 81, 85, 88],
+      p50: [15, 25, 40, 55, 65, 72, 78, 82, 86, 89, 92, 95, 98],
+      p97: [25, 40, 58, 72, 82, 88, 92, 95, 97, 98, 99, 100, 100],
+    },
+    cognitive: {
+      p3: [5, 12, 22, 35, 45, 52, 58, 64, 70, 75, 79, 83, 87],
+      p50: [10, 22, 38, 52, 62, 70, 76, 81, 85, 88, 91, 94, 97],
+      p97: [20, 35, 55, 70, 80, 86, 90, 93, 95, 97, 98, 99, 100],
+    },
+    language: {
+      p3: [2, 8, 15, 28, 40, 50, 58, 65, 71, 76, 80, 84, 88],
+      p50: [5, 15, 28, 42, 55, 65, 72, 78, 83, 87, 90, 93, 96],
+      p97: [15, 28, 45, 60, 72, 80, 86, 90, 93, 95, 97, 98, 100],
+    },
+    social: {
+      p3: [5, 12, 20, 32, 42, 50, 56, 62, 68, 73, 78, 82, 86],
+      p50: [12, 22, 35, 48, 58, 66, 73, 79, 84, 88, 91, 94, 97],
+      p97: [22, 38, 52, 65, 75, 82, 88, 92, 95, 97, 98, 99, 100],
+    },
+  }
+  return standards[selectedAbilityType.value] || standards.gross
+})
+
+// 关键里程碑事件数据
+const keyMilestoneEvents = computed(() => {
+  const events: Record<
+    string,
+    Array<{
+      month: number
+      title: string
+      emoji: string
+      significance: string
+      tips: string[]
+      caution: string
+    }>
+  > = {
+    gross: [
+      {
+        month: 2,
+        title: '抬头稳定',
+        emoji: '👶',
+        significance: '颈部肌肉发育成熟的标志，为后续翻身、坐立打下基础。',
+        tips: ['多进行俯卧练习', '用玩具引导宝宝抬头', '每次练习2-3分钟'],
+        caution: '练习时注意安全，避免宝宝疲劳。',
+      },
+      {
+        month: 4,
+        title: '翻身',
+        emoji: '🔄',
+        significance: '全身协调能力的里程碑，标志着主动运动能力的开始。',
+        tips: [
+          '在床上放置吸引物引导翻身',
+          '帮助宝宝体验翻身感觉',
+          '多鼓励尝试',
+        ],
+        caution: '翻身后注意防止坠床。',
+      },
+      {
+        month: 6,
+        title: '独坐',
+        emoji: '🪑',
+        significance: '核心肌群发育成熟，视野开阔促进认知发展。',
+        tips: ['先用靠垫辅助坐立', '玩具引导保持平衡', '循序渐进增加时间'],
+        caution: '周围放置软垫防止摔倒。',
+      },
+      {
+        month: 8,
+        title: '开始爬行',
+        emoji: '🐛',
+        significance: '大运动发展的重要里程碑，促进大脑左右脑协调。',
+        tips: ['提供安全的爬行空间', '用玩具引导前进', '多进行亲子爬行游戏'],
+        caution: '确保环境安全无尖锐物品。',
+      },
+      {
+        month: 10,
+        title: '能独站',
+        emoji: '🧍',
+        significance: '下肢力量和平衡能力的重要发展，为行走做准备。',
+        tips: ['扶着家具站立练习', '鼓励蹲起动作', '增强腿部力量'],
+        caution: '练习时家长要在旁保护。',
+      },
+      {
+        month: 12,
+        title: '独立行走',
+        emoji: '🚶',
+        significance: '运动发育的重大里程碑，标志着独立探索能力大幅提升。',
+        tips: ['提供安全学步环境', '牵手练习走路', '不要过度依赖学步车'],
+        caution: '初学走路易摔跤，做好防护。',
+      },
+    ],
+    fine: [
+      {
+        month: 3,
+        title: '手能握拳张开',
+        emoji: '✋',
+        significance: '精细动作发展的开始，为抓握物品做准备。',
+        tips: ['轻触宝宝手掌刺激', '提供不同质感的物品触摸', '多做手指操'],
+        caution: '注意物品卫生和安全。',
+      },
+      {
+        month: 5,
+        title: '主动抓握',
+        emoji: '🤏',
+        significance: '手眼协调能力发展的重要标志。',
+        tips: ['提供易抓握的玩具', '引导宝宝抓取物品', '多进行抓握游戏'],
+        caution: '避免小零件防止误吞。',
+      },
+      {
+        month: 8,
+        title: '捏取小物',
+        emoji: '👌',
+        significance: '拇指和食指对捏能力发展，精细动作更加精准。',
+        tips: ['提供安全的小颗粒食物练习', '捡豆子游戏', '串珠游戏'],
+        caution: '严密看护防止误吞。',
+      },
+      {
+        month: 12,
+        title: '涂鸦画线',
+        emoji: '✏️',
+        significance: '手部精细控制能力成熟，创造力萌芽。',
+        tips: ['提供安全蜡笔和画纸', '鼓励自由涂鸦', '亲子共同创作'],
+        caution: '使用无毒材料。',
+      },
+    ],
+    cognitive: [
+      {
+        month: 4,
+        title: '认识主要照顾者',
+        emoji: '👨‍👩‍👧',
+        significance: '社会认知发展的开始，建立安全依恋关系。',
+        tips: ['增加亲子互动时间', '固定照顾者', '建立安全感'],
+        caution: '避免频繁更换照顾者。',
+      },
+      {
+        month: 6,
+        title: '物体恒存概念萌芽',
+        emoji: '🔍',
+        significance: '认知发展的重要里程碑，理解物品不消失。',
+        tips: ['玩躲猫猫游戏', '藏找玩具游戏', '盖布找物游戏'],
+        caution: '游戏要有趣不要吓到宝宝。',
+      },
+      {
+        month: 9,
+        title: '因果关系理解',
+        emoji: '💡',
+        significance: '逻辑思维萌芽，理解行为会产生结果。',
+        tips: ['按钮发声玩具', '开关灯游戏', '敲击乐器'],
+        caution: '鼓励探索但注意安全。',
+      },
+      {
+        month: 12,
+        title: '简单指令理解',
+        emoji: '👂',
+        significance: '语言理解能力和执行能力的重要发展。',
+        tips: ['给简单指令如"给妈妈"', '配合手势说话', '多重复关键词'],
+        caution: '指令要简短清晰。',
+      },
+    ],
+    language: [
+      {
+        month: 2,
+        title: '咿呀学语',
+        emoji: '🗣️',
+        significance: '语言发展的开始，发声器官开始练习。',
+        tips: ['多和宝宝说话', '模仿宝宝发声', '唱儿歌'],
+        caution: '回应要积极鼓励发声。',
+      },
+      {
+        month: 6,
+        title: '发辅音',
+        emoji: '💬',
+        significance: '语言能力进步，能发出更多种类的声音。',
+        tips: ['重复简单音节ba、ma', '看嘴型学习', '多进行语言互动'],
+        caution: '不要纠正，鼓励为主。',
+      },
+      {
+        month: 9,
+        title: '叫爸爸妈妈',
+        emoji: '👪',
+        significance: '有意义发声的开始，语言理解和表达的重要突破。',
+        tips: ['强化爸爸妈妈的称呼', '指认练习', '多鼓励发声'],
+        caution: '要有耐心，每个宝宝进度不同。',
+      },
+      {
+        month: 12,
+        title: '说2-3个词',
+        emoji: '📖',
+        significance: '词汇积累开始，语言表达能力明显进步。',
+        tips: ['指物说名', '看绘本学词汇', '日常描述动作物品'],
+        caution: '创造丰富的语言环境。',
+      },
+    ],
+    social: [
+      {
+        month: 2,
+        title: '社交微笑',
+        emoji: '😊',
+        significance: '社交情感发展的重要标志，能对人微笑回应。',
+        tips: ['多对宝宝微笑', '表情夸张互动', '眼神交流'],
+        caution: '真诚温暖的互动最重要。',
+      },
+      {
+        month: 5,
+        title: '认生期开始',
+        emoji: '😟',
+        significance: '区分熟悉与陌生人，依恋关系建立的表现。',
+        tips: ['给宝宝安全感', '不强迫接触陌生人', '循序渐进社交'],
+        caution: '尊重宝宝的情感需求。',
+      },
+      {
+        month: 8,
+        title: '分离焦虑',
+        emoji: '😢',
+        significance: '依恋关系深化的表现，对分离有强烈反应。',
+        tips: ['建立规律的告别仪式', '短时间分离练习', '给予安全物品'],
+        caution: '不要偷偷离开，会加重焦虑。',
+      },
+      {
+        month: 12,
+        title: '社交性微笑和招手',
+        emoji: '👋',
+        significance: '社交技能丰富，能主动进行社交互动。',
+        tips: ['示范招手再见', '鼓励社交互动', '参与同龄互动'],
+        caution: '尊重宝宝的社交节奏。',
+      },
+    ],
+  }
+  return events[selectedAbilityType.value] || events.gross
+})
 
 // 模拟历史打卡数据（实际应从store获取）
 const abilityHistoryData = computed(() => {
@@ -3190,6 +3739,21 @@ const abilityHistoryData = computed(() => {
       11: 93,
       12: 96,
     },
+    social: {
+      0: 12,
+      1: 22,
+      2: 35,
+      3: 48,
+      4: 58,
+      5: 66,
+      6: 73,
+      7: 79,
+      8: 84,
+      9: 88,
+      10: 91,
+      11: 94,
+      12: 97,
+    },
   }
 
   // 生成从0到当前月龄的数据点
@@ -3213,17 +3777,17 @@ const abilityHistoryData = computed(() => {
   return data
 })
 
-// 趋势数据点坐标
+// 趋势数据点坐标（适配新图表尺寸）
 const trendDataPoints = computed(() => {
   const data = abilityHistoryData.value
   const currentMonth = monthData.value?.month ?? 0
-  const chartWidth = 280
-  const chartHeight = 120
-  const padding = 30
+  const chartWidth = 310 // 从35到345
+  const chartHeight = 155 // 从20到175
+  const paddingLeft = 35
 
   return data.map((item, idx) => ({
-    x: padding + (idx * chartWidth) / Math.max(data.length - 1, 1),
-    y: 15 + ((100 - item.value) * chartHeight) / 100,
+    x: paddingLeft + (idx * chartWidth) / Math.max(data.length - 1, 1),
+    y: 20 + ((100 - item.value) * chartHeight) / 100,
     month: item.month,
     value: item.value,
     isCurrent: item.month === currentMonth,
@@ -3245,7 +3809,7 @@ const trendAreaPath = computed(() => {
 
   const firstX = points[0]?.x ?? 0
   const lastX = points[points.length - 1]?.x ?? 0
-  const bottomY = 135
+  const bottomY = 175
 
   let path = `M ${firstX} ${bottomY}`
   points.forEach((p) => {
@@ -3256,27 +3820,505 @@ const trendAreaPath = computed(() => {
   return path
 })
 
-// 趋势分析总结
-const abilityTrendSummary = computed(() => {
+// 百分位曲线路径生成函数
+const generatePercentilePath = (percentileArray: number[]) => {
+  const data = abilityHistoryData.value
+  if (data.length < 2) return ''
+
+  const chartWidth = 310
+  const chartHeight = 155
+  const paddingLeft = 35
+
+  return data
+    .map((item, idx) => {
+      const pValue = percentileArray[item.month] ?? 50
+      const x = paddingLeft + (idx * chartWidth) / Math.max(data.length - 1, 1)
+      const y = 20 + ((100 - pValue) * chartHeight) / 100
+      return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
+    })
+    .join(' ')
+}
+
+// P3曲线路径
+const p3CurvePath = computed(() =>
+  generatePercentilePath(percentileData.value?.p3 ?? []),
+)
+
+// P50曲线路径
+const p50CurvePath = computed(() =>
+  generatePercentilePath(percentileData.value?.p50 ?? []),
+)
+
+// P97曲线路径
+const p97CurvePath = computed(() =>
+  generatePercentilePath(percentileData.value?.p97 ?? []),
+)
+
+// P50区域填充路径
+const p50AreaPath = computed(() => {
+  const data = abilityHistoryData.value
+  if (data.length < 2) return ''
+
+  const chartWidth = 310
+  const chartHeight = 155
+  const paddingLeft = 35
+  const bottomY = 175
+
+  const points = data.map((item, idx) => {
+    const pValue = percentileData.value?.p50?.[item.month] ?? 50
+    const x = paddingLeft + (idx * chartWidth) / Math.max(data.length - 1, 1)
+    const y = 20 + ((100 - pValue) * chartHeight) / 100
+    return { x, y }
+  })
+
+  const firstX = points[0]?.x ?? 0
+  const lastX = points[points.length - 1]?.x ?? 0
+
+  let path = `M ${firstX} ${bottomY}`
+  points.forEach((p) => {
+    path += ` L ${p.x} ${p.y}`
+  })
+  path += ` L ${lastX} ${bottomY} Z`
+
+  return path
+})
+
+// 关键里程碑标记点
+const keyMilestoneMarkers = computed(() => {
+  const data = abilityHistoryData.value
+  const events = keyMilestoneEvents.value
+  const chartWidth = 310
+  const chartHeight = 155
+  const paddingLeft = 35
+
+  const markers: Array<{
+    x: number
+    y: number
+    month: number
+    title: string
+    emoji: string
+    significance: string
+    tips: string[]
+    caution: string
+  }> = []
+
+  events?.forEach((event) => {
+    const dataPoint = data.find((d) => d.month === event.month)
+    if (dataPoint) {
+      const idx = data.findIndex((d) => d.month === event.month)
+      const x = paddingLeft + (idx * chartWidth) / Math.max(data.length - 1, 1)
+      const y = 20 + ((100 - dataPoint.value) * chartHeight) / 100
+      markers.push({
+        x,
+        y,
+        month: event.month,
+        title: event.title,
+        emoji: event.emoji,
+        significance: event.significance,
+        tips: event.tips,
+        caution: event.caution,
+      })
+    }
+  })
+
+  return markers
+})
+
+// 显示里程碑详情
+const showMilestoneDetail = (
+  milestone: typeof keyMilestoneMarkers.value[0],
+) => {
+  selectedMilestoneMarker.value = milestone
+  milestoneDetailVisible.value = true
+}
+
+// 发育评估摘要
+const developmentAssessment = computed(() => {
   const abilityNames: Record<string, string> = {
     gross: '大运动',
     fine: '精细动作',
     cognitive: '认知能力',
     language: '语言能力',
+    social: '社交情感',
   }
   const data = abilityHistoryData.value
   const currentMonth = monthData.value?.month ?? 0
   const currentData = data.find((d) => d.month === currentMonth)
-  const value = currentData?.value ?? 0
+  const babyValue = currentData?.value ?? 0
+  const p50Value = percentileData.value?.p50?.[currentMonth] ?? 50
+  const diff = babyValue - p50Value
 
-  let status = '发展正常'
-  if (value >= 85) status = '发展优秀'
-  else if (value >= 70) status = '发展良好'
-  else if (value < 50) status = '需要加强训练'
+  let level = '正常发展'
+  let icon = '✅'
+  let tagType: 'success' | 'warning' | 'danger' | 'info' = 'success'
+  let description = ''
+  let diffClass = ''
+  let diffText = ''
 
-  return `${
-    abilityNames[selectedAbilityType.value]
-  }：${status}（完成度${Math.round(value)}%）`
+  if (diff >= 15) {
+    level = '发展优秀'
+    icon = '🌟'
+    tagType = 'success'
+    description = `宝宝的${
+      abilityNames[selectedAbilityType.value]
+    }发展明显超过同龄平均水平，继续保持！`
+    diffClass = 'positive'
+    diffText = `+${Math.round(diff)}%`
+  } else if (diff >= 5) {
+    level = '发展良好'
+    icon = '👍'
+    tagType = 'success'
+    description = `宝宝的${
+      abilityNames[selectedAbilityType.value]
+    }发展略高于同龄平均水平，表现不错！`
+    diffClass = 'positive'
+    diffText = `+${Math.round(diff)}%`
+  } else if (diff >= -5) {
+    level = '正常发展'
+    icon = '✅'
+    tagType = 'info'
+    description = `宝宝的${
+      abilityNames[selectedAbilityType.value]
+    }发展与同龄平均水平相当，属于正常范围。`
+    diffClass = 'neutral'
+    diffText = diff >= 0 ? `+${Math.round(diff)}%` : `${Math.round(diff)}%`
+  } else if (diff >= -15) {
+    level = '稍慢发展'
+    icon = '💪'
+    tagType = 'warning'
+    description = `宝宝的${
+      abilityNames[selectedAbilityType.value]
+    }发展稍低于同龄平均水平，建议加强针对性训练。`
+    diffClass = 'negative'
+    diffText = `${Math.round(diff)}%`
+  } else {
+    level = '需要关注'
+    icon = '⚠️'
+    tagType = 'danger'
+    description = `宝宝的${
+      abilityNames[selectedAbilityType.value]
+    }发展明显低于同龄平均水平，建议咨询专业医生。`
+    diffClass = 'negative'
+    diffText = `${Math.round(diff)}%`
+  }
+
+  return {
+    title: abilityNames[selectedAbilityType.value],
+    icon,
+    level,
+    tagType,
+    description,
+    currentValue: Math.round(babyValue),
+    p50Value: Math.round(p50Value),
+    diff: diffText,
+    diffClass,
+  }
+})
+
+// 能力发展报告数据
+const abilityReportData = computed(() => {
+  const currentMonth = monthData.value?.month ?? 0
+  const abilities = [
+    { key: 'gross', name: '大运动', color: '#667eea' },
+    { key: 'fine', name: '精细动作', color: '#f59e0b' },
+    { key: 'cognitive', name: '认知能力', color: '#10b981' },
+    { key: 'language', name: '语言能力', color: '#ec4899' },
+    { key: 'social', name: '社交情感', color: '#8b5cf6' },
+  ]
+
+  const historyMap: Record<string, Record<number, number>> = {
+    gross: {
+      0: 20,
+      1: 35,
+      2: 50,
+      3: 65,
+      4: 75,
+      5: 80,
+      6: 85,
+      7: 88,
+      8: 90,
+      9: 92,
+      10: 94,
+      11: 96,
+      12: 100,
+    },
+    fine: {
+      0: 15,
+      1: 25,
+      2: 40,
+      3: 55,
+      4: 65,
+      5: 72,
+      6: 78,
+      7: 82,
+      8: 86,
+      9: 89,
+      10: 92,
+      11: 95,
+      12: 98,
+    },
+    cognitive: {
+      0: 10,
+      1: 22,
+      2: 38,
+      3: 52,
+      4: 62,
+      5: 70,
+      6: 76,
+      7: 81,
+      8: 85,
+      9: 88,
+      10: 91,
+      11: 94,
+      12: 97,
+    },
+    language: {
+      0: 5,
+      1: 15,
+      2: 28,
+      3: 42,
+      4: 55,
+      5: 65,
+      6: 72,
+      7: 78,
+      8: 83,
+      9: 87,
+      10: 90,
+      11: 93,
+      12: 96,
+    },
+    social: {
+      0: 12,
+      1: 22,
+      2: 35,
+      3: 48,
+      4: 58,
+      5: 66,
+      6: 73,
+      7: 79,
+      8: 84,
+      9: 88,
+      10: 91,
+      11: 94,
+      12: 97,
+    },
+  }
+
+  const p50Map: Record<string, number[]> = {
+    gross: [20, 35, 50, 65, 75, 80, 85, 88, 90, 92, 94, 96, 100],
+    fine: [15, 25, 40, 55, 65, 72, 78, 82, 86, 89, 92, 95, 98],
+    cognitive: [10, 22, 38, 52, 62, 70, 76, 81, 85, 88, 91, 94, 97],
+    language: [5, 15, 28, 42, 55, 65, 72, 78, 83, 87, 90, 93, 96],
+    social: [12, 22, 35, 48, 58, 66, 73, 79, 84, 88, 91, 94, 97],
+  }
+
+  return abilities.reduce((acc, ability) => {
+    const score = historyMap[ability.key]?.[currentMonth] ?? 50
+    const p50 = p50Map[ability.key]?.[currentMonth] ?? 50
+    const diff = score - p50
+    let status = '正常'
+    let statusClass = 'normal'
+    if (diff >= 10) {
+      status = '优秀'
+      statusClass = 'excellent'
+    } else if (diff >= 0) {
+      status = '良好'
+      statusClass = 'good'
+    } else if (diff >= -10) {
+      status = '正常'
+      statusClass = 'normal'
+    } else {
+      status = '待提升'
+      statusClass = 'needs-work'
+    }
+
+    acc[ability.key] = {
+      name: ability.name,
+      score,
+      p50,
+      diff: diff >= 0 ? `+${diff}` : `${diff}`,
+      status,
+      statusClass,
+      color: ability.color,
+    }
+    return acc
+  }, {} as Record<string, { name: string; score: number; p50: number; diff: string; status: string; statusClass: string; color: string }>)
+})
+
+// 发育建议
+const developmentAdvices = computed(() => {
+  const report = abilityReportData.value
+  const advices: Array<{
+    icon: string
+    title: string
+    content: string
+    type: string
+  }> = []
+
+  // 找出需要加强的领域
+  Object.entries(report).forEach(([key, data]) => {
+    if (data.statusClass === 'needs-work') {
+      const adviceMap: Record<
+        string,
+        { icon: string; title: string; content: string }
+      > = {
+        gross: {
+          icon: '🏃',
+          title: '大运动发展建议',
+          content:
+            '建议增加俯卧时间，多进行爬行、翻身练习，户外活动促进大运动发展。',
+        },
+        fine: {
+          icon: '✋',
+          title: '精细动作发展建议',
+          content:
+            '可以多玩抓握玩具、撕纸、捏橡皮泥等活动，锻炼手部精细控制能力。',
+        },
+        cognitive: {
+          icon: '🧠',
+          title: '认知能力发展建议',
+          content: '多玩因果关系玩具、躲猫猫游戏、形状配对等，促进认知发展。',
+        },
+        language: {
+          icon: '💬',
+          title: '语言能力发展建议',
+          content: '建议多进行亲子阅读、唱儿歌、日常对话，创造丰富的语言环境。',
+        },
+        social: {
+          icon: '👥',
+          title: '社交情感发展建议',
+          content: '增加亲子互动时间，参与同龄宝宝活动，建立安全依恋关系。',
+        },
+      }
+      if (adviceMap[key]) {
+        advices.push({ ...adviceMap[key], type: 'warning' })
+      }
+    }
+  })
+
+  // 表扬优秀领域
+  Object.entries(report).forEach(([key, data]) => {
+    if (data.statusClass === 'excellent') {
+      advices.push({
+        icon: '🌟',
+        title: `${data.name}表现优秀`,
+        content: `宝宝在${data.name}方面发展很棒！继续保持现有的训练和互动方式。`,
+        type: 'success',
+      })
+    }
+  })
+
+  if (advices.length === 0) {
+    advices.push({
+      icon: '✅',
+      title: '整体发展良好',
+      content:
+        '宝宝各方面发展都在正常范围内，继续保持规律的作息和丰富的亲子互动。',
+      type: 'info',
+    })
+  }
+
+  return advices
+})
+
+// 下月发展预期
+const nextMonthExpectations = computed(() => {
+  const currentMonth = monthData.value?.month ?? 0
+  const nextMonth = currentMonth + 1
+
+  const expectationsMap: Record<
+    number,
+    Array<{ icon: string; text: string }>
+  > = {
+    1: [
+      { icon: '👀', text: '追视能力更加稳定' },
+      { icon: '😊', text: '社交微笑出现' },
+    ],
+    2: [
+      { icon: '🎵', text: '对声音反应更敏感' },
+      { icon: '👋', text: '手部抓握反射' },
+    ],
+    3: [
+      { icon: '🔄', text: '开始尝试翻身' },
+      { icon: '🗣️', text: '咿呀学语增多' },
+    ],
+    4: [
+      { icon: '✋', text: '主动抓握物品' },
+      { icon: '😄', text: '笑出声音' },
+    ],
+    5: [
+      { icon: '🪑', text: '扶坐更稳定' },
+      { icon: '🍼', text: '准备添加辅食' },
+    ],
+    6: [
+      { icon: '🥄', text: '学习吃辅食' },
+      { icon: '👶', text: '独坐能力发展' },
+    ],
+    7: [
+      { icon: '🐛', text: '爬行准备期' },
+      { icon: '💬', text: '发出更多辅音' },
+    ],
+    8: [
+      { icon: '🚀', text: '爬行能力提升' },
+      { icon: '👋', text: '模仿挥手再见' },
+    ],
+    9: [
+      { icon: '🧍', text: '扶站更稳' },
+      { icon: '👪', text: '叫爸爸妈妈' },
+    ],
+    10: [
+      { icon: '🚶', text: '扶走准备' },
+      { icon: '👂', text: '理解简单指令' },
+    ],
+    11: [
+      { icon: '👣', text: '独站尝试' },
+      { icon: '📖', text: '词汇理解增加' },
+    ],
+    12: [
+      { icon: '🎉', text: '独立行走' },
+      { icon: '🗣️', text: '说简单词语' },
+    ],
+    13: [
+      { icon: '🌟', text: '进入幼儿期' },
+      { icon: '🏃', text: '行走更加稳定' },
+    ],
+  }
+
+  return expectationsMap[nextMonth] || [{ icon: '🌈', text: '继续健康成长' }]
+})
+
+// 生成能力发展报告
+const generateAbilityReport = () => {
+  abilityReportVisible.value = true
+}
+
+// 分享能力报告
+const shareAbilityReport = () => {
+  if (navigator.share) {
+    navigator
+      .share({
+        title: `宝宝${monthData.value?.month}月龄能力发展报告`,
+        text: `🎉 ${babyInfo.value.name || '宝宝'}${
+          monthData.value?.month
+        }个月能力发展报告已生成！`,
+        url: window.location.href,
+      })
+      .catch(() => {})
+  } else {
+    ElMessage.info('请截图后分享至微信/朋友圈')
+  }
+}
+
+// 下载能力报告
+const downloadAbilityReport = () => {
+  ElMessage.success(
+    '📊 能力发展报告已保存！\n（实际项目需安装 html2canvas 库）',
+  )
+}
+
+// 趋势分析总结（保留兼容）
+const abilityTrendSummary = computed(() => {
+  return developmentAssessment.value.description
 })
 
 // 📚 学习资源推荐相关
@@ -5853,109 +6895,621 @@ watch(
   color: white !important;
 }
 
-/* 能力发展趋势图 */
+/* 能力发展趋势图 - 增强版 */
 .ability-trend-section {
   margin-top: 30px;
   padding: 0 20px;
 }
 
-.trend-card {
-  border-radius: 20px !important;
-  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-  border: 2px solid #ddd6fe;
-}
-
 .trend-header {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
   margin-bottom: 20px;
 }
 
-.trend-icon {
-  font-size: 28px;
-}
-
-.trend-title {
+.trend-header h4 {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: #5b21b6;
+  color: #303133;
 }
 
-.trend-chart-container {
+.trend-controls {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.trend-controls :deep(.el-radio-group) {
+  flex-wrap: nowrap;
+}
+
+.trend-controls :deep(.el-radio-button__inner) {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.trend-chart-enhanced {
   background: white;
   border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
-.trend-svg {
+.chart-svg-enhanced {
   width: 100%;
   height: auto;
   display: block;
 }
 
-.trend-grid-line {
-  stroke: #e5e7eb;
+.axis-label {
+  font-size: 10px;
+  fill: #9ca3af;
+  text-anchor: start;
+}
+
+.grid-line {
+  stroke: #f3f4f6;
   stroke-width: 1;
 }
 
-.trend-x-axis {
-  stroke: #d1d5db;
-  stroke-width: 2;
+.grid-line-base {
+  stroke: #e5e7eb;
+  stroke-width: 1.5;
 }
 
-.trend-area {
-  opacity: 0.3;
-}
-
-.trend-line {
+/* 百分位曲线样式 */
+.percentile-line {
   fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.percentile-line.p97 {
+  stroke: #ef4444;
+  stroke-dasharray: 6 4;
+  opacity: 0.7;
+}
+
+.percentile-line.p50 {
+  stroke: #22c55e;
+  stroke-width: 2.5;
+  opacity: 0.9;
+}
+
+.percentile-line.p3 {
+  stroke: #3b82f6;
+  stroke-dasharray: 6 4;
+  opacity: 0.7;
+}
+
+/* 宝宝数据线样式 */
+.baby-trend-line {
+  fill: none;
+  stroke: #667eea;
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.trend-dot {
+/* 数据点样式 */
+.data-point {
+  fill: #667eea;
   stroke: white;
   stroke-width: 2;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.trend-dot:hover {
-  transform: scale(1.3);
+.data-point.current {
+  fill: #ec4899;
+  r: 7;
+  filter: drop-shadow(0 2px 4px rgba(236, 72, 153, 0.4));
 }
 
-.trend-x-label {
-  font-size: 11px;
+.x-label {
+  font-size: 10px;
   fill: #6b7280;
   text-anchor: middle;
 }
 
-.trend-legend {
+/* 关键里程碑标记 */
+.milestone-marker-line {
+  stroke: #f59e0b;
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+  opacity: 0.6;
+}
+
+.milestone-marker {
+  fill: #fef3c7;
+  stroke: #f59e0b;
+  stroke-width: 2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.milestone-marker:hover {
+  fill: #fde68a;
+  transform: scale(1.2);
+}
+
+.milestone-marker-text {
+  font-size: 10px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+/* 图例增强 */
+.trend-legend-enhanced {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.legend-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.legend-items {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
+  gap: 12px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.legend-line {
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.legend-line.baby {
+  background: #667eea;
+}
+
+.legend-line.p97 {
+  background: #ef4444;
+  background: repeating-linear-gradient(
+    90deg,
+    #ef4444 0,
+    #ef4444 4px,
+    transparent 4px,
+    transparent 7px
+  );
+}
+
+.legend-line.p50 {
+  background: #22c55e;
+}
+
+.legend-line.p3 {
+  background: #3b82f6;
+  background: repeating-linear-gradient(
+    90deg,
+    #3b82f6 0,
+    #3b82f6 4px,
+    transparent 4px,
+    transparent 7px
+  );
+}
+
+.legend-marker {
+  font-size: 12px;
+}
+
+/* 发育评估摘要 */
+.development-assessment {
+  margin-top: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 14px;
+  border: 1px solid #bbf7d0;
+}
+
+.assessment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.assessment-icon {
+  font-size: 20px;
+}
+
+.assessment-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #166534;
+}
+
+.assessment-desc {
+  margin: 0 0 14px 0;
+  font-size: 14px;
+  color: #15803d;
+  line-height: 1.6;
+}
+
+.assessment-comparison {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.comparison-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 10px;
+  min-width: 80px;
+}
+
+.comparison-label {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.comparison-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.comparison-value.standard {
+  color: #22c55e;
+}
+
+.comparison-value.positive {
+  color: #22c55e;
+}
+
+.comparison-value.neutral {
+  color: #6b7280;
+}
+
+.comparison-value.negative {
+  color: #f59e0b;
+}
+
+/* 生成报告按钮 */
+.trend-report-action {
+  margin-top: 16px;
+  text-align: center;
+}
+
+/* 里程碑详情弹窗 */
+.milestone-detail-dialog :deep(.el-dialog) {
+  border-radius: 20px;
+}
+
+.milestone-detail-dialog :deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  padding: 16px 20px;
+  margin: 0;
+}
+
+.milestone-detail-dialog :deep(.el-dialog__title) {
+  color: #92400e;
+  font-weight: 700;
+}
+
+.milestone-detail-content {
+  padding: 20px;
+}
+
+.milestone-detail-content .detail-hero {
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.milestone-detail-content .hero-emoji {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.milestone-detail-content .detail-hero h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: #78350f;
+}
+
+.milestone-detail-content .hero-month {
+  margin: 0;
+  font-size: 14px;
+  color: #92400e;
+}
+
+.milestone-detail-content .detail-section {
+  margin-bottom: 16px;
+}
+
+.milestone-detail-content .detail-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #78350f;
+}
+
+.milestone-detail-content .detail-section p {
+  margin: 0;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.suggestion-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.suggestion-list li {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.8;
+}
+
+/* 能力发展报告弹窗 */
+.ability-report-dialog :deep(.el-dialog) {
+  border-radius: 20px;
+}
+
+.ability-report-dialog :deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 16px 20px;
+  margin: 0;
+}
+
+.ability-report-dialog :deep(.el-dialog__title) {
+  color: white;
+  font-weight: 700;
+}
+
+.ability-report-dialog :deep(.el-dialog__headerbtn .el-dialog__close) {
+  color: white;
+}
+
+.ability-report-content {
+  padding: 20px;
+}
+
+.report-header {
+  margin-bottom: 24px;
+}
+
+.report-baby-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.report-baby-info .baby-avatar {
+  font-size: 48px;
+}
+
+.baby-details h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: #303133;
+}
+
+.baby-details p {
+  margin: 0;
   font-size: 13px;
+  color: #909399;
+}
+
+.report-section {
+  margin-bottom: 24px;
+}
+
+.report-section h4 {
+  margin: 0 0 14px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+/* 能力条形图 */
+.ability-radar-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ability-bar-item {
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.ability-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ability-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.ability-score {
+  font-size: 16px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.ability-bar-container {
+  position: relative;
+  height: 10px;
+  margin-bottom: 6px;
+}
+
+.ability-bar-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #e5e7eb;
+  border-radius: 5px;
+}
+
+.ability-bar-fill {
+  position: absolute;
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+.ability-bar-p50 {
+  position: absolute;
+  width: 2px;
+  height: 16px;
+  top: -3px;
+  background: #22c55e;
+  border-radius: 1px;
+}
+
+.ability-bar-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ability-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.ability-status.excellent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ability-status.good {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.ability-status.normal {
+  background: #f3f4f6;
   color: #4b5563;
 }
 
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
+.ability-status.needs-work {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ability-diff {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* 发育建议卡片 */
+.advice-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.advice-card {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid;
+}
+
+.advice-card.warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.advice-card.success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.advice-card.info {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.advice-icon {
+  font-size: 24px;
+}
+
+.advice-content h5 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.advice-content p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* 下月预期 */
+.next-month-expectations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.expectation-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 20px;
+  border: 1px solid #bae6fd;
+}
+
+.exp-icon {
+  font-size: 18px;
+}
+
+.exp-text {
+  font-size: 13px;
+  color: #0369a1;
+  font-weight: 500;
+}
+
+.report-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
 
 /* 学习资源推荐 */
