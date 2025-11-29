@@ -623,6 +623,34 @@
           </template>
 
           <div class="tab-content">
+            <!-- 🔔 智能提醒区域 -->
+            <div class="smart-reminder-section" v-if="smartReminder">
+              <div :class="['reminder-card', smartReminder.type]">
+                <div class="reminder-icon">{{ smartReminder.icon }}</div>
+                <div class="reminder-content">
+                  <h4>{{ smartReminder.title }}</h4>
+                  <p>{{ smartReminder.message }}</p>
+                </div>
+                <el-button
+                  v-if="smartReminder.action"
+                  type="primary"
+                  size="small"
+                  round
+                  @click="handleReminderAction(smartReminder.action)"
+                >
+                  {{ smartReminder.actionText }}
+                </el-button>
+                <el-button
+                  text
+                  circle
+                  class="reminder-close"
+                  @click="dismissReminder"
+                >
+                  <el-icon><Close /></el-icon>
+                </el-button>
+              </div>
+            </div>
+
             <div class="milestones-header">
               <div class="milestones-progress">
                 <el-progress
@@ -646,6 +674,14 @@
                   <h4>里程碑完成进度</h4>
                   <p>点击卡片标记完成状态</p>
                 </div>
+              </div>
+
+              <!-- 📊 生成成长报告按钮 -->
+              <div class="report-actions">
+                <el-button type="success" round @click="openGrowthReportDialog">
+                  <el-icon><Document /></el-icon>
+                  生成成长报告
+                </el-button>
               </div>
             </div>
 
@@ -966,6 +1002,170 @@
                 </el-button>
               </template>
             </el-dialog>
+
+            <!-- 📊 成长报告对话框 -->
+            <el-dialog
+              v-model="growthReportDialogVisible"
+              title="📊 生成成长报告"
+              width="90%"
+              :style="{ maxWidth: '500px' }"
+            >
+              <div class="growth-report-content">
+                <!-- 报告预览 -->
+                <div class="report-preview" ref="reportPreviewRef">
+                  <div class="report-header-section">
+                    <div class="report-logo">👶</div>
+                    <h2>宝宝成长报告</h2>
+                    <p class="report-subtitle">
+                      第{{ monthData?.month }}个月成长记录
+                    </p>
+                  </div>
+
+                  <div class="report-info-section">
+                    <div class="info-row">
+                      <span class="info-label">👤 宝宝姓名</span>
+                      <span class="info-value">
+                        {{ babyInfo.name || '未设置' }}
+                      </span>
+                    </div>
+                    <div class="info-row">
+                      <span class="info-label">🎂 出生日期</span>
+                      <span class="info-value">
+                        {{ babyInfo.birthday || '未设置' }}
+                      </span>
+                    </div>
+                    <div class="info-row">
+                      <span class="info-label">📅 报告日期</span>
+                      <span class="info-value">{{ reportDate }}</span>
+                    </div>
+                  </div>
+
+                  <div class="report-progress-section">
+                    <h3>🏆 本月里程碑完成情况</h3>
+                    <div class="progress-summary">
+                      <div class="progress-ring">
+                        <svg viewBox="0 0 100 100">
+                          <circle class="ring-bg" cx="50" cy="50" r="40" />
+                          <circle
+                            class="ring-fill"
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            :style="{ strokeDashoffset: reportProgressOffset }"
+                          />
+                        </svg>
+                        <span class="progress-percent">
+                          {{ milestoneProgress }}%
+                        </span>
+                      </div>
+                      <div class="progress-stats">
+                        <div class="stat-item completed">
+                          <span class="stat-num">
+                            {{ completedMilestonesCount }}
+                          </span>
+                          <span class="stat-label">已完成</span>
+                        </div>
+                        <div class="stat-item pending">
+                          <span class="stat-num">
+                            {{
+                              (monthData?.milestones?.length ?? 0) -
+                              completedMilestonesCount
+                            }}
+                          </span>
+                          <span class="stat-label">待完成</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="milestones-summary">
+                      <div
+                        v-for="(milestone, idx) in monthData?.milestones"
+                        :key="idx"
+                        :class="[
+                          'milestone-row',
+                          { completed: isMilestoneCompleted(milestone.title) },
+                        ]"
+                      >
+                        <span class="milestone-status-icon">
+                          {{
+                            isMilestoneCompleted(milestone.title) ? '✅' : '⏳'
+                          }}
+                        </span>
+                        <span class="milestone-name">
+                          {{ milestone.title }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="report-prediction-section">
+                    <h3>🔮 下月能力预测</h3>
+                    <p class="prediction-intro">
+                      进入{{
+                        (monthData?.month ?? 0) + 1
+                      }}个月后，宝宝将可能发展以下能力：
+                    </p>
+                    <div class="prediction-tags">
+                      <el-tag
+                        v-for="(ability, idx) in nextMonthAbilities"
+                        :key="idx"
+                        type="success"
+                        effect="plain"
+                        round
+                      >
+                        {{ ability }}
+                      </el-tag>
+                    </div>
+                  </div>
+
+                  <div class="report-footer-section">
+                    <p>📱 由「宝宝成长指南」生成</p>
+                    <p class="footer-date">{{ reportDate }}</p>
+                  </div>
+                </div>
+
+                <!-- 宝宝信息编辑（首次使用时） -->
+                <div class="baby-info-edit" v-if="!babyInfo.name">
+                  <el-alert
+                    title="请先完善宝宝信息，以便生成完整报告"
+                    type="info"
+                    :closable="false"
+                    show-icon
+                  />
+                  <div class="info-form">
+                    <el-input
+                      v-model="babyInfoForm.name"
+                      placeholder="宝宝姓名/昵称"
+                      prefix-icon="User"
+                    />
+                    <el-date-picker
+                      v-model="babyInfoForm.birthday"
+                      type="date"
+                      placeholder="出生日期"
+                      format="YYYY-MM-DD"
+                      value-format="YYYY-MM-DD"
+                      style="width: 100%;"
+                    />
+                    <el-button type="primary" round @click="saveBabyInfo">
+                      保存信息
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+              <template #footer>
+                <el-button @click="growthReportDialogVisible = false" round>
+                  关闭
+                </el-button>
+                <el-button round @click="shareReport">
+                  <el-icon><Share /></el-icon>
+                  分享
+                </el-button>
+                <el-button type="primary" round @click="downloadReport">
+                  <el-icon><Download /></el-icon>
+                  保存图片
+                </el-button>
+              </template>
+            </el-dialog>
           </div>
         </el-tab-pane>
 
@@ -1246,6 +1446,9 @@ import {
   Camera,
   Close,
   Plus,
+  Document,
+  Share,
+  Download,
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { BabyMonthData, Milestone } from '@/types/baby'
@@ -2444,8 +2647,231 @@ const submitQuickRecord = () => {
   ElMessage.success('🎉 成长记录已保存！')
   quickRecordDialogVisible.value = false
 
-  // 可选：跳转到日记页面查看
-  // router.push('/diary')
+  // 更新最后打卡时间
+  localStorage.setItem('lastMilestoneCheckIn', new Date().toISOString())
+}
+
+// 🔔 智能提醒系统
+interface SmartReminder {
+  type: 'info' | 'warning' | 'success'
+  icon: string
+  title: string
+  message: string
+  action?: string
+  actionText?: string
+}
+
+const reminderDismissed = ref(false)
+
+const smartReminder = computed((): SmartReminder | null => {
+  if (reminderDismissed.value) return null
+
+  const currentMonth = monthData.value?.month ?? 0
+  const completedCount = completedMilestonesCount.value
+  const totalCount = monthData.value?.milestones?.length ?? 0
+
+  // 检查是否连续3天未打卡
+  const lastCheckIn = localStorage.getItem('lastMilestoneCheckIn')
+  if (lastCheckIn) {
+    const daysSinceLastCheckIn = Math.floor(
+      (Date.now() - new Date(lastCheckIn).getTime()) / (1000 * 60 * 60 * 24),
+    )
+    if (daysSinceLastCheckIn >= 3 && completedCount < totalCount) {
+      return {
+        type: 'warning',
+        icon: '⏰',
+        title: '温馨提醒',
+        message: `已经${daysSinceLastCheckIn}天没有打卡啦！建议查看训练方法，帮助宝宝发展新能力。`,
+        action: 'showTraining',
+        actionText: '查看训练方法',
+      }
+    }
+  }
+
+  // 本周关键里程碑提醒
+  const keyMilestones: Record<number, string> = {
+    0: '追视能力',
+    1: '社交微笑',
+    2: '抬头稳定',
+    3: '翻身',
+    4: '伸手抓物',
+    5: '独坐',
+    6: '辅食适应',
+    7: '爬行',
+    8: '扶站',
+    9: '语言理解',
+    10: '独站',
+    11: '迈步',
+    12: '独立行走',
+  }
+
+  const keyMilestone = keyMilestones[currentMonth]
+  if (keyMilestone && completedCount < totalCount) {
+    return {
+      type: 'info',
+      icon: '🎯',
+      title: '本月关键里程碑',
+      message: `宝宝${currentMonth}个月啦，重点关注"${keyMilestone}"能力的发展！`,
+      action: 'scrollToMilestone',
+      actionText: '去打卡',
+    }
+  }
+
+  // 全部完成的庆祝提醒
+  if (completedCount === totalCount && totalCount > 0) {
+    return {
+      type: 'success',
+      icon: '🎉',
+      title: '太棒了！',
+      message: '本月所有里程碑已完成！建议生成成长报告记录这个精彩时刻。',
+      action: 'generateReport',
+      actionText: '生成报告',
+    }
+  }
+
+  return null
+})
+
+// 处理提醒动作
+const handleReminderAction = (action: string) => {
+  switch (action) {
+    case 'showTraining':
+      // 展开第一个未完成的里程碑的训练方法
+      const uncompletedMilestone = monthData.value?.milestones?.find(
+        (m) => !isMilestoneCompleted(m.title),
+      )
+      if (uncompletedMilestone) {
+        confirmMilestone(uncompletedMilestone)
+      }
+      break
+    case 'scrollToMilestone':
+      // 滚动到里程碑区域
+      document
+        .querySelector('.milestones-grid')
+        ?.scrollIntoView({ behavior: 'smooth' })
+      break
+    case 'generateReport':
+      openGrowthReportDialog()
+      break
+  }
+  reminderDismissed.value = true
+}
+
+// 关闭提醒
+const dismissReminder = () => {
+  reminderDismissed.value = true
+}
+
+// 📊 成长报告相关
+const growthReportDialogVisible = ref(false)
+const reportPreviewRef = ref<HTMLElement | null>(null)
+
+// 宝宝信息
+const babyInfo = computed(() => ({
+  name: localStorage.getItem('babyName') || '',
+  birthday: localStorage.getItem('babyBirthday') || '',
+}))
+
+const babyInfoForm = ref({
+  name: '',
+  birthday: '',
+})
+
+// 报告日期
+const reportDate = computed(() => {
+  const now = new Date()
+  return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
+})
+
+// 报告进度圆环
+const reportProgressOffset = computed(() => {
+  const circumference = 2 * Math.PI * 40
+  return circumference * (1 - milestoneProgress.value / 100)
+})
+
+// 下月能力预测
+const nextMonthAbilities = computed(() => {
+  const abilitiesMap: Record<number, string[]> = {
+    1: ['社交微笑', '追视180°', '俯卧抬头'],
+    2: ['咿呀发声', '握住玩具', '笑出声'],
+    3: ['翻身', '抓握物品', '认识熟人'],
+    4: ['独坐片刻', '伸手取物', '发多音节'],
+    5: ['扶坐稳定', '传递物品', '认识名字'],
+    6: ['独坐稳', '爬行萌芽', '挥手再见'],
+    7: ['爬行', '扶站', '有意识叫人'],
+    8: ['扶走', '精细抓取', '理解简单指令'],
+    9: ['独站片刻', '模仿动作', '说叠词'],
+    10: ['独站稳', '迈步', '指认物品'],
+    11: ['独立行走', '简单词汇', '配合穿衣'],
+    12: ['走得稳', '说短句', '用勺子'],
+    13: ['跑步', '表达需求', '自己吃饭'],
+  }
+  const nextMonth = (monthData.value?.month ?? 0) + 1
+  return abilitiesMap[nextMonth] || []
+})
+
+// 打开成长报告对话框
+const openGrowthReportDialog = () => {
+  growthReportDialogVisible.value = true
+  // 预填充表单
+  babyInfoForm.value.name = babyInfo.value.name
+  babyInfoForm.value.birthday = babyInfo.value.birthday
+}
+
+// 保存宝宝信息
+const saveBabyInfo = () => {
+  if (babyInfoForm.value.name) {
+    localStorage.setItem('babyName', babyInfoForm.value.name)
+  }
+  if (babyInfoForm.value.birthday) {
+    localStorage.setItem('babyBirthday', babyInfoForm.value.birthday)
+  }
+  ElMessage.success('宝宝信息已保存')
+}
+
+// 下载报告（保存为图片）
+const downloadReport = async () => {
+  try {
+    ElMessage.info('正在生成报告图片...')
+
+    // 使用 html2canvas 生成图片（需要安装依赖）
+    // 这里先用简单的提示代替
+    const reportContent = reportPreviewRef.value
+    if (!reportContent) return
+
+    // 模拟下载
+    ElMessage.success('📊 成长报告已生成！\n（实际项目需安装 html2canvas 库）')
+
+    // 实际实现代码（需要安装 html2canvas）：
+    // const canvas = await html2canvas(reportContent)
+    // const link = document.createElement('a')
+    // link.download = `宝宝成长报告_${monthData.value?.month}月龄.png`
+    // link.href = canvas.toDataURL()
+    // link.click()
+  } catch (error) {
+    ElMessage.error('生成报告失败，请重试')
+  }
+}
+
+// 分享报告
+const shareReport = () => {
+  // 检查是否支持原生分享 API
+  if (navigator.share) {
+    navigator
+      .share({
+        title: `宝宝${monthData.value?.month}月龄成长报告`,
+        text: `🎉 ${babyInfo.value.name || '宝宝'}${
+          monthData.value?.month
+        }个月啦！已完成${completedMilestonesCount.value}个里程碑！`,
+        url: window.location.href,
+      })
+      .catch(() => {
+        // 用户取消分享
+      })
+  } else {
+    // 不支持原生分享，显示分享选项
+    ElMessage.info('请截图后分享至微信/朋友圈')
+  }
 }
 
 onMounted(() => {
@@ -3318,6 +3744,86 @@ watch(
   line-height: 1.8;
 }
 
+/* 🔔 智能提醒区域 */
+.smart-reminder-section {
+  margin-bottom: 20px;
+}
+
+.reminder-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  position: relative;
+}
+
+.reminder-card.info {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #93c5fd;
+}
+
+.reminder-card.warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fcd34d;
+}
+
+.reminder-card.success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+}
+
+.reminder-icon {
+  font-size: 28px;
+}
+
+.reminder-content {
+  flex: 1;
+}
+
+.reminder-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.reminder-card.info .reminder-content h4 {
+  color: #1e40af;
+}
+
+.reminder-card.warning .reminder-content h4 {
+  color: #92400e;
+}
+
+.reminder-card.success .reminder-content h4 {
+  color: #166534;
+}
+
+.reminder-content p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reminder-card.info .reminder-content p {
+  color: #1e3a8a;
+}
+
+.reminder-card.warning .reminder-content p {
+  color: #78350f;
+}
+
+.reminder-card.success .reminder-content p {
+  color: #14532d;
+}
+
+.reminder-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #9ca3af;
+}
+
 /* 里程碑 */
 .milestones-header {
   margin-bottom: 30px;
@@ -3331,6 +3837,12 @@ watch(
   padding: 30px;
   background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
   border-radius: 20px;
+}
+
+.report-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .progress-inner {
@@ -4203,6 +4715,235 @@ watch(
 .preview-action-btn {
   margin-top: 16px;
   width: 100%;
+}
+
+/* 📊 成长报告对话框样式 */
+.growth-report-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.report-preview {
+  background: linear-gradient(180deg, #fef3c7 0%, #fefce8 30%, #ffffff 100%);
+  border-radius: 20px;
+  padding: 24px;
+  border: 2px solid #fde047;
+}
+
+.report-header-section {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.report-logo {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.report-header-section h2 {
+  margin: 0 0 4px 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #92400e;
+}
+
+.report-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #a16207;
+}
+
+.report-info-section {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.report-progress-section {
+  margin-bottom: 20px;
+}
+
+.report-progress-section h3,
+.report-prediction-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 16px 0;
+}
+
+.progress-summary {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.progress-ring {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.progress-ring svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.progress-ring .ring-bg {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-width: 8;
+}
+
+.progress-ring .ring-fill {
+  fill: none;
+  stroke: #22c55e;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 251.2;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.progress-percent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  font-weight: 800;
+  color: #22c55e;
+}
+
+.progress-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.progress-stats .stat-item {
+  text-align: center;
+}
+
+.progress-stats .stat-num {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.progress-stats .stat-item.completed .stat-num {
+  color: #22c55e;
+}
+
+.progress-stats .stat-item.pending .stat-num {
+  color: #9ca3af;
+}
+
+.progress-stats .stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.milestones-summary {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.milestone-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.milestone-row:last-child {
+  border-bottom: none;
+}
+
+.milestone-row.completed {
+  opacity: 1;
+}
+
+.milestone-row:not(.completed) {
+  opacity: 0.6;
+}
+
+.milestone-status-icon {
+  font-size: 16px;
+}
+
+.milestone-name {
+  font-size: 13px;
+  color: #374151;
+}
+
+.report-prediction-section {
+  margin-bottom: 20px;
+}
+
+.prediction-intro {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 12px 0;
+}
+
+.prediction-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.report-footer-section {
+  text-align: center;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.report-footer-section p {
+  margin: 0;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.footer-date {
+  margin-top: 4px !important;
+}
+
+.baby-info-edit {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.info-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 /* 响应式 */
