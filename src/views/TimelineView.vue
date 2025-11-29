@@ -36,6 +36,66 @@
       </div>
     </div>
 
+    <!-- 横向时间轴导航 -->
+    <div class="horizontal-timeline-nav">
+      <div class="nav-wrapper">
+        <el-button
+          circle
+          size="small"
+          class="nav-arrow nav-prev"
+          @click="scrollTimeline(-1)"
+        >
+          <el-icon><ArrowLeft /></el-icon>
+        </el-button>
+        
+        <div class="timeline-nav-track" ref="timelineNavRef">
+          <div class="timeline-nav-items">
+            <div
+              v-for="month in monthsData"
+              :key="month.month"
+              :class="[
+                'timeline-nav-item',
+                { 
+                  'is-current': month.month === currentMonth,
+                  'is-completed': getMonthStatus(month.month) === 'completed',
+                  'is-locked': getMonthStatus(month.month) === 'locked'
+                }
+              ]"
+              @click="jumpToMonth(month.month)"
+            >
+              <div class="nav-item-marker">
+                <span v-if="getMonthStatus(month.month) === 'completed'">✓</span>
+                <span v-else-if="getMonthStatus(month.month) === 'locked'">🔒</span>
+                <span v-else>{{ month.month }}</span>
+              </div>
+              <div class="nav-item-label">{{ month.month }}月</div>
+              <div 
+                class="nav-item-progress" 
+                :style="{ width: getMilestoneProgress(month) + '%' }"
+              ></div>
+            </div>
+          </div>
+        </div>
+        
+        <el-button
+          circle
+          size="small"
+          class="nav-arrow nav-next"
+          @click="scrollTimeline(1)"
+        >
+          <el-icon><ArrowRight /></el-icon>
+        </el-button>
+      </div>
+      
+      <!-- 进度提示 -->
+      <div class="timeline-progress-hint">
+        <span class="hint-icon">🎯</span>
+        <span class="hint-text">
+          已浏览 {{ visitedMonths.length }}/13 个阶段
+        </span>
+      </div>
+    </div>
+
     <!-- 时间轴内容 -->
     <div class="timeline-container" ref="timelineRef">
       <!-- 中央时间线 -->
@@ -204,7 +264,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBabyStore } from '@/stores/babyStore'
-import { ArrowRight, Top } from '@element-plus/icons-vue'
+import { ArrowRight, Top, ArrowLeft } from '@element-plus/icons-vue'
 import type { BabyMonthData } from '@/types/baby'
 
 const router = useRouter()
@@ -213,9 +273,45 @@ const babyStore = useBabyStore()
 const monthsData = computed(() => babyStore.allMonthsData)
 const headerRef = ref<HTMLElement>()
 const timelineRef = ref<HTMLElement>()
+const timelineNavRef = ref<HTMLElement>()
 const monthRefs = ref<any[]>([])
 const scrollProgress = ref(0)
 const showScrollTop = ref(false)
+const currentMonth = ref(babyStore.currentMonth)
+const visitedMonths = ref<number[]>([0]) // 已浏览的月龄
+
+// 获取月龄状态
+const getMonthStatus = (monthId: number) => {
+  const babyAge = babyStore.currentMonth
+  if (monthId < babyAge) return 'completed'
+  if (monthId === babyAge) return 'current'
+  return 'locked'
+}
+
+// 滚动时间轴导航
+const scrollTimeline = (direction: number) => {
+  if (timelineNavRef.value) {
+    const scrollAmount = 200
+    timelineNavRef.value.scrollLeft += scrollAmount * direction
+  }
+}
+
+// 跳转到指定月龄
+const jumpToMonth = (monthId: number) => {
+  currentMonth.value = monthId
+  if (!visitedMonths.value.includes(monthId)) {
+    visitedMonths.value.push(monthId)
+  }
+  
+  // 平滑滚动到对应卡片
+  const targetIndex = monthsData.value.findIndex(m => m.month === monthId)
+  if (targetIndex !== -1 && monthRefs.value[targetIndex]) {
+    monthRefs.value[targetIndex].scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    })
+  }
+}
 
 const stats = computed(() => [
   { icon: '📅', value: '13', label: '月龄阶段' },
@@ -312,6 +408,161 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, #f8f9ff 0%, #ffffff 50%, #fff8f8 100%);
   position: relative;
   overflow-x: hidden;
+}
+
+/* 横向时间轴导航 */
+.horizontal-timeline-nav {
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  background: white;
+  padding: 16px 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+  margin-bottom: 24px;
+}
+
+.nav-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nav-arrow {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.nav-arrow:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.timeline-nav-track {
+  flex: 1;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f0f0f0;
+}
+
+.timeline-nav-track::-webkit-scrollbar {
+  height: 4px;
+}
+
+.timeline-nav-track::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+.timeline-nav-track::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
+
+.timeline-nav-items {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.timeline-nav-item {
+  position: relative;
+  flex-shrink: 0;
+  width: 64px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-item-marker {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #9ca3af;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-nav-item.is-current .nav-item-marker {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: scale(1.15);
+}
+
+.timeline-nav-item.is-completed .nav-item-marker {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
+}
+
+.timeline-nav-item.is-locked .nav-item-marker {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.nav-item-label {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.timeline-nav-item.is-current .nav-item-label {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.nav-item-progress {
+  position: absolute;
+  bottom: -4px;
+  left: 8px;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 1.5px;
+  transition: width 0.6s ease;
+}
+
+.timeline-nav-item:hover:not(.is-locked) .nav-item-marker {
+  transform: scale(1.1);
+  border-color: #a78bfa;
+}
+
+.timeline-progress-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.hint-icon {
+  font-size: 16px;
 }
 
 /* 底部简单装饰 */
@@ -1335,6 +1586,35 @@ onBeforeUnmount(() => {
     right: 16px;
     width: 44px;
     height: 44px;
+  }
+
+  /* 移动端横向导航 */
+  .horizontal-timeline-nav {
+    padding: 12px 16px;
+  }
+
+  .nav-wrapper {
+    gap: 8px;
+  }
+
+  .timeline-nav-item {
+    width: 56px;
+  }
+
+  .nav-item-marker {
+    width: 42px;
+    height: 42px;
+    font-size: 14px;
+  }
+
+  .nav-item-label {
+    font-size: 10px;
+  }
+
+  .timeline-progress-hint {
+    padding: 6px 12px;
+    font-size: 12px;
+    margin-top: 10px;
   }
 }
 
