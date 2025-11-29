@@ -748,7 +748,10 @@
                     viewBox="0 0 360 200"
                     class="chart-svg-enhanced"
                     :class="{ 'chart-transitioning': isChartTransitioning }"
-                    :style="{ transform: `scale(${chartScale})`, transformOrigin: 'center center' }"
+                    :style="{
+                      transform: `scale(${chartScale})`,
+                      transformOrigin: 'center center',
+                    }"
                   >
                     <!-- 渐变定义 -->
                     <defs>
@@ -943,16 +946,33 @@
 
                   <!-- 缩放控制按钮 -->
                   <div class="zoom-controls">
-                    <button class="zoom-btn" @click="zoomIn" :disabled="chartScale >= 2" title="放大">
+                    <button
+                      class="zoom-btn"
+                      @click="zoomIn"
+                      :disabled="chartScale >= 2"
+                      title="放大"
+                    >
                       <span>+</span>
                     </button>
-                    <button class="zoom-btn reset" @click="resetZoom" :disabled="chartScale === 1" title="重置">
+                    <button
+                      class="zoom-btn reset"
+                      @click="resetZoom"
+                      :disabled="chartScale === 1"
+                      title="重置"
+                    >
                       <span>⟲</span>
                     </button>
-                    <button class="zoom-btn" @click="zoomOut" :disabled="chartScale <= 0.5" title="缩小">
+                    <button
+                      class="zoom-btn"
+                      @click="zoomOut"
+                      :disabled="chartScale <= 0.5"
+                      title="缩小"
+                    >
                       <span>−</span>
                     </button>
-                    <span class="zoom-level">{{ Math.round(chartScale * 100) }}%</span>
+                    <span class="zoom-level">
+                      {{ Math.round(chartScale * 100) }}%
+                    </span>
                   </div>
                 </div>
 
@@ -7604,7 +7624,7 @@ watch(
   height: 28px;
   border: none;
   border-radius: 50%;
-  background: linear-gradient(135deg, #9D50FF 0%, #FF6BCC 100%);
+  background: linear-gradient(135deg, #9d50ff 0%, #ff6bcc 100%);
   color: white;
   font-size: 16px;
   font-weight: 600;
